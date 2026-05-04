@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "PowerShell(Add-Type -AssemblyName System.IO; $path = \"C:\\\\Users\\\\Unika Dev 2\\\\Downloads\\\\Desafio Estágio \\(2\\) \\(1\\).pdf\"; [System.IO.File]::Exists\\($path\\))"
+    ]
+  }
+}
