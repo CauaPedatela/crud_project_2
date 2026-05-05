@@ -37,3 +37,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Credentials - nunca versionar arquivos com senhas ###
+src/main/resources/application.properties
