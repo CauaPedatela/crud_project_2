@@ -93,6 +93,39 @@
         </dependency>
 
         <!--
+            JasperReports:
+            Biblioteca para geração de relatórios em PDF.
+            Os relatórios são desenhados no Jasper Studio (.jrxml)
+            e compilados/preenchidos aqui em tempo de execução.
+        -->
+        <dependency>
+            <groupId>net.sf.jasperreports</groupId>
+            <artifactId>jasperreports</artifactId>
+            <version>6.20.0</version>
+            <exclusions>
+                <!--
+                    Excluímos o commons-logging para evitar conflito
+                    com o sistema de logs do Spring Boot (slf4j).
+                -->
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!--
+            Apache POI — leitura e escrita de arquivos Excel (.xlsx):
+            poi-ooxml inclui suporte ao formato moderno do Excel.
+            Usado para exportar dados para planilha e importar clientes via Excel.
+        -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.3</version>
+        </dependency>
+
+        <!--
             Testes com JUnit 5:
             Usado para escrever e rodar testes automatizados.
             scope "test" = só existe durante os testes, não vai pro executável final.
