@@ -17,24 +17,10 @@ import java.util.List;
 @Table(name = "tb_cliente") // define o nome da tabela no banco
 public class Cliente {
 
-    /**
-     * Chave primária da tabela.
-     *
-     * Long (maiúsculo) = tipo wrapper — necessário para o JPA
-     * conseguir representar null quando o objeto ainda não foi salvo.
-     *
-     * @GeneratedValue → o banco gera o ID automaticamente (AUTO INCREMENT)
-     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Tipo de pessoa: FISICA ou JURIDICA.
-     *
-     * @Enumerated(EnumType.STRING) → salva o nome no banco ("FISICA" ou "JURIDICA")
-     * sem isso, o Hibernate salvaria um número (0 ou 1), o que dificulta leitura.
-     */
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo_pessoa", nullable = false)
     private TipoPessoa tipoPessoa;

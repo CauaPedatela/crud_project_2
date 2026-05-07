@@ -8,8 +8,6 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 /**
- * Repository de Cliente.
- *
  * Estendendo JpaRepository, ganhamos os métodos básicos de acesso
  * ao banco automaticamente, sem escrever SQL:
  *   findAll()        → busca todos os clientes
