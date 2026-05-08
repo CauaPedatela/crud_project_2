@@ -1,5 +1,8 @@
 package com.crudproject.service;
 
+import com.crudproject.dto.cliente.ClienteCadastroDTO;
+import com.crudproject.dto.cliente.ClienteResponseDTO;
+import com.crudproject.mapper.ClienteMapper;
 import com.crudproject.model.Cliente;
 import com.crudproject.repository.ClienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,12 +18,18 @@ public class ClienteService {
     @Autowired
     private ClienteRepository clienteRepository;
 
+    @Autowired
+    private ClienteMapper clienteMapper;
+
     // ===================================================
     // MÉTODOS PÚBLICOS (usados pela página Wicket)
     // ===================================================
 
     @Transactional
-    public Cliente salvar(Cliente cliente) {
+    public ClienteResponseDTO salvar(ClienteCadastroDTO dto) {
+
+        // Converte DTO em entidade (sem id ainda)
+        Cliente cliente = clienteMapper.toEntity(dto);
 
         // Valida campos comuns a PF e PJ (inclui tipo de pessoa)
         validarCamposComuns(cliente);
@@ -55,7 +64,11 @@ public class ClienteService {
             }
         }
 
-        return clienteRepository.save(cliente);
+        // Persiste no banco e retorna a versão salva (já com id)
+        Cliente salvo = clienteRepository.save(cliente);
+
+        // Converte a entidade salva em DTO de saída
+        return clienteMapper.toResponse(salvo);
     }
 
     public List<Cliente> buscarTodos() {

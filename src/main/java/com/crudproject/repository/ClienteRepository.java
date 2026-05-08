@@ -21,14 +21,10 @@ import java.util.Optional;
 @Repository
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {
 
-    // Os métodos básicos já existem — herdados do JpaRepository.
-    // Métodos de busca específicos serão adicionados aqui futuramente.
-
-    /**
-     * Lá no service usaremos esse método "findByCpf" pra verificar se já existe cliente
-     * cadastrado com o cpf(ou cnpj) que é passado como parâmetro através de um
-     * Usado para verificar se um CPF ou CNPJ já está cadastrado.
+    /*
+     * usaremos esses métodos pra fazer as validações no service
      */
+
     Optional<Cliente> findByCpf(String cpf);
     Optional<Cliente> findByCnpj(String cnpj);
 
