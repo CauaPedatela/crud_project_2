@@ -23,7 +23,7 @@ BACKEND (Spring Boot - Java 17)
   ├── Repository → acessa o banco (Spring Data JPA)
   └── DAO        → queries avançadas (HQL, SQL puro, Search) — Fase futura
         ↕  Hibernate (JPA)
-BANCO DE DADOS (MySQL)
+BANCO DE DADOS (MySQL via Docker)
 ```
 
 **Padrão MVC:**
@@ -35,259 +35,212 @@ BANCO DE DADOS (MySQL)
 
 ## Estado atual do projeto
 
-> Última atualização: rota de cadastro com DTOs em construção
+> Última atualização: **CRUD completo de Cliente/Endereço em REST. Banco zerado, pronto para refactor grande baseado no modelo passado pelo supervisor.**
 
 ### ✅ Concluído
 
-- **Setup do ambiente** — Java 17, Maven, MySQL, IntelliJ
-- **`pom.xml`** — Spring Boot 2.7, Hibernate, MySQL, Wicket 7, JasperReports, Apache POI
-- **Banco de dados** — MySQL com banco `crud_project_db` criado via DBeaver
-- **`application.properties`** — configurado (fora do Git, há `.example` no repo)
-- **`CrudProjectApplication.java`** — entrypoint do Spring Boot
-- **Modelos**
-  - `Cliente.java` — entidade JPA com PF + PJ na mesma tabela
-  - `Endereco.java` — entidade JPA com FK pra Cliente
-  - `TipoPessoa.java` — enum FISICA / JURIDICA
-- **Repositories**
-  - `ClienteRepository.java` — `findByCpf`, `findByCnpj`
-  - `EnderecoRepository.java` — `findByClienteId`
-- **Services**
-  - `ClienteService.java` — todos os métodos (`salvar`, `buscarTodos`, `buscarPorId`, `atualizar`, `excluir`) + validações de CPF/CNPJ
-  - `EnderecoService.java` — só estrutura base, métodos públicos vazios
-- **DTOs de Cliente** (Rota 1 — cadastro)
-  - `ClienteCadastroDTO.java` — entrada do POST
-  - `ClienteResponseDTO.java` — saída de qualquer operação
-- **`ClienteMapper.java`** — converte DTO ↔ Entity em ambos os sentidos
-- **`ClienteService.salvar()`** refatorado para receber DTO e retornar DTO
+**Infraestrutura**
+- Java 17 + Maven + IntelliJ
+- `pom.xml` com Spring Boot 2.7, Hibernate 5, MySQL driver, JasperReports, Apache POI
+- **MySQL via Docker Compose** (`docker-compose.yml` na raiz)
+- `application.properties` com mensagens de erro detalhadas (no `.gitignore`, com `.example` no repo)
 
-### ⏳ Em andamento
+**Models (entidades JPA)**
+- `Cliente.java` — PF + PJ na mesma tabela, com `@JsonManagedReference`
+- `Endereco.java` — FK para Cliente, com `@JsonBackReference`
+- `TipoPessoa.java` — enum FISICA / JURIDICA
 
-- **Rota 1: `POST /api/clientes`** (cadastro de cliente)
-  - [x] DTO de entrada
-  - [x] DTO de saída
-  - [x] Mapper
-  - [x] Service adaptado
-  - [ ] **`ClienteController` ← PRÓXIMO PASSO**
-  - [ ] Testar no Apidog
+**Repositories**
+- `ClienteRepository` — `findByCpf`, `findByCnpj`
+- `EnderecoRepository` — `findByClienteId`
 
-### 📋 A fazer
+**DTOs** (sufixados por intenção — contratos claros)
+- `dto/cliente/`
+  - `ClienteCadastroDTO` — POST (com lista de endereços iniciais embedded)
+  - `ClienteAtualizacaoDTO` — PUT (sem tipoPessoa, sem enderecos)
+  - `ClienteResponseDTO` — saída (com lista de endereços)
+- `dto/endereco/`
+  - `EnderecoCadastroDTO` — POST (com clienteId)
+  - `EnderecoAtualizacaoDTO` — PUT (sem clienteId)
+  - `EnderecoResponseDTO` — saída
 
-**Backend — Restante das rotas de Cliente**
+**Mappers**
+- `ClienteMapper` — toEntity, toResponse, updateEntity, lida com endereços embedded
+- `EnderecoMapper` — toEntity (recebe Cliente do Service), toResponse, updateEntity
 
-- Rota 2: `GET /api/clientes` (listar todos)
-- Rota 3: `GET /api/clientes/{id}` (buscar por id)
-- Rota 4: `PUT /api/clientes/{id}` (atualizar)
-- Rota 5: `DELETE /api/clientes/{id}` (excluir)
+**Services**
+- `ClienteService` — `salvar`, `buscarTodos`, `buscarPorId`, `atualizar`, `excluir`
+  - Validação cruzada PF/PJ
+  - Algoritmo Receita Federal pra CPF/CNPJ
+  - Sincronização de endereços no salvar (mín. 1, ajusta principal)
+  - tipoPessoa imutável após cadastro
+- `EnderecoService` — CRUD completo + `definirComoPrincipal`
+  - Regras de endereço principal automatizadas
+  - Bloqueio de mover endereço entre clientes
 
-**Backend — Endereços**
+**Controllers REST**
+- `ClienteController` — `POST`, `GET`, `GET/{id}`, `PUT/{id}`, `DELETE/{id}`
+- `EnderecoController` — `POST`, `GET/{id}`, `GET cliente/{clienteId}`, `PUT/{id}`, `DELETE/{id}`, `PUT/{id}/principal`
 
-- DTOs de Endereço (`EnderecoCadastroDTO`, `EnderecoResponseDTO`)
-- `EnderecoMapper`
-- Implementar métodos do `EnderecoService` (vazios atualmente)
-- `EnderecoController` com rotas REST
-
-**Backend — DAO (Desafio 8.4)**
-
-- `dao/` com `GenericDAO`, `ClienteDAO`, `EnderecoDAO`
-- Queries com `com.googlecode.genericdao.search`
-- Queries com HQL e SQL puro
-
-**Frontend Fase 1 — Wicket**
-
-- Página de listagem de clientes (com filtros e paginação)
-- Modal de cadastro/edição
-- Modal de gestão de endereços
-- FeedbackPanel para mensagens
-- Confirmação para exclusões
-
-**Relatórios**
-
-- PDF com JasperReports (relatório de cliente individual + lista)
-- Excel com Apache POI (exportação)
-- Importação de Excel para cadastro em massa
-
-**Testes**
-
-- JUnit nos Services
-
-**Frontend Fase 2 — Angular**
-
-- Projeto Angular 14 separado
-- Consumir as rotas REST já existentes
-- Bootstrap + Angular Material + Notify.js
+**Banco de dados**
+- Banco `crud_project_db` rodando no Docker
+- ⚠ **Tabelas `tb_cliente` e `tb_endereco` foram dropadas em preparação para o refactor**
 
 ---
 
-## Próximo passo concreto
+## Próximo passo — REFACTOR GRANDE
 
-> Quando voltar ao projeto, retome aqui:
+> Quando voltar ao projeto, retome aqui.
 
-**Implementar `ClienteController.java`** para expor o método `salvar()` do Service como rota HTTP `POST /api/clientes`.
+O supervisor passou um novo modelo de dados que exige refatoração. O JSON novo:
 
-O Service e o Mapper já estão prontos. Falta só:
-1. Adicionar as anotações `@RestController` e `@RequestMapping("/api/clientes")` na classe
-2. Injetar o `ClienteService` via `@Autowired`
-3. Criar um método `cadastrar(@RequestBody ClienteCadastroDTO dto)` anotado com `@PostMapping`
-4. Esse método só repassa a chamada: `return clienteService.salvar(dto);`
+```json
+{
+  "id": 1001,
+  "tipoPessoa": "FISICA",
+  "nome": "João Carlos da Silva",
+  "cpfCnpj": "12345678901",
+  "rgInscricaoEstadual": "123456789",
+  "dataNascimento": "1990-05-15",
+  "email": "joao.silva@email.com",
+  "telefone": "(11) 99999-9999",
+  "ativo": true,
+  "dataCadastro": "2026-05-11T10:30:00",
+  "enderecos": [
+    {
+      "id": 1,
+      "tipo": "RESIDENCIAL",
+      "logradouro": "Rua das Flores",
+      "numero": "123",
+      "complemento": "Apartamento 45",
+      "bairro": "Centro",
+      "cidade": "São Paulo",
+      "estado": "SP",
+      "cep": "01001-000",
+      "pais": "Brasil",
+      "principal": true
+    }
+  ]
+}
+```
 
-Depois disso, testar no Apidog enviando um POST com JSON de PF e outro de PJ.
+### Decisões já tomadas
+
+| Pergunta | Decisão |
+|---|---|
+| Wrapper `{ "cliente": {...} }`? | **NÃO** — JSON direto na raiz, padrão REST |
+| `dataNascimento` para PJ? | Sim — mesmo campo, semântica de "data de fundação" |
+| PUT com endereços: replace ou sync? | **Sync** — id existe → atualiza, sem id → cria, sumiu → deleta |
+| Manter rotas de Endereço separadas? | **NÃO** — tudo passa pelo `/api/clientes` |
+
+### Mudanças que serão feitas
+
+**Model — `Cliente.java`**
+- Remove: `cpf`, `rg`, `cnpj`, `razaoSocial`, `inscricaoEstadual`, `dataCriacao`
+- Adiciona: `cpfCnpj`, `rgInscricaoEstadual`, `telefone`, `dataCadastro`
+- Mantém: `id`, `tipoPessoa`, `nome`, `dataNascimento`, `email`, `ativo`, `enderecos`
+
+**Model — `Endereco.java`**
+- Remove: `telefone` (vai pra Cliente)
+- Renomeia: `enderecoPrincipal` → `principal`
+- Adiciona: `tipo` (enum `TipoEndereco`), `pais`
+
+**Model — novo enum `TipoEndereco.java`**
+- `RESIDENCIAL, COMERCIAL`
+
+**DTOs — unificação**
+- `ClienteCadastroDTO` + `ClienteAtualizacaoDTO` → `ClienteDTO` (único)
+- `EnderecoCadastroDTO` + `EnderecoAtualizacaoDTO` → `EnderecoDTO` (com `id` opcional)
+- `ClienteResponseDTO` e `EnderecoResponseDTO` mantidos, com os novos campos
+
+**Service**
+- `EnderecoService.java` → **DELETADO**
+- `ClienteService` ganha:
+  - Validação `cpfCnpj` (length 11 = PF, 14 = PJ)
+  - Método `sincronizarEnderecos` (semântica de sync)
+  - `dataCadastro = now()` no salvar
+
+**Controller**
+- `EnderecoController.java` → **DELETADO**
+- `ClienteController` mantém as 5 rotas, com `ClienteDTO` unificado
+
+**Repository**
+- `ClienteRepository.findByCpfCnpj(String)` substitui `findByCpf` + `findByCnpj`
+
+### Plano de execução amanhã
+
+1. Pull do projeto
+2. Levantar Docker (`docker compose up -d`)
+3. Subir Spring Boot uma vez para o Hibernate criar tabelas novas
+4. Iniciar o refactor: model → DTO → mapper → service → controller
+5. Testar todas as rotas no Apidog
 
 ---
 
 ## Fluxo do cadastro — do Apidog ao banco
 
-Quando uma rota REST é chamada (ex: pelo Apidog, Angular ou Postman), o dado atravessa todas as camadas. O exemplo abaixo é o fluxo de **cadastro de cliente** (POST `/api/clientes`).
+Quando uma rota REST é chamada (ex: pelo Apidog, Angular ou Postman), o dado atravessa todas as camadas.
 
 ```
-┌─────────────────────────────────────────┐
-│ 1. APIDOG (cliente HTTP)                │
-│                                         │
-│  POST http://localhost:8080/api/clientes│
-│                                         │
-│  Body (JSON):                           │
-│  {                                      │
-│    "tipoPessoa": "FISICA",              │
-│    "cpf": "123.456.789-00",             │
-│    "nome": "João",                      │
-│    "email": "joao@email.com",           │
-│    "ativo": true                        │
-│  }                                      │
-└──────────────────┬──────────────────────┘
-                   │ envia o JSON via HTTP
-                   ▼
-┌─────────────────────────────────────────┐
-│ 2. SPRING (recebe a requisição)         │
-│                                         │
-│  Spring vê o POST /api/clientes,        │
-│  procura quem responde por essa rota.   │
-│  Encontra ClienteController.cadastrar() │
-│                                         │
-│  Antes de chamar, converte o JSON em    │
-│  ClienteCadastroDTO automaticamente.    │
-└──────────────────┬──────────────────────┘
-                   │ ClienteCadastroDTO
-                   ▼
-┌─────────────────────────────────────────┐
-│ 3. CONTROLLER — ClienteController       │
-│                                         │
-│  cadastrar(ClienteCadastroDTO dto) {    │
-│      return clienteService.salvar(dto); │
-│  }                                      │
-│                                         │
-│  Não tem regra. Só recebe e repassa.    │
-└──────────────────┬──────────────────────┘
-                   │ ClienteCadastroDTO
-                   ▼
-┌─────────────────────────────────────────┐
-│ 4. SERVICE — ClienteService             │
-│                                         │
-│  ① Pede ao Mapper para converter        │
-│     o DTO em Cliente (entidade)         │
-│                                         │
-│  ② Aplica as regras de negócio:         │
-│     - Tipo de pessoa preenchido?        │
-│     - CPF/CNPJ já cadastrado?           │
-│     - Campos obrigatórios?              │
-│                                         │
-│  ③ Manda o Repository salvar            │
-└──────────────────┬──────────────────────┘
-                   │ Cliente (entidade)
-                   ▼
-┌─────────────────────────────────────────┐
-│ 5. MAPPER — ClienteMapper               │
-│                                         │
-│  toEntity(dto)                          │
-│    Cliente c = new Cliente()            │
-│    c.setNome(dto.getNome())             │
-│    c.setCpf(dto.getCpf())               │
-│    ... (copia campo por campo)          │
-│    return c                             │
-└──────────────────┬──────────────────────┘
-                   │ Cliente sem ID ainda
-                   ▼
-┌─────────────────────────────────────────┐
-│ 6. REPOSITORY — ClienteRepository       │
-│                                         │
-│  clienteRepository.save(cliente)        │
-│                                         │
-│  Hibernate vê que não tem ID → INSERT   │
-└──────────────────┬──────────────────────┘
-                   │ SQL: INSERT INTO tb_cliente...
-                   ▼
-┌─────────────────────────────────────────┐
-│ 7. MYSQL                                │
-│                                         │
-│  Salva o cliente, gera o ID (ex: 7)     │
-│  Devolve o ID ao Hibernate              │
-└──────────────────┬──────────────────────┘
-                   │ Cliente com ID = 7
-                   ▼
-┌─────────────────────────────────────────┐
-│ 8. SERVICE (caminho de volta)           │
-│                                         │
-│  Recebe o Cliente salvo (com ID)        │
-│  Pede ao Mapper para converter de       │
-│  volta em ClienteResponseDTO            │
-└──────────────────┬──────────────────────┘
-                   │ ClienteResponseDTO
-                   ▼
-┌─────────────────────────────────────────┐
-│ 9. CONTROLLER → SPRING                  │
-│                                         │
-│  Spring converte o DTO em JSON          │
-│  e devolve com status 201 Created       │
-└──────────────────┬──────────────────────┘
-                   │ HTTP Response com JSON
-                   ▼
-┌─────────────────────────────────────────┐
-│ 10. APIDOG (recebe a resposta)          │
-│                                         │
-│  Status: 201 Created                    │
-│  Body:                                  │
-│  {                                      │
-│    "id": 7,                             │
-│    "tipoPessoa": "FISICA",              │
-│    "nome": "João",                      │
-│    "cpf": "123.456.789-00",             │
-│    "email": "joao@email.com",           │
-│    "ativo": true                        │
-│  }                                      │
-└─────────────────────────────────────────┘
+APIDOG (cliente HTTP)
+       │ envia JSON via HTTP
+       ▼
+SPRING (recebe a requisição)
+       │ converte JSON em DTO
+       ▼
+CONTROLLER (ClienteController)
+       │ repassa o DTO para o Service
+       ▼
+SERVICE (ClienteService)
+       │ ① mapeia DTO em entidade
+       │ ② aplica regras de negócio
+       │ ③ manda Repository salvar
+       ▼
+MAPPER (ClienteMapper)
+       │ copia DTO → Cliente
+       ▼
+REPOSITORY (ClienteRepository)
+       │ executa INSERT/UPDATE
+       ▼
+MYSQL (Docker)
+       │ gera id, devolve ao Hibernate
+       ▼
+SERVICE (caminho de volta)
+       │ mapeia Cliente → DTO de saída
+       ▼
+CONTROLLER → SPRING
+       │ converte DTO em JSON
+       ▼
+APIDOG (resposta)
 ```
 
-**Resumo em uma frase:** o **DTO atravessa Controller e Service**, vira **Entity no Mapper**, é salvo pelo **Repository**, e volta o caminho inverso até o **JSON** que o Apidog recebe.
+**Resumo em uma frase:** o DTO atravessa Controller e Service, vira Entity no Mapper, é salvo pelo Repository, e volta o caminho inverso até o JSON que o Apidog recebe.
 
-A entidade `Cliente` nunca é exposta ao mundo externo — quem sai e entra é sempre DTO.
+A entidade nunca é exposta — quem sai e entra é sempre DTO.
 
-### Por que cada camada existe nesse fluxo
+### Por que cada camada existe
 
 | Camada | Por que precisa existir |
 |---|---|
-| **Controller** | Tradutor HTTP ↔ Java. Sem ele, ninguém atende a requisição |
-| **DTO** | Embalagem segura. Não expõe a entidade real |
-| **Service** | Lugar das regras. Sem ele, regras vazariam pro Controller |
-| **Mapper** | Centraliza a conversão. Sem ele, viraria gambiarra no Service |
-| **Repository** | Fala com o banco. Sem ele, teríamos SQL na mão em todo lugar |
-| **Entity** | Mapeia a tabela. Sem ela, Hibernate não sabe o que persistir |
+| **Controller** | Tradutor HTTP ↔ Java |
+| **DTO** | Embalagem segura, não expõe a entidade |
+| **Service** | Lugar das regras de negócio |
+| **Mapper** | Centraliza a conversão entre DTO e Entity |
+| **Repository** | Fala com o banco |
+| **Entity** | Mapeia a tabela do banco |
 
-### E o Wicket? Como se encaixa nesse fluxo?
+### E o Wicket?
 
-O Wicket **não usa HTTP entre frontend e backend** — ele roda no mesmo servidor que o Spring Boot. Ou seja, a página do Wicket chama o `Service` **diretamente em Java**, sem passar por Controller nem JSON.
+O Wicket **não usa HTTP entre frontend e backend** — ele roda no mesmo servidor que o Spring Boot. A página Wicket chama o `Service` **diretamente em Java**, sem passar por Controller nem JSON.
 
 ```
-WICKET                        APIDOG/ANGULAR
+WICKET                        APIDOG / ANGULAR
 ──────                        ──────────────
 ClientePage.java              Apidog envia JSON
    │                                │
    │ chama em Java                  │ HTTP POST
    ▼                                ▼
-[Mapper page→DTO]              ClienteController
-   │                                │
-   ▼                                │ chama em Java
-ClienteService.salvar(dto)  ◄───────┘
-   │
-   ▼
-ClienteMapper.toEntity(dto)
+ClienteService.salvar(dto)  ◄── ClienteController
    │
    ▼
 ClienteRepository.save(entity)
@@ -296,7 +249,7 @@ ClienteRepository.save(entity)
 MySQL
 ```
 
-**A camada Service é o ponto de encontro.** Tudo que está abaixo dela (Mapper, Repository, Entity, banco) é reutilizado por ambos os frontends. Por isso vale a pena construir o backend primeiro com a API REST — quando o Wicket chegar, ele só consome o que já existe.
+**A camada Service é o ponto de encontro.** Tudo abaixo dela é reaproveitado pelos dois frontends.
 
 ---
 
@@ -305,51 +258,55 @@ MySQL
 | Tecnologia | Para que serve |
 |---|---|
 | Java 17 | Linguagem do backend |
-| Spring Boot 2.7 | Framework que facilita criar APIs em Java |
-| Hibernate 5 | Converte objetos Java em tabelas do banco |
-| MySQL 8 | Banco de dados |
-| Apache Wicket 7 | Framework para criar telas web em Java (Fase 1) |
+| Spring Boot 2.7 | Framework Web + DI + auto-config |
+| Hibernate 5 | ORM (objeto Java → tabela) |
+| MySQL 8 (Docker) | Banco de dados |
+| Apache Wicket 7 | Framework para criar telas em Java (Fase 1) |
 | Angular 14 | Framework frontend moderno (Fase 2) |
-| JasperReports | Geração de relatórios em PDF |
-| Apache POI | Geração e leitura de planilhas Excel |
+| JasperReports | Relatórios PDF |
+| Apache POI | Planilhas Excel |
 | JUnit | Testes automatizados |
+| Apidog | Cliente HTTP para testes |
 
-> **Observação importante:** Spring Boot 2.7 (não 3.x) por compatibilidade com Wicket 7. Migrar para Spring Boot 3 só faz sentido após substituir o Wicket.
+> **Observação:** Spring Boot 2.7 (não 3.x) por compatibilidade com Wicket 7. O `wicket-spring-boot-starter` foi **removido** por incompatibilidade — será feita integração manual quando chegar a fase do Wicket.
 
 ---
 
-## Modelos de dados
+## Modelos de dados — após refactor (próximo passo)
 
 ### Cliente
+
 | Campo | Tipo | Observação |
 |---|---|---|
-| tipoPessoa | Enum | FISICA ou JURIDICA — **imutável após cadastro** |
-| cpf | String | Só para Pessoa Física |
-| nome | String | Só para Pessoa Física |
-| rg | String | Só para Pessoa Física |
-| dataNascimento | LocalDate | Só para Pessoa Física |
-| cnpj | String | Só para Pessoa Jurídica |
-| razaoSocial | String | Só para Pessoa Jurídica |
-| inscricaoEstadual | String | Só para Pessoa Jurídica |
-| dataCriacao | LocalDate | Só para Pessoa Jurídica |
-| email | String | Todos |
-| ativo | Boolean | Sim ou Não |
-| enderecos | List\<Endereco\> | Relação 1:N (um cliente, vários endereços) |
+| id | Long | PK |
+| tipoPessoa | Enum | FISICA / JURIDICA — imutável após cadastro |
+| nome | String | Nome (PF) ou Razão Social (PJ) |
+| cpfCnpj | String | CPF (11 dígitos) ou CNPJ (14 dígitos) |
+| rgInscricaoEstadual | String | RG (PF) ou Inscrição Estadual (PJ) |
+| dataNascimento | LocalDate | Nascimento (PF) ou Fundação (PJ) |
+| email | String | Email do cliente |
+| telefone | String | Telefone principal |
+| ativo | Boolean | Status |
+| dataCadastro | LocalDateTime | Gerado no save automaticamente |
+| enderecos | List\<Endereco\> | Relação 1:N |
 
-> **Decisão arquitetural:** uma única tabela `tb_cliente` com colunas opcionais para PF e PJ. Quando é PF, os campos PJ ficam null e vice-versa. As validações cruzadas ficam no Service.
+> **Decisão arquitetural:** uma única tabela `tb_cliente`. Campos são unificados (não há separação cpf/cnpj). As validações de negócio (CPF vs CNPJ) acontecem no Service baseado no `tipoPessoa`.
 
 ### Endereço
-| Campo | Tipo |
-|---|---|
-| logradouro | String |
-| numero | String |
-| cep | String |
-| bairro | String |
-| telefone | String |
-| cidade | String |
-| estado | String |
-| enderecoPrincipal | Boolean |
-| complemento | String |
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| id | Long | PK |
+| tipo | Enum | RESIDENCIAL / COMERCIAL |
+| logradouro | String | |
+| numero | String | |
+| complemento | String | Opcional |
+| bairro | String | |
+| cidade | String | |
+| estado | String | UF |
+| cep | String | |
+| pais | String | |
+| principal | Boolean | Apenas 1 principal por cliente |
 
 ---
 
@@ -357,126 +314,132 @@ MySQL
 
 ```
 src/main/java/com/crudproject/
-├── CrudProjectApplication.java     ← entrypoint Spring Boot
+├── CrudProjectApplication.java     ← entrypoint
 ├── model/
 │   ├── Cliente.java
 │   ├── Endereco.java
 │   └── TipoPessoa.java
 ├── dto/
-│   └── cliente/
-│       ├── ClienteCadastroDTO.java     ← entrada do POST
-│       └── ClienteResponseDTO.java     ← saída
+│   ├── cliente/
+│   │   ├── ClienteCadastroDTO.java
+│   │   ├── ClienteAtualizacaoDTO.java
+│   │   └── ClienteResponseDTO.java
+│   └── endereco/
+│       ├── EnderecoCadastroDTO.java
+│       ├── EnderecoAtualizacaoDTO.java
+│       └── EnderecoResponseDTO.java
 ├── mapper/
-│   └── ClienteMapper.java              ← DTO ↔ Entity
+│   ├── ClienteMapper.java
+│   └── EnderecoMapper.java
 ├── repository/
 │   ├── ClienteRepository.java
 │   └── EnderecoRepository.java
 ├── service/
-│   ├── ClienteService.java             ← salvar() já recebe DTO
-│   └── EnderecoService.java            ← métodos vazios ainda
+│   ├── ClienteService.java
+│   └── EnderecoService.java
 ├── controller/
-│   └── ClienteController.java          ← VAZIO — próximo passo
-└── wicket/page/                        ← vazio (Fase 1 - Wicket)
+│   ├── ClienteController.java
+│   └── EnderecoController.java
+└── wicket/page/                    ← vazio (Fase 1)
+
+docker-compose.yml                  ← MySQL 8 em container
 ```
 
 ---
 
 ## Configuração local
 
-O `application.properties` está no `.gitignore` para proteger a senha do banco. No repositório existe um `application.properties.example` como modelo.
+### MySQL via Docker (recomendado)
 
-**Quando clonar o projeto em outro PC:**
+O projeto roda o MySQL em container Docker. **Não precisa instalar MySQL nativamente**.
 
+```bash
+# Subir o banco
+docker compose up -d
+
+# Verificar status
+docker compose ps    # deve mostrar "healthy"
+
+# Desligar (mantém os dados)
+docker compose down
+
+# ⚠ NUNCA use down -v — apaga todos os dados
+```
+
+A conexão JDBC continua sendo `localhost:3306` — indistinguível de um MySQL nativo.
+
+### application.properties
+
+Está no `.gitignore` pra proteger a senha. Existe um `application.properties.example` no repo como modelo.
+
+**Ao clonar em outro PC:**
 1. Copie `src/main/resources/application.properties.example` para `application.properties`
-2. Edite `application.properties` e substitua `SUA_SENHA_AQUI` pela senha do MySQL local
-3. Crie o banco no MySQL: `CREATE DATABASE crud_project_db;`
+2. Substitua `SUA_SENHA_AQUI` por `UnikaDevDB` (ou a senha que escolheu pro container)
+3. Suba o Docker: `docker compose up -d`
 
 ---
 
 ## Git — Comandos essenciais
 
 ```bash
-# Ver o estado atual do repositório
-git status
-
-# Ver o histórico de commits
-git log --oneline
-
-# Adicionar arquivos para o próximo commit
-git add nome-do-arquivo
-# ou adicionar tudo:
-git add .
-
-# Criar um commit (snapshot do que foi feito)
-git commit -m "mensagem descrevendo o que foi feito"
-
-# Enviar para o repositório online (GitHub/GitLab)
-git push origin main
-
-# Baixar atualizações do repositório online
-git pull origin main
-
-# Voltar pro último push (descarta mudanças locais)
-git reset --hard origin/main
-git clean -fd
+git status                       # estado atual
+git log --oneline                # histórico
+git add .                        # adicionar tudo
+git commit -m "mensagem"         # commit
+git push origin main             # enviar pro GitHub
+git pull origin main             # baixar do GitHub
+git reset --hard origin/main     # voltar pro último push (descarta locais)
+git clean -fd                    # remove arquivos não-rastreados
 ```
 
-**Boas práticas de commit:**
-- Faça commits diariamente antes de encerrar o trabalho
-- Mensagens no imperativo ("Adiciona modelo Cliente"), prefixos: `feat:`, `chore:`, `docs:`, `refactor:`
-- Não commite arquivos com senhas — o `.gitignore` já cuida disso
+**Boas práticas:**
+- Commits diários
+- Prefixos: `feat:`, `chore:`, `docs:`, `refactor:`, `fix:`
+- Nunca commitar senhas — `.gitignore` cuida
 
 ---
 
-## Como continuar no computador de casa
+## Como continuar amanhã
 
-1. **Clone o repositório** (se ainda não tiver):
-   ```bash
-   git clone https://github.com/CauaPedatela/crud_project_2.git
-   cd crud-project
-   ```
-
-2. **Ou, se já tiver o repositório clonado**, baixe as atualizações:
+1. **Pull do repositório:**
    ```bash
    git pull origin main
    ```
 
-3. **Configure o `application.properties`** (veja seção "Configuração local")
+2. **Subir o Docker:**
+   ```bash
+   docker compose up -d
+   ```
 
-4. Abra o projeto no **IntelliJ IDEA**:
-   - File → Open → selecione a pasta `crud-project`
-   - O IntelliJ vai detectar o `pom.xml` e baixar as dependências automaticamente
+3. **Abrir o IntelliJ** e configurar `application.properties` (se for um PC novo)
 
-5. **Continue do passo onde parou** olhando a seção "Estado atual do projeto" acima
+4. **Continuar do refactor** — ler a seção "Próximo passo — REFACTOR GRANDE" acima
 
 ---
 
 ## Sessões com o Claude Code
 
-Ao abrir o Claude Code no computador de casa e navegar até a pasta do projeto, basta dizer:
+Ao abrir o Claude Code amanhã, basta dizer:
 
-> "Continuando o desafio de estágio — leia o README e me diga onde paramos."
+> "Continuando o desafio — leia o README e vamos fazer o refactor do modelo do supervisor."
 
-O Claude vai ler a seção "Estado atual" e "Próximo passo concreto" e retomar exatamente de onde foi deixado.
+O Claude vai ler o estado atual e o plano, e retoma de onde foi deixado.
 
 ---
 
 ## Dúvidas frequentes
 
-**Por que Spring Boot e não apenas Spring?**
-O Spring Boot já vem configurado para funcionar com o mínimo de esforço. O Spring puro exigiria muito mais configuração manual.
+**Por que Spring Boot 2.7 e não 3.x?**
+Compatibilidade com Wicket 7 (que o desafio pede). Spring Boot 3 exigiria Wicket 9+.
 
-**O que é Maven?**
-É o gerenciador de dependências do Java. O arquivo `pom.xml` lista todas as bibliotecas que o projeto usa.
-
-**O que é Hibernate?**
-É um ORM (Object-Relational Mapping) — ele traduz objetos Java para tabelas no banco de dados. Em vez de escrever SQL na mão para tudo, você escreve classes Java e o Hibernate cuida do resto.
-
-**Por que Wicket antes de Angular?**
-O desafio pede explicitamente isso. Wicket é um framework mais antigo onde você escreve as telas diretamente em Java. Angular é moderno e separado do backend. Começar pelo Wicket ajuda a entender o fluxo completo antes de separar as responsabilidades.
+**Por que removi o `wicket-spring-boot-starter`?**
+A versão 3.x do starter quebrou com Wicket 7 (`NoSuchMethodError` no setTimeout). Quando chegar a fase do Wicket, vamos integrar manualmente com uma `@Configuration` que registra o `WicketFilter`.
 
 **Por que DTOs se a Entity já existe?**
-Para não expor a entidade JPA diretamente ao mundo externo. O DTO é a "embalagem" segura dos dados — sem anotações JPA, sem ciclos infinitos de serialização, sem vazar campos sensíveis.
+Para não expor a entidade JPA diretamente — segurança e desacoplamento. DTOs são "embalagens" sem anotações JPA, sem ciclos de serialização e sem campos sensíveis.
+
+**Por que usar Docker pro MySQL?**
+Portabilidade. Não precisa instalar MySQL em cada máquina onde for desenvolver — basta ter Docker instalado e rodar `docker compose up -d`.
 
 **Repository vs DAO?**
-Repository (Spring Data JPA) é usado para CRUD simples (`save`, `findById`, `findByCpf`). DAO entra quando o desafio pede queries com Search dinâmico, HQL ou SQL puro — recursos que o Repository não cobre tão facilmente.
+Repository (Spring Data JPA) cobre CRUD simples. DAO entra para queries avançadas exigidas pelo desafio: Search dinâmico (`com.googlecode.genericdao.search`), HQL, SQL puro.
