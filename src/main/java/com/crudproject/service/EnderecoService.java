@@ -1,5 +1,9 @@
 package com.crudproject.service;
 
+import com.crudproject.dto.endereco.EnderecoCadastroDTO;
+import com.crudproject.dto.endereco.EnderecoResponseDTO;
+import com.crudproject.mapper.EnderecoMapper;
+import com.crudproject.model.Cliente;
 import com.crudproject.model.Endereco;
 import com.crudproject.repository.ClienteRepository;
 import com.crudproject.repository.EnderecoRepository;
@@ -9,6 +13,7 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class EnderecoService {
@@ -20,42 +25,122 @@ public class EnderecoService {
     @Autowired
     private ClienteRepository clienteRepository;
 
+    @Autowired
+    private EnderecoMapper enderecoMapper;
+
     // ===================================================
-    // MÉTODOS PÚBLICOS (usados pela página Wicket)
+    // MÉTODOS PÚBLICOS (consumidos por Controller e Wicket)
+    //
+    // Todos recebem e devolvem DTOs — a entidade Endereco
+    // nunca sai dessa camada.
     // ===================================================
 
     @Transactional
-    public Endereco salvar(Endereco endereco) {
+    public EnderecoResponseDTO salvar(EnderecoCadastroDTO dto) {
 
-        return endereco;
-    }
+        // Valida que o DTO traz um clienteId e que esse cliente existe
+        Cliente cliente = validarClienteExiste(dto.getClienteId());
 
-    public Endereco buscarPorId(Long id) {
-        Optional<Endereco> endereco = enderecoRepository.findById(id);
-        if (!endereco.isPresent()) {
-            throw new RuntimeException("Endereço não encontrado.");
+        // Valida campos obrigatórios do endereço
+        validarCamposObrigatorios(dto);
+
+        // Converte DTO em entidade
+        Endereco endereco = enderecoMapper.toEntity(dto, cliente);
+
+        // Regras do endereço principal:
+        //  - Se for o primeiro endereço do cliente → vira principal automaticamente
+        //  - Se o usuário marcou como principal → desmarca os outros do mesmo cliente
+        //  - Se não marcou nada → trata como false
+        List<Endereco> existentes = enderecoRepository.findByClienteId(cliente.getId());
+        boolean ehPrimeiro = existentes.isEmpty();
+        boolean querSerPrincipal = Boolean.TRUE.equals(dto.getEnderecoPrincipal());
+
+        if (ehPrimeiro) {
+            endereco.setEnderecoPrincipal(true);
+        } else if (querSerPrincipal) {
+            desmarcarOutrosPrincipais(existentes, null);
+            endereco.setEnderecoPrincipal(true);
+        } else {
+            endereco.setEnderecoPrincipal(false);
         }
-        return endereco.get();
+
+        Endereco salvo = enderecoRepository.save(endereco);
+        return enderecoMapper.toResponse(salvo);
     }
 
-    public List<Endereco> buscarPorCliente(Long clienteId) {
-        return enderecoRepository.findByClienteId(clienteId);
+    public EnderecoResponseDTO buscarPorId(Long id) {
+        return enderecoMapper.toResponse(buscarEntidadePorId(id));
+    }
+
+    public List<EnderecoResponseDTO> buscarPorCliente(Long clienteId) {
+        return enderecoRepository.findByClienteId(clienteId)
+                .stream()
+                .map(enderecoMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional
-    public Endereco atualizar(Endereco endereco) {
+    public EnderecoResponseDTO atualizar(Long id, EnderecoCadastroDTO dto) {
 
-        return endereco;
+        // Carrega o endereço existente — lança se não achar
+        Endereco endereco = buscarEntidadePorId(id);
+
+        // Trocar o endereço de cliente não é permitido. Se o DTO
+        // informar clienteId, ele precisa ser o mesmo do registro atual.
+        Long clienteAtualId = endereco.getCliente().getId();
+        if (dto.getClienteId() != null && !dto.getClienteId().equals(clienteAtualId)) {
+            throw new RuntimeException("Não é permitido mover o endereço para outro cliente.");
+        }
+
+        // Valida campos obrigatórios do endereço
+        validarCamposObrigatorios(dto);
+
+        // Guarda o estado anterior do flag principal antes de sobrescrever
+        boolean eraPrincipal = Boolean.TRUE.equals(endereco.getEnderecoPrincipal());
+        boolean querSerPrincipal = Boolean.TRUE.equals(dto.getEnderecoPrincipal());
+
+        // Sobrescreve os campos do endereço com os valores do DTO.
+        // Cliente e id ficam preservados (updateEntity não mexe neles).
+        enderecoMapper.updateEntity(endereco, dto);
+
+        // Normaliza o flag: null vira false (a coluna no banco é NOT NULL).
+        endereco.setEnderecoPrincipal(querSerPrincipal);
+
+        // Se passou a ser principal agora, desmarca os outros do mesmo cliente
+        if (querSerPrincipal && !eraPrincipal) {
+            List<Endereco> outros = enderecoRepository.findByClienteId(clienteAtualId);
+            desmarcarOutrosPrincipais(outros, id);
+        }
+
+        Endereco salvo = enderecoRepository.save(endereco);
+        return enderecoMapper.toResponse(salvo);
     }
 
     @Transactional
     public void excluir(Long id) {
-
+        if (!enderecoRepository.existsById(id)) {
+            throw new RuntimeException("Endereço não encontrado.");
+        }
+        enderecoRepository.deleteById(id);
     }
 
+    /**
+     * Promove um endereço a "principal" e desmarca os demais do mesmo cliente.
+     * Toda a operação acontece dentro da mesma transação para garantir que
+     * o cliente nunca fique sem principal ou com mais de um.
+     */
     @Transactional
     public void definirComoPrincipal(Long id) {
+        Endereco alvo = buscarEntidadePorId(id);
+        Long clienteId = alvo.getCliente().getId();
 
+        List<Endereco> doCliente = enderecoRepository.findByClienteId(clienteId);
+
+        for (Endereco e : doCliente) {
+            e.setEnderecoPrincipal(e.getId().equals(id));
+        }
+
+        enderecoRepository.saveAll(doCliente);
     }
 
     // ===================================================
@@ -63,20 +148,33 @@ public class EnderecoService {
     // ===================================================
 
     /**
-     * Valida campos obrigatórios do Endereço.
-     * Chamado tanto no salvar() quanto no atualizar().
+     * Busca a entidade Endereco pelo id ou lança exceção.
+     *
+     * Privado porque a entidade não deve vazar para fora do Service.
      */
-    private void validarCamposObrigatorios(Endereco endereco) {
-        if (endereco.getLogradouro() == null || endereco.getLogradouro().isBlank()) {
+    private Endereco buscarEntidadePorId(Long id) {
+        Optional<Endereco> endereco = enderecoRepository.findById(id);
+        if (!endereco.isPresent()) {
+            throw new RuntimeException("Endereço não encontrado.");
+        }
+        return endereco.get();
+    }
+
+    /**
+     * Valida campos obrigatórios do Endereço diretamente do DTO.
+     * Chamado no salvar() e no atualizar().
+     */
+    private void validarCamposObrigatorios(EnderecoCadastroDTO dto) {
+        if (dto.getLogradouro() == null || dto.getLogradouro().isBlank()) {
             throw new RuntimeException("Logradouro é obrigatório.");
         }
-        if (endereco.getCep() == null || endereco.getCep().isBlank()) {
+        if (dto.getCep() == null || dto.getCep().isBlank()) {
             throw new RuntimeException("CEP é obrigatório.");
         }
-        if (endereco.getCidade() == null || endereco.getCidade().isBlank()) {
+        if (dto.getCidade() == null || dto.getCidade().isBlank()) {
             throw new RuntimeException("Cidade é obrigatória.");
         }
-        if (endereco.getEstado() == null || endereco.getEstado().isBlank()) {
+        if (dto.getEstado() == null || dto.getEstado().isBlank()) {
             throw new RuntimeException("Estado é obrigatório.");
         }
         // enderecoPrincipal não é validado aqui pois o sistema controla
@@ -85,16 +183,33 @@ public class EnderecoService {
     }
 
     /**
-     * Verifica se o cliente vinculado ao endereço existe no banco.
+     * Verifica se o clienteId é válido e retorna a entidade Cliente.
      * Um endereço sem cliente válido não pode ser salvo.
      */
-    private void validarClienteExiste(Endereco endereco) {
-        if (endereco.getCliente() == null || endereco.getCliente().getId() == null) {
+    private Cliente validarClienteExiste(Long clienteId) {
+        if (clienteId == null) {
             throw new RuntimeException("Endereço deve estar vinculado a um cliente.");
         }
-        if (!clienteRepository.existsById(endereco.getCliente().getId())) {
+        Optional<Cliente> cliente = clienteRepository.findById(clienteId);
+        if (!cliente.isPresent()) {
             throw new RuntimeException("Cliente não encontrado.");
         }
+        return cliente.get();
+    }
+
+    /**
+     * Desmarca o flag enderecoPrincipal de todos os endereços da lista,
+     * exceto o de id informado em "exceto" (pode ser null para desmarcar todos).
+     *
+     * Não chama save() — quem chamou se encarrega da persistência dentro
+     * da mesma transação.
+     */
+    private void desmarcarOutrosPrincipais(List<Endereco> enderecos, Long exceto) {
+        for (Endereco e : enderecos) {
+            if (exceto != null && e.getId().equals(exceto)) continue;
+            e.setEnderecoPrincipal(false);
+        }
+        enderecoRepository.saveAll(enderecos);
     }
 
 }

@@ -32,6 +32,34 @@ public class ClienteMapper {
         return cliente;
     }
 
+    /**
+     * Sobrescreve os campos de uma entidade Cliente existente com os
+     * dados do DTO de atualização.
+     *
+     * O id e a lista de endereços são preservados. O tipoPessoa
+     * deveria ser imutável; sua proteção contra alteração é feita
+     * pelo Service antes de chamar este método.
+     */
+    public void updateEntity(Cliente cliente, ClienteCadastroDTO dto) {
+        cliente.setTipoPessoa(dto.getTipoPessoa());
+
+        // Campos PF
+        cliente.setCpf(dto.getCpf());
+        cliente.setNome(dto.getNome());
+        cliente.setRg(dto.getRg());
+        cliente.setDataNascimento(dto.getDataNascimento());
+
+        // Campos PJ
+        cliente.setCnpj(dto.getCnpj());
+        cliente.setRazaoSocial(dto.getRazaoSocial());
+        cliente.setInscricaoEstadual(dto.getInscricaoEstadual());
+        cliente.setDataCriacao(dto.getDataCriacao());
+
+        // Comuns
+        cliente.setEmail(dto.getEmail());
+        cliente.setAtivo(dto.getAtivo());
+    }
+
 
     public ClienteResponseDTO toResponse(Cliente cliente) {
         ClienteResponseDTO dto = new ClienteResponseDTO();

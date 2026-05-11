@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ClienteService {
@@ -22,7 +23,10 @@ public class ClienteService {
     private ClienteMapper clienteMapper;
 
     // ===================================================
-    // MÉTODOS PÚBLICOS (usados pela página Wicket)
+    // MÉTODOS PÚBLICOS (consumidos por Controller e Wicket)
+    //
+    // Todos recebem e devolvem DTOs — a entidade Cliente
+    // nunca sai dessa camada.
     // ===================================================
 
     @Transactional
@@ -71,36 +75,38 @@ public class ClienteService {
         return clienteMapper.toResponse(salvo);
     }
 
-    public List<Cliente> buscarTodos() {
-        return clienteRepository.findAll();
+    public List<ClienteResponseDTO> buscarTodos() {
+        // Mapeia cada Cliente do banco para um DTO de resposta
+        return clienteRepository.findAll()
+                .stream()
+                .map(clienteMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
-    public Cliente buscarPorId(Long id) {
-        Optional<Cliente> cliente = clienteRepository.findById(id);
-        if (!cliente.isPresent()) {
-            throw new RuntimeException("Cliente não encontrado.");
-        }
-        return cliente.get();
+    public ClienteResponseDTO buscarPorId(Long id) {
+        return clienteMapper.toResponse(buscarEntidadePorId(id));
     }
 
     @Transactional
-    public Cliente atualizar(Cliente cliente) {
+    public ClienteResponseDTO atualizar(Long id, ClienteCadastroDTO dto) {
 
-        // Verifica se o cliente existe no banco
-        if (cliente.getId() == null || !clienteRepository.existsById(cliente.getId())) {
-            throw new RuntimeException("Cliente não encontrado.");
+        // Carrega o cliente existente — lança se não achar
+        Cliente cliente = buscarEntidadePorId(id);
+
+        // Tipo de pessoa é imutável após o cadastro. Validar ANTES de
+        // sobrescrever os campos para evitar corromper os dados.
+        if (dto.getTipoPessoa() == null) {
+            throw new RuntimeException("Selecione o tipo de pessoa!");
         }
-
-        // Valida campos comuns a PF e PJ (inclui tipo de pessoa)
-        validarCamposComuns(cliente);
-
-        // Verifica se o tipo de pessoa foi alterado — deve ser a primeira
-        // validação após confirmar que o cliente existe, pois mudar de PF
-        // para PJ (ou vice-versa) corromperia os dados do banco.
-        Cliente clienteExistente = buscarPorId(cliente.getId());
-        if (!clienteExistente.getTipoPessoa().equals(cliente.getTipoPessoa())) {
+        if (!cliente.getTipoPessoa().equals(dto.getTipoPessoa())) {
             throw new RuntimeException("Não é permitido alterar o tipo de pessoa.");
         }
+
+        // Aplica os novos valores em cima da entidade gerenciada
+        clienteMapper.updateEntity(cliente, dto);
+
+        // Valida campos comuns a PF e PJ
+        validarCamposComuns(cliente);
 
         if (cliente.isPessoaFisica()) {
             // Valida campos obrigatórios de PF
@@ -134,7 +140,8 @@ public class ClienteService {
             }
         }
 
-        return clienteRepository.save(cliente);
+        Cliente salvo = clienteRepository.save(cliente);
+        return clienteMapper.toResponse(salvo);
     }
 
     @Transactional
@@ -148,6 +155,22 @@ public class ClienteService {
     // ===================================================
     // MÉTODOS PRIVADOS (auxiliares — só usados aqui dentro)
     // ===================================================
+
+    /**
+     * Busca a entidade Cliente pelo id ou lança exceção.
+     *
+     * Privado porque a entidade não deve vazar para fora do Service —
+     * quem consome o Service só enxerga DTO. Este helper existe para
+     * uso interno quando precisamos da entidade gerenciada pelo JPA
+     * (ex: durante o atualizar).
+     */
+    private Cliente buscarEntidadePorId(Long id) {
+        Optional<Cliente> cliente = clienteRepository.findById(id);
+        if (!cliente.isPresent()) {
+            throw new RuntimeException("Cliente não encontrado.");
+        }
+        return cliente.get();
+    }
 
     /**
      * Valida campos obrigatórios exclusivos de Pessoa Física.
