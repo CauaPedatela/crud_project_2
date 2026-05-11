@@ -1,5 +1,6 @@
 package com.crudproject.service;
 
+import com.crudproject.dto.endereco.EnderecoAtualizacaoDTO;
 import com.crudproject.dto.endereco.EnderecoCadastroDTO;
 import com.crudproject.dto.endereco.EnderecoResponseDTO;
 import com.crudproject.mapper.EnderecoMapper;
@@ -80,20 +81,20 @@ public class EnderecoService {
     }
 
     @Transactional
-    public EnderecoResponseDTO atualizar(Long id, EnderecoCadastroDTO dto) {
+    public EnderecoResponseDTO atualizar(Long id, EnderecoAtualizacaoDTO dto) {
 
         // Carrega o endereço existente — lança se não achar
         Endereco endereco = buscarEntidadePorId(id);
 
-        // Trocar o endereço de cliente não é permitido. Se o DTO
-        // informar clienteId, ele precisa ser o mesmo do registro atual.
-        Long clienteAtualId = endereco.getCliente().getId();
-        if (dto.getClienteId() != null && !dto.getClienteId().equals(clienteAtualId)) {
-            throw new RuntimeException("Não é permitido mover o endereço para outro cliente.");
-        }
+        // OBS: não validamos mais "não pode mover o endereço para outro cliente"
+        // aqui porque o EnderecoAtualizacaoDTO não tem clienteId. O DTO em si
+        // já não permite essa operação — o vínculo com o cliente é mantido
+        // implicitamente pelo próprio mapper (updateEntity preserva cliente).
 
         // Valida campos obrigatórios do endereço
         validarCamposObrigatorios(dto);
+
+        Long clienteAtualId = endereco.getCliente().getId();
 
         // Guarda o estado anterior do flag principal antes de sobrescrever
         boolean eraPrincipal = Boolean.TRUE.equals(endereco.getEnderecoPrincipal());
@@ -161,8 +162,8 @@ public class EnderecoService {
     }
 
     /**
-     * Valida campos obrigatórios do Endereço diretamente do DTO.
-     * Chamado no salvar() e no atualizar().
+     * Valida campos obrigatórios do Endereço diretamente do DTO de cadastro.
+     * Chamado no salvar().
      */
     private void validarCamposObrigatorios(EnderecoCadastroDTO dto) {
         if (dto.getLogradouro() == null || dto.getLogradouro().isBlank()) {
@@ -180,6 +181,29 @@ public class EnderecoService {
         // enderecoPrincipal não é validado aqui pois o sistema controla
         // automaticamente: o primeiro endereço sempre vira principal,
         // e a troca é feita pelo método definirComoPrincipal()
+    }
+
+    /**
+     * Sobrecarga (overload) do mesmo método de validação para o DTO de
+     * atualização. Mesmas regras de campos obrigatórios.
+     *
+     * Em Java, dois métodos podem ter o mesmo nome se tiverem
+     * parâmetros diferentes — o compilador escolhe qual chamar
+     * baseado no tipo passado.
+     */
+    private void validarCamposObrigatorios(EnderecoAtualizacaoDTO dto) {
+        if (dto.getLogradouro() == null || dto.getLogradouro().isBlank()) {
+            throw new RuntimeException("Logradouro é obrigatório.");
+        }
+        if (dto.getCep() == null || dto.getCep().isBlank()) {
+            throw new RuntimeException("CEP é obrigatório.");
+        }
+        if (dto.getCidade() == null || dto.getCidade().isBlank()) {
+            throw new RuntimeException("Cidade é obrigatória.");
+        }
+        if (dto.getEstado() == null || dto.getEstado().isBlank()) {
+            throw new RuntimeException("Estado é obrigatório.");
+        }
     }
 
     /**

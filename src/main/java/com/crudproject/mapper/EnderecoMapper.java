@@ -1,5 +1,6 @@
 package com.crudproject.mapper;
 
+import com.crudproject.dto.endereco.EnderecoAtualizacaoDTO;
 import com.crudproject.dto.endereco.EnderecoCadastroDTO;
 import com.crudproject.dto.endereco.EnderecoResponseDTO;
 import com.crudproject.model.Cliente;
@@ -37,11 +38,15 @@ public class EnderecoMapper {
      * Sobrescreve os campos de uma entidade Endereco existente com
      * os dados do DTO de atualização.
      *
+     * Recebe EnderecoAtualizacaoDTO (não EnderecoCadastroDTO) —
+     * esse DTO não tem clienteId, deixando explícito que a operação
+     * não tem como mover o endereço para outro cliente.
+     *
      * Usado no fluxo de PUT: o Service busca a entidade pelo id,
      * passa para o mapper aplicar as mudanças, e o id + cliente
      * originais são preservados.
      */
-    public void updateEntity(Endereco endereco, EnderecoCadastroDTO dto) {
+    public void updateEntity(Endereco endereco, EnderecoAtualizacaoDTO dto) {
         endereco.setLogradouro(dto.getLogradouro());
         endereco.setNumero(dto.getNumero());
         endereco.setCep(dto.getCep());

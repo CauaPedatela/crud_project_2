@@ -1,13 +1,33 @@
 package com.crudproject.mapper;
 
+import com.crudproject.dto.cliente.ClienteAtualizacaoDTO;
 import com.crudproject.dto.cliente.ClienteCadastroDTO;
 import com.crudproject.dto.cliente.ClienteResponseDTO;
 import com.crudproject.model.Cliente;
+import com.crudproject.model.Endereco;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class ClienteMapper {
 
+    private final EnderecoMapper enderecoMapper;
+
+    public ClienteMapper(EnderecoMapper enderecoMapper) {
+        this.enderecoMapper = enderecoMapper;
+    }
+
+    /**
+     * Converte DTO de entrada em entidade Cliente, JÁ vinculando
+     * os endereços que vieram embedded no DTO.
+     *
+     * Cada endereço aponta de volta para o Cliente recém-criado
+     * (relação bidirecional). A persistência em cascade no @OneToMany
+     * cuida de salvar tudo numa transação só.
+     */
     public Cliente toEntity(ClienteCadastroDTO dto) {
         Cliente cliente = new Cliente();
 
@@ -29,20 +49,30 @@ public class ClienteMapper {
         cliente.setEmail(dto.getEmail());
         cliente.setAtivo(dto.getAtivo());
 
+        // Mapeia os endereços embedded, vinculando ao cliente.
+        // O mapper de Endereco precisa do Cliente já instanciado pra setar a FK.
+        List<Endereco> enderecos = new ArrayList<>();
+        if (dto.getEnderecos() != null) {
+            for (var enderecoDto : dto.getEnderecos()) {
+                enderecos.add(enderecoMapper.toEntity(enderecoDto, cliente));
+            }
+        }
+        cliente.setEnderecos(enderecos);
+
         return cliente;
     }
 
     /**
-     * Sobrescreve os campos de uma entidade Cliente existente com os
-     * dados do DTO de atualização.
+     * Sobrescreve campos de Cliente existente.
      *
-     * O id e a lista de endereços são preservados. O tipoPessoa
-     * deveria ser imutável; sua proteção contra alteração é feita
-     * pelo Service antes de chamar este método.
+     * Recebe ClienteAtualizacaoDTO (não ClienteCadastroDTO) — esse DTO
+     * já é "intencionalmente limitado": sem tipoPessoa, sem enderecos.
+     * Assim o contrato e o mapper ficam consistentes.
+     *
+     * Não toca em id, tipoPessoa nem enderecos (esses são imutáveis
+     * ou gerenciados em outra rota).
      */
-    public void updateEntity(Cliente cliente, ClienteCadastroDTO dto) {
-        cliente.setTipoPessoa(dto.getTipoPessoa());
-
+    public void updateEntity(Cliente cliente, ClienteAtualizacaoDTO dto) {
         // Campos PF
         cliente.setCpf(dto.getCpf());
         cliente.setNome(dto.getNome());
@@ -59,7 +89,6 @@ public class ClienteMapper {
         cliente.setEmail(dto.getEmail());
         cliente.setAtivo(dto.getAtivo());
     }
-
 
     public ClienteResponseDTO toResponse(Cliente cliente) {
         ClienteResponseDTO dto = new ClienteResponseDTO();
@@ -82,6 +111,15 @@ public class ClienteMapper {
         // Comuns
         dto.setEmail(cliente.getEmail());
         dto.setAtivo(cliente.getAtivo());
+
+        // Endereços
+        if (cliente.getEnderecos() != null) {
+            dto.setEnderecos(
+                    cliente.getEnderecos().stream()
+                            .map(enderecoMapper::toResponse)
+                            .collect(Collectors.toList())
+            );
+        }
 
         return dto;
     }

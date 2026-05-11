@@ -82,15 +82,21 @@
         </dependency>
 
         <!--
-            Spring Boot + Wicket (integração):
-            Biblioteca que une o Spring Boot com o Wicket,
-            permitindo que o Wicket use os serviços do Spring.
+            ATENÇÃO: a versão 3.x do wicket-spring-boot-starter exige Wicket 9+.
+            Como estamos em Wicket 7 (compatível com o restante do desafio),
+            essa dependência está REMOVIDA por enquanto.
+
+            Quando chegar a hora de implementar páginas Wicket, faremos a
+            integração manual com uma @Configuration que registra o
+            WicketFilter (sem depender desse starter).
+
+            Histórico do conflito:
+            <dependency>
+                <groupId>com.giffing.wicket.spring.boot.starter</groupId>
+                <artifactId>wicket-spring-boot-starter</artifactId>
+                <version>3.1.7</version>
+            </dependency>
         -->
-        <dependency>
-            <groupId>com.giffing.wicket.spring.boot.starter</groupId>
-            <artifactId>wicket-spring-boot-starter</artifactId>
-            <version>3.1.7</version>
-        </dependency>
 
         <!--
             JasperReports:

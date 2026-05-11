@@ -1,0 +1,58 @@
+# =============================================================================
+# Docker Compose — Banco de dados do projeto
+# =============================================================================
+#
+# Sobe um container MySQL 8 configurado para o projeto crud-project.
+# Substitui a necessidade de instalar MySQL localmente.
+#
+# Como usar:
+#   docker compose up -d       → sobe o banco em background
+#   docker compose down        → desliga o banco (mantém os dados)
+#   docker compose down -v     → desliga e APAGA TODOS OS DADOS (cuidado!)
+#   docker compose logs -f db  → mostra os logs do banco
+#   docker compose ps          → mostra os containers rodando
+#
+# A conexão JDBC fica idêntica à de um MySQL nativo:
+#   jdbc:mysql://localhost:3306/crud_project_db
+# Por isso o application.properties NÃO precisa mudar.
+# =============================================================================
+
+services:
+  db:
+    # Imagem oficial do MySQL 8 — a mesma versão que estava instalada local
+    image: mysql:8.0
+    container_name: crud-project-db
+
+    # Reinicia o container automaticamente se ele cair (ou após reboot)
+    restart: unless-stopped
+
+    # Variáveis de ambiente do MySQL.
+    # MYSQL_DATABASE faz o MySQL criar o banco automaticamente no primeiro start —
+    # você não precisa rodar "CREATE DATABASE" manualmente.
+    environment:
+      MYSQL_ROOT_PASSWORD: UnikaDevDB
+      MYSQL_DATABASE: crud_project_db
+
+    # Mapeia a porta 3306 do container para a porta 3306 da sua máquina.
+    # É isso que faz "localhost:3306" funcionar como se o MySQL fosse nativo.
+    ports:
+      - "3306:3306"
+
+    # Volume nomeado — os dados do banco ficam dentro do Docker, não na pasta do projeto.
+    # Sobrevive a "docker compose down". Só some com "docker compose down -v".
+    volumes:
+      - crud_project_db_data:/var/lib/mysql
+
+    # Health check — o Docker testa se o MySQL está realmente pronto para conexões.
+    # Útil quando o Spring Boot tenta conectar antes do MySQL terminar de subir.
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pUnikaDevDB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+# Definição do volume nomeado citado acima.
+# O Docker gerencia onde isso fica fisicamente — você não precisa se preocupar.
+volumes:
+  crud_project_db_data:
+    name: crud_project_db_data

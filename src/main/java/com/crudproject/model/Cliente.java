@@ -1,5 +1,7 @@
 package com.crudproject.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.List;
@@ -76,7 +78,8 @@ public class Cliente {
      * cascade → operações no Cliente se propagam para os Endereços
      *   (ex: ao salvar o Cliente, salva os Endereços automaticamente)
      */
-    @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference   // serializa esse lado da relação no JSON
     private List<Endereco> enderecos;
 
     // -------------------------

@@ -1,5 +1,6 @@
 package com.crudproject.service;
 
+import com.crudproject.dto.cliente.ClienteAtualizacaoDTO;
 import com.crudproject.dto.cliente.ClienteCadastroDTO;
 import com.crudproject.dto.cliente.ClienteResponseDTO;
 import com.crudproject.mapper.ClienteMapper;
@@ -32,6 +33,11 @@ public class ClienteService {
     @Transactional
     public ClienteResponseDTO salvar(ClienteCadastroDTO dto) {
 
+        // Garante que pelo menos UM endereço veio embedded no DTO
+        if (dto.getEnderecos() == null || dto.getEnderecos().isEmpty()) {
+            throw new RuntimeException("Cliente deve ter pelo menos um endereço.");
+        }
+
         // Converte DTO em entidade (sem id ainda)
         Cliente cliente = clienteMapper.toEntity(dto);
 
@@ -39,40 +45,72 @@ public class ClienteService {
         validarCamposComuns(cliente);
 
         if (cliente.isPessoaFisica()) {
-            // Valida campos obrigatórios de PF
             validarCamposPessoaFisica(cliente);
-
-            // Valida se CPF é válido
             if (!isCpfValido(cliente.getCpf())) {
                 throw new RuntimeException("CPF inválido.");
             }
-
-            // Verifica duplicidade de CPF
             if (clienteRepository.findByCpf(cliente.getCpf()).isPresent()) {
                 throw new RuntimeException("CPF já cadastrado.");
             }
         }
 
         if (cliente.isPessoaJuridica()) {
-            // Valida campos obrigatórios de PJ
             validarCamposPessoaJuridica(cliente);
-
-            // Valida se CNPJ é válido
             if (!isCnpjValido(cliente.getCnpj())) {
                 throw new RuntimeException("CNPJ inválido.");
             }
-
-            // Verifica duplicidade de CNPJ
             if (clienteRepository.findByCnpj(cliente.getCnpj()).isPresent()) {
                 throw new RuntimeException("CNPJ já cadastrado.");
             }
         }
 
-        // Persiste no banco e retorna a versão salva (já com id)
+        // Valida e normaliza os endereços (campos obrigatórios + flag principal)
+        ajustarEnderecosNoSalvar(cliente);
+
+        // Persiste no banco. Cascade.ALL salva os endereços juntos.
         Cliente salvo = clienteRepository.save(cliente);
 
-        // Converte a entidade salva em DTO de saída
         return clienteMapper.toResponse(salvo);
+    }
+
+    /**
+     * Garante que os endereços que vieram embedded estão íntegros:
+     *  - Pelo menos UM marcado como principal (se ninguém marcou, marca o primeiro)
+     *  - Apenas UM como principal (se vários marcados, mantém o primeiro)
+     *  - Campos obrigatórios validados
+     */
+    private void ajustarEnderecosNoSalvar(Cliente cliente) {
+        var enderecos = cliente.getEnderecos();
+        boolean jaAchouPrincipal = false;
+
+        for (var endereco : enderecos) {
+            // Validações de campos obrigatórios diretamente na entidade
+            if (endereco.getLogradouro() == null || endereco.getLogradouro().isBlank()) {
+                throw new RuntimeException("Logradouro é obrigatório.");
+            }
+            if (endereco.getCep() == null || endereco.getCep().isBlank()) {
+                throw new RuntimeException("CEP é obrigatório.");
+            }
+            if (endereco.getCidade() == null || endereco.getCidade().isBlank()) {
+                throw new RuntimeException("Cidade é obrigatória.");
+            }
+            if (endereco.getEstado() == null || endereco.getEstado().isBlank()) {
+                throw new RuntimeException("Estado é obrigatório.");
+            }
+
+            // Normaliza o flag principal: só pode ter um, e null vira false
+            if (Boolean.TRUE.equals(endereco.getEnderecoPrincipal()) && !jaAchouPrincipal) {
+                endereco.setEnderecoPrincipal(true);
+                jaAchouPrincipal = true;
+            } else {
+                endereco.setEnderecoPrincipal(false);
+            }
+        }
+
+        // Se ninguém veio marcado como principal, o primeiro vira o principal
+        if (!jaAchouPrincipal) {
+            enderecos.get(0).setEnderecoPrincipal(true);
+        }
     }
 
     public List<ClienteResponseDTO> buscarTodos() {
@@ -88,21 +126,18 @@ public class ClienteService {
     }
 
     @Transactional
-    public ClienteResponseDTO atualizar(Long id, ClienteCadastroDTO dto) {
+    public ClienteResponseDTO atualizar(Long id, ClienteAtualizacaoDTO dto) {
 
         // Carrega o cliente existente — lança se não achar
         Cliente cliente = buscarEntidadePorId(id);
 
-        // Tipo de pessoa é imutável após o cadastro. Validar ANTES de
-        // sobrescrever os campos para evitar corromper os dados.
-        if (dto.getTipoPessoa() == null) {
-            throw new RuntimeException("Selecione o tipo de pessoa!");
-        }
-        if (!cliente.getTipoPessoa().equals(dto.getTipoPessoa())) {
-            throw new RuntimeException("Não é permitido alterar o tipo de pessoa.");
-        }
+        // OBS: não validamos mais "tipo de pessoa" aqui porque o
+        // ClienteAtualizacaoDTO não tem esse campo. O tipo do cliente
+        // permanece o que está no banco, e o Service usa esse tipo para
+        // decidir quais validações aplicar (PF ou PJ) logo abaixo.
 
-        // Aplica os novos valores em cima da entidade gerenciada
+        // Aplica os novos valores em cima da entidade gerenciada.
+        // O updateEntity NÃO toca em id, tipoPessoa nem enderecos.
         clienteMapper.updateEntity(cliente, dto);
 
         // Valida campos comuns a PF e PJ

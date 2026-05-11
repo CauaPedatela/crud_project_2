@@ -1,5 +1,7 @@
 package com.crudproject.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import javax.persistence.*;
 
 /**
@@ -59,6 +61,7 @@ public class Endereco {
 
     @ManyToOne
     @JoinColumn(name = "cliente_id", nullable = false)
+    @JsonBackReference   // não serializa de volta o Cliente (quebra o ciclo)
     private Cliente cliente;
 
     // -------------------------

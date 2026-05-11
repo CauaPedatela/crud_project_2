@@ -1,8 +1,10 @@
 package com.crudproject.dto.cliente;
 
+import com.crudproject.dto.endereco.EnderecoResponseDTO;
 import com.crudproject.model.TipoPessoa;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public class ClienteResponseDTO {
 
@@ -25,10 +27,16 @@ public class ClienteResponseDTO {
     private String email;
     private Boolean ativo;
 
+    // Endereços do cliente (sempre vem populado na resposta)
+    private List<EnderecoResponseDTO> enderecos;
+
     // Getters e setters
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public List<EnderecoResponseDTO> getEnderecos() { return enderecos; }
+    public void setEnderecos(List<EnderecoResponseDTO> enderecos) { this.enderecos = enderecos; }
 
     public TipoPessoa getTipoPessoa() { return tipoPessoa; }
     public void setTipoPessoa(TipoPessoa tipoPessoa) { this.tipoPessoa = tipoPessoa; }

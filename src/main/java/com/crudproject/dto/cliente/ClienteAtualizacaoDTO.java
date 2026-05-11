@@ -1,14 +1,25 @@
 package com.crudproject.dto.cliente;
 
-import com.crudproject.dto.endereco.EnderecoCadastroDTO;
-import com.crudproject.model.TipoPessoa;
-
 import java.time.LocalDate;
-import java.util.List;
 
-public class ClienteCadastroDTO {
-
-    private TipoPessoa tipoPessoa;
+/**
+ * DTO de entrada para ATUALIZAÇÃO de Cliente (PUT /api/clientes/{id}).
+ *
+ * Diferenças intencionais para ClienteCadastroDTO:
+ *
+ * - SEM tipoPessoa
+ *     → tipoPessoa é imutável após o cadastro. Como o cliente já existe
+ *       no banco com seu tipo definido, não faz sentido aceitar esse
+ *       campo aqui. O Service usa o tipo do banco para decidir quais
+ *       validações aplicar (PF ou PJ).
+ *
+ * - SEM enderecos
+ *     → Endereços são gerenciados em rotas próprias do EnderecoController
+ *       (POST/PUT/DELETE /api/enderecos). PUT em cliente não toca neles.
+ *
+ * O id do cliente vai como path param na URL, não no body.
+ */
+public class ClienteAtualizacaoDTO {
 
     // Campos de PF
     private String cpf;
@@ -26,16 +37,7 @@ public class ClienteCadastroDTO {
     private String email;
     private Boolean ativo;
 
-    // Endereços Iniciais
-    private List<EnderecoCadastroDTO> enderecos;
-
     // Getters e setters
-
-    public TipoPessoa getTipoPessoa() { return tipoPessoa; }
-    public void setTipoPessoa(TipoPessoa tipoPessoa) { this.tipoPessoa = tipoPessoa; }
-
-    public List<EnderecoCadastroDTO> getEnderecos() { return enderecos; }
-    public void setEnderecos(List<EnderecoCadastroDTO> enderecos) { this.enderecos = enderecos; }
 
     public String getCpf() { return cpf; }
     public void setCpf(String cpf) { this.cpf = cpf; }
@@ -66,9 +68,4 @@ public class ClienteCadastroDTO {
 
     public Boolean getAtivo() { return ativo; }
     public void setAtivo(Boolean ativo) { this.ativo = ativo; }
-
-    // Helpers — derivam informação do próprio estado, sem regras de negócio
-
-    public boolean isPessoaFisica() { return tipoPessoa == TipoPessoa.FISICA; }
-    public boolean isPessoaJuridica() { return tipoPessoa == TipoPessoa.JURIDICA; }
 }
