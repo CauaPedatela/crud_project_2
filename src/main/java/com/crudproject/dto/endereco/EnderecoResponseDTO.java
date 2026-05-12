@@ -1,33 +1,36 @@
 package com.crudproject.dto.endereco;
 
-/**
- * DTO de saída de qualquer operação com Endereço.
- *
- * Exporta clienteId (não o objeto Cliente completo) para evitar
- * ciclos infinitos na serialização JSON e não vazar dados do cliente.
- */
+import com.crudproject.model.TipoEndereco;
+
+//  DTO de saída para Endereço.
+//  Estrutura espelhando o EnderecoDTO (entrada), com o id sempre
+//  preenchido. Não expõe o objeto Cliente completo para evitar
+//  ciclo de serialização — o endereço sempre é retornado dentro
+//  do ClienteResponseDTO, então o cliente já está implícito.
+
 public class EnderecoResponseDTO {
 
     private Long id;
-    private Long clienteId;
-
+    private TipoEndereco tipo;
     private String logradouro;
     private String numero;
-    private String cep;
+    private String complemento;
     private String bairro;
-    private String telefone;
     private String cidade;
     private String estado;
-    private Boolean enderecoPrincipal;
-    private String complemento;
+    private String cep;
+    private String pais;
+    private Boolean principal;
 
-    // Getters e setters
+    // ============================================================
+    // Getters e Setters
+    // ============================================================
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Long getClienteId() { return clienteId; }
-    public void setClienteId(Long clienteId) { this.clienteId = clienteId; }
+    public TipoEndereco getTipo() { return tipo; }
+    public void setTipo(TipoEndereco tipo) { this.tipo = tipo; }
 
     public String getLogradouro() { return logradouro; }
     public void setLogradouro(String logradouro) { this.logradouro = logradouro; }
@@ -35,14 +38,11 @@ public class EnderecoResponseDTO {
     public String getNumero() { return numero; }
     public void setNumero(String numero) { this.numero = numero; }
 
-    public String getCep() { return cep; }
-    public void setCep(String cep) { this.cep = cep; }
+    public String getComplemento() { return complemento; }
+    public void setComplemento(String complemento) { this.complemento = complemento; }
 
     public String getBairro() { return bairro; }
     public void setBairro(String bairro) { this.bairro = bairro; }
-
-    public String getTelefone() { return telefone; }
-    public void setTelefone(String telefone) { this.telefone = telefone; }
 
     public String getCidade() { return cidade; }
     public void setCidade(String cidade) { this.cidade = cidade; }
@@ -50,9 +50,12 @@ public class EnderecoResponseDTO {
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
 
-    public Boolean getEnderecoPrincipal() { return enderecoPrincipal; }
-    public void setEnderecoPrincipal(Boolean enderecoPrincipal) { this.enderecoPrincipal = enderecoPrincipal; }
+    public String getCep() { return cep; }
+    public void setCep(String cep) { this.cep = cep; }
 
-    public String getComplemento() { return complemento; }
-    public void setComplemento(String complemento) { this.complemento = complemento; }
+    public String getPais() { return pais; }
+    public void setPais(String pais) { this.pais = pais; }
+
+    public Boolean getPrincipal() { return principal; }
+    public void setPrincipal(Boolean principal) { this.principal = principal; }
 }

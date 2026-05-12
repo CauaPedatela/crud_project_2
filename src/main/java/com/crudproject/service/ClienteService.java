@@ -1,120 +1,69 @@
 package com.crudproject.service;
 
-import com.crudproject.dto.cliente.ClienteAtualizacaoDTO;
-import com.crudproject.dto.cliente.ClienteCadastroDTO;
+import com.crudproject.dto.cliente.ClienteDTO;
 import com.crudproject.dto.cliente.ClienteResponseDTO;
 import com.crudproject.mapper.ClienteMapper;
 import com.crudproject.model.Cliente;
 import com.crudproject.repository.ClienteRepository;
+import com.crudproject.service.validation.ClienteValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
+
+/**
+ * Serviço de Cliente — orquestrador.
+ *
+ * Não tem lógica de validação nem de sincronização de endereços.
+ * Apenas chama as classes especializadas na ordem correta:
+ *
+ *   ClienteValidator       → validações de negócio
+ *   ClienteMapper          → conversão DTO ↔ Entity
+ *   EnderecoSincronizador  → sync da lista de endereços
+ *   ClienteRepository      → acesso ao banco
+ */
 
 @Service
 public class ClienteService {
 
-    @Autowired
-    private ClienteRepository clienteRepository;
+    @Autowired private ClienteRepository clienteRepository;
+    @Autowired private ClienteMapper clienteMapper;
+    @Autowired private ClienteValidator validator;
+    @Autowired private EnderecoSincronizador enderecoSincronizador;
 
-    @Autowired
-    private ClienteMapper clienteMapper;
-
-    // ===================================================
-    // MÉTODOS PÚBLICOS (consumidos por Controller e Wicket)
-    //
-    // Todos recebem e devolvem DTOs — a entidade Cliente
-    // nunca sai dessa camada.
-    // ===================================================
+    // ============================================================
+    // API PÚBLICA
+    // ============================================================
 
     @Transactional
-    public ClienteResponseDTO salvar(ClienteCadastroDTO dto) {
+    public ClienteResponseDTO salvar(ClienteDTO dto) {
 
-        // Garante que pelo menos UM endereço veio embedded no DTO
-        if (dto.getEnderecos() == null || dto.getEnderecos().isEmpty()) {
-            throw new RuntimeException("Cliente deve ter pelo menos um endereço.");
-        }
+        // 1) Valida tudo antes de tocar no banco
+        validator.validarCamposObrigatorios(dto);
+        validator.validarDocumento(dto.getCpfCnpj(), dto.getTipoPessoa());
+        validator.validarUnicidadeDocumento(dto.getCpfCnpj(), null);
+        validator.validarEnderecos(dto.getEnderecos());
 
-        // Converte DTO em entidade (sem id ainda)
+        // 2) Converte DTO em entidade (com endereços já vinculados ao cliente)
         Cliente cliente = clienteMapper.toEntity(dto);
 
-        // Valida campos comuns a PF e PJ (inclui tipo de pessoa)
-        validarCamposComuns(cliente);
+        // 3) dataCadastro é gerada agora — sempre no momento do salvamento
+        cliente.setDataCadastro(LocalDateTime.now());
 
-        if (cliente.isPessoaFisica()) {
-            validarCamposPessoaFisica(cliente);
-            if (!isCpfValido(cliente.getCpf())) {
-                throw new RuntimeException("CPF inválido.");
-            }
-            if (clienteRepository.findByCpf(cliente.getCpf()).isPresent()) {
-                throw new RuntimeException("CPF já cadastrado.");
-            }
-        }
+        // 4) Garante exatamente UM endereço marcado como principal
+        enderecoSincronizador.ajustarPrincipal(cliente.getEnderecos());
 
-        if (cliente.isPessoaJuridica()) {
-            validarCamposPessoaJuridica(cliente);
-            if (!isCnpjValido(cliente.getCnpj())) {
-                throw new RuntimeException("CNPJ inválido.");
-            }
-            if (clienteRepository.findByCnpj(cliente.getCnpj()).isPresent()) {
-                throw new RuntimeException("CNPJ já cadastrado.");
-            }
-        }
-
-        // Valida e normaliza os endereços (campos obrigatórios + flag principal)
-        ajustarEnderecosNoSalvar(cliente);
-
-        // Persiste no banco. Cascade.ALL salva os endereços juntos.
+        // 5) Persiste (cascade salva os endereços junto)
         Cliente salvo = clienteRepository.save(cliente);
 
+        // 6) Converte resultado em DTO de saída
         return clienteMapper.toResponse(salvo);
     }
 
-    /**
-     * Garante que os endereços que vieram embedded estão íntegros:
-     *  - Pelo menos UM marcado como principal (se ninguém marcou, marca o primeiro)
-     *  - Apenas UM como principal (se vários marcados, mantém o primeiro)
-     *  - Campos obrigatórios validados
-     */
-    private void ajustarEnderecosNoSalvar(Cliente cliente) {
-        var enderecos = cliente.getEnderecos();
-        boolean jaAchouPrincipal = false;
-
-        for (var endereco : enderecos) {
-            // Validações de campos obrigatórios diretamente na entidade
-            if (endereco.getLogradouro() == null || endereco.getLogradouro().isBlank()) {
-                throw new RuntimeException("Logradouro é obrigatório.");
-            }
-            if (endereco.getCep() == null || endereco.getCep().isBlank()) {
-                throw new RuntimeException("CEP é obrigatório.");
-            }
-            if (endereco.getCidade() == null || endereco.getCidade().isBlank()) {
-                throw new RuntimeException("Cidade é obrigatória.");
-            }
-            if (endereco.getEstado() == null || endereco.getEstado().isBlank()) {
-                throw new RuntimeException("Estado é obrigatório.");
-            }
-
-            // Normaliza o flag principal: só pode ter um, e null vira false
-            if (Boolean.TRUE.equals(endereco.getEnderecoPrincipal()) && !jaAchouPrincipal) {
-                endereco.setEnderecoPrincipal(true);
-                jaAchouPrincipal = true;
-            } else {
-                endereco.setEnderecoPrincipal(false);
-            }
-        }
-
-        // Se ninguém veio marcado como principal, o primeiro vira o principal
-        if (!jaAchouPrincipal) {
-            enderecos.get(0).setEnderecoPrincipal(true);
-        }
-    }
-
     public List<ClienteResponseDTO> buscarTodos() {
-        // Mapeia cada Cliente do banco para um DTO de resposta
         return clienteRepository.findAll()
                 .stream()
                 .map(clienteMapper::toResponse)
@@ -126,55 +75,27 @@ public class ClienteService {
     }
 
     @Transactional
-    public ClienteResponseDTO atualizar(Long id, ClienteAtualizacaoDTO dto) {
+    public ClienteResponseDTO atualizar(Long id, ClienteDTO dto) {
 
-        // Carrega o cliente existente — lança se não achar
+        // 1) Carrega o cliente existente — lança se não encontrar
         Cliente cliente = buscarEntidadePorId(id);
 
-        // OBS: não validamos mais "tipo de pessoa" aqui porque o
-        // ClienteAtualizacaoDTO não tem esse campo. O tipo do cliente
-        // permanece o que está no banco, e o Service usa esse tipo para
-        // decidir quais validações aplicar (PF ou PJ) logo abaixo.
+        // 2) Validações específicas de atualização
+        validator.validarTipoPessoaImutavel(cliente, dto);
 
-        // Aplica os novos valores em cima da entidade gerenciada.
-        // O updateEntity NÃO toca em id, tipoPessoa nem enderecos.
+        // 3) Validações comuns — usa o tipoPessoa da entidade (já validado como imutável)
+        validator.validarCamposObrigatorios(dto);
+        validator.validarDocumento(dto.getCpfCnpj(), cliente.getTipoPessoa());
+        validator.validarUnicidadeDocumento(dto.getCpfCnpj(), id);
+        validator.validarEnderecos(dto.getEnderecos());
+
+        // 4) Atualiza campos básicos do cliente (sem tocar em endereços)
         clienteMapper.updateEntity(cliente, dto);
 
-        // Valida campos comuns a PF e PJ
-        validarCamposComuns(cliente);
+        // 5) Sincroniza endereços (semântica de sync)
+        enderecoSincronizador.sincronizar(cliente, dto.getEnderecos());
 
-        if (cliente.isPessoaFisica()) {
-            // Valida campos obrigatórios de PF
-            validarCamposPessoaFisica(cliente);
-
-            // Valida se CPF é válido
-            if (!isCpfValido(cliente.getCpf())) {
-                throw new RuntimeException("CPF inválido.");
-            }
-
-            // Verifica se o CPF pertence a outro cliente
-            Optional<Cliente> existente = clienteRepository.findByCpf(cliente.getCpf());
-            if (existente.isPresent() && !existente.get().getId().equals(cliente.getId())) {
-                throw new RuntimeException("CPF já cadastrado para outro cliente.");
-            }
-        }
-
-        if (cliente.isPessoaJuridica()) {
-            // Valida campos obrigatórios de PJ
-            validarCamposPessoaJuridica(cliente);
-
-            // Valida se CNPJ é válido
-            if (!isCnpjValido(cliente.getCnpj())) {
-                throw new RuntimeException("CNPJ inválido.");
-            }
-
-            // Verifica se o CNPJ pertence a outro cliente
-            Optional<Cliente> existente = clienteRepository.findByCnpj(cliente.getCnpj());
-            if (existente.isPresent() && !existente.get().getId().equals(cliente.getId())) {
-                throw new RuntimeException("CNPJ já cadastrado para outro cliente.");
-            }
-        }
-
+        // 6) Persiste e retorna
         Cliente salvo = clienteRepository.save(cliente);
         return clienteMapper.toResponse(salvo);
     }
@@ -187,145 +108,12 @@ public class ClienteService {
         clienteRepository.deleteById(id);
     }
 
-    // ===================================================
-    // MÉTODOS PRIVADOS (auxiliares — só usados aqui dentro)
-    // ===================================================
+    // ============================================================
+    // HELPER PRIVADO
+    // ============================================================
 
-    /**
-     * Busca a entidade Cliente pelo id ou lança exceção.
-     *
-     * Privado porque a entidade não deve vazar para fora do Service —
-     * quem consome o Service só enxerga DTO. Este helper existe para
-     * uso interno quando precisamos da entidade gerenciada pelo JPA
-     * (ex: durante o atualizar).
-     */
     private Cliente buscarEntidadePorId(Long id) {
-        Optional<Cliente> cliente = clienteRepository.findById(id);
-        if (!cliente.isPresent()) {
-            throw new RuntimeException("Cliente não encontrado.");
-        }
-        return cliente.get();
-    }
-
-    /**
-     * Valida campos obrigatórios exclusivos de Pessoa Física.
-     * Chamado tanto no salvar() quanto no atualizar().
-     */
-    private void validarCamposPessoaFisica(Cliente cliente) {
-        if (cliente.getCpf() == null || cliente.getCpf().isBlank()) {
-            throw new RuntimeException("CPF é obrigatório.");
-        }
-        if (cliente.getNome() == null || cliente.getNome().isBlank()) {
-            throw new RuntimeException("Nome é obrigatório.");
-        }
-        if (cliente.getRg() == null || cliente.getRg().isBlank()) {
-            throw new RuntimeException("RG é obrigatório.");
-        }
-        if (cliente.getDataNascimento() == null) {
-            throw new RuntimeException("Data de nascimento é obrigatória.");
-        }
-    }
-
-    /**
-     * Valida campos obrigatórios exclusivos de Pessoa Jurídica.
-     * Chamado tanto no salvar() quanto no atualizar().
-     */
-    private void validarCamposPessoaJuridica(Cliente cliente) {
-        if (cliente.getCnpj() == null || cliente.getCnpj().isBlank()) {
-            throw new RuntimeException("CNPJ é obrigatório.");
-        }
-        if (cliente.getRazaoSocial() == null || cliente.getRazaoSocial().isBlank()) {
-            throw new RuntimeException("Razão Social é obrigatória.");
-        }
-        if (cliente.getInscricaoEstadual() == null || cliente.getInscricaoEstadual().isBlank()) {
-            throw new RuntimeException("Inscrição Estadual é obrigatória.");
-        }
-        if (cliente.getDataCriacao() == null) {
-            throw new RuntimeException("Data de criação é obrigatória.");
-        }
-    }
-
-    /**
-     * Valida campos obrigatórios comuns a PF e PJ.
-     * Chamado tanto no salvar() quanto no atualizar().
-     */
-    private void validarCamposComuns(Cliente cliente) {
-        if (cliente.getTipoPessoa() == null) {
-            throw new RuntimeException("Selecione o tipo de pessoa!");
-        }
-        if (cliente.getEmail() == null || cliente.getEmail().isBlank()) {
-            throw new RuntimeException("E-mail é obrigatório.");
-        }
-        if (cliente.getAtivo() == null) {
-            throw new RuntimeException("O campo ativo é obrigatório.");
-        }
-    }
-
-    /**
-     * Valida se um CPF é matematicamente válido.
-     *
-     * Remove a formatação (pontos e traço), verifica os dígitos
-     * verificadores usando o algoritmo oficial da Receita Federal.
-     *
-     * Exemplo de CPF válido: 529.982.247-25
-     */
-    private boolean isCpfValido(String cpf) {
-        // Remove formatação (pontos e traço)
-        cpf = cpf.replaceAll("[^0-9]", "");
-
-        // CPF deve ter 11 dígitos
-        if (cpf.length() != 11) return false;
-
-        // Rejeita CPFs com todos os dígitos iguais (ex: 111.111.111-11)
-        if (cpf.matches("(\\d)\\1{10}")) return false;
-
-        // Calcula e verifica o primeiro dígito verificador
-        int soma = 0;
-        for (int i = 0; i < 9; i++) soma += (cpf.charAt(i) - '0') * (10 - i);
-        int primeiro = 11 - (soma % 11);
-        if (primeiro >= 10) primeiro = 0;
-        if (primeiro != (cpf.charAt(9) - '0')) return false;
-
-        // Calcula e verifica o segundo dígito verificador
-        soma = 0;
-        for (int i = 0; i < 10; i++) soma += (cpf.charAt(i) - '0') * (11 - i);
-        int segundo = 11 - (soma % 11);
-        if (segundo >= 10) segundo = 0;
-        return segundo == (cpf.charAt(10) - '0');
-    }
-
-    /**
-     * Valida se um CNPJ é matematicamente válido.
-     *
-     * Remove a formatação, verifica os dígitos verificadores
-     * usando o algoritmo oficial da Receita Federal.
-     *
-     * Exemplo de CNPJ válido: 11.222.333/0001-81
-     */
-    private boolean isCnpjValido(String cnpj) {
-        // Remove formatação
-        cnpj = cnpj.replaceAll("[^0-9]", "");
-
-        // CNPJ deve ter 14 dígitos
-        if (cnpj.length() != 14) return false;
-
-        // Rejeita CNPJs com todos os dígitos iguais
-        if (cnpj.matches("(\\d)\\1{13}")) return false;
-
-        // Pesos para cálculo dos dígitos verificadores
-        int[] pesosPrimeiro  = {5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2};
-        int[] pesosSegundo = {6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2};
-
-        // Calcula e verifica o primeiro dígito verificador
-        int soma = 0;
-        for (int i = 0; i < 12; i++) soma += (cnpj.charAt(i) - '0') * pesosPrimeiro[i];
-        int primeiro = soma % 11 < 2 ? 0 : 11 - (soma % 11);
-        if (primeiro != (cnpj.charAt(12) - '0')) return false;
-
-        // Calcula e verifica o segundo dígito verificador
-        soma = 0;
-        for (int i = 0; i < 13; i++) soma += (cnpj.charAt(i) - '0') * pesosSegundo[i];
-        int segundo = soma % 11 < 2 ? 0 : 11 - (soma % 11);
-        return segundo == (cnpj.charAt(13) - '0');
+        return clienteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cliente não encontrado."));
     }
 }

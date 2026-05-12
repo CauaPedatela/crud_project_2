@@ -40,3 +40,8 @@ build/
 
 ### Credentials - nunca versionar arquivos com senhas ###
 src/main/resources/application.properties
+
+### Jaspersoft Studio (workspace metadata e arquivos compilados) ###
+/.metadata/
+*.jasper
+*.jrpxml

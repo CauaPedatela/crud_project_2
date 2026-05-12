@@ -1,19 +1,26 @@
 package com.crudproject.dto.cliente;
 
-import com.crudproject.dto.endereco.EnderecoResponseDTO;
+import com.crudproject.dto.endereco.EnderecoDTO;
 import com.crudproject.model.TipoPessoa;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
-// DTO de saída para Cliente.
-// Inclui o id e a dataCadastro (gerados pelo banco/servidor) e
-// a lista completa de endereços já com seus ids.
+// DTO unificado para Cliente — usado em POST e PUT.
+//
+// O mesmo formato vale para criar e atualizar. A diferença está
+// apenas em quais campos vêm preenchidos:
 
-public class ClienteResponseDTO {
+//  POST (criar)        → lista de endereços sem ids
+//  PUT  (atualizar)    → id do cliente vem na URL (não no body);
+//                        endereços com id existente = update,
+//                        endereços sem id = novos,
+//                        endereços que sumiram da lista = deletados
+//
+// Já o campo "id" dos endereços é FUNCIONAL — dirige a lógica de sync.]
 
-    private Long id;
+public class ClienteDTO {
+
     private TipoPessoa tipoPessoa;
     private String nome;
     private String cpfCnpj;
@@ -22,15 +29,11 @@ public class ClienteResponseDTO {
     private String email;
     private String telefone;
     private Boolean ativo;
-    private LocalDateTime dataCadastro;
-    private List<EnderecoResponseDTO> enderecos;
+    private List<EnderecoDTO> enderecos;
 
     // ============================================================
     // Getters e Setters
     // ============================================================
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     public TipoPessoa getTipoPessoa() { return tipoPessoa; }
     public void setTipoPessoa(TipoPessoa tipoPessoa) { this.tipoPessoa = tipoPessoa; }
@@ -56,9 +59,13 @@ public class ClienteResponseDTO {
     public Boolean getAtivo() { return ativo; }
     public void setAtivo(Boolean ativo) { this.ativo = ativo; }
 
-    public LocalDateTime getDataCadastro() { return dataCadastro; }
-    public void setDataCadastro(LocalDateTime dataCadastro) { this.dataCadastro = dataCadastro; }
+    public List<EnderecoDTO> getEnderecos() { return enderecos; }
+    public void setEnderecos(List<EnderecoDTO> enderecos) { this.enderecos = enderecos; }
 
-    public List<EnderecoResponseDTO> getEnderecos() { return enderecos; }
-    public void setEnderecos(List<EnderecoResponseDTO> enderecos) { this.enderecos = enderecos; }
+    // ============================================================
+    // Helpers
+    // ============================================================
+
+    public boolean isPessoaFisica() { return tipoPessoa == TipoPessoa.FISICA; }
+    public boolean isPessoaJuridica() { return tipoPessoa == TipoPessoa.JURIDICA; }
 }

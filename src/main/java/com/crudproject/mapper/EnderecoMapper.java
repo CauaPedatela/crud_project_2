@@ -1,7 +1,6 @@
 package com.crudproject.mapper;
 
-import com.crudproject.dto.endereco.EnderecoAtualizacaoDTO;
-import com.crudproject.dto.endereco.EnderecoCadastroDTO;
+import com.crudproject.dto.endereco.EnderecoDTO;
 import com.crudproject.dto.endereco.EnderecoResponseDTO;
 import com.crudproject.model.Cliente;
 import com.crudproject.model.Endereco;
@@ -10,71 +9,55 @@ import org.springframework.stereotype.Component;
 @Component
 public class EnderecoMapper {
 
-    /**
-     * Converte o DTO de entrada em entidade Endereco.
-     *
-     * Recebe o objeto Cliente já buscado pelo Service —
-     * o mapper não acessa o banco, só transforma dados.
-     */
-    public Endereco toEntity(EnderecoCadastroDTO dto, Cliente cliente) {
+//     Cria uma nova entidade Endereco a partir do DTO,
+//     vinculando ao Cliente passado pelo Service.
+
+    public Endereco toEntity(EnderecoDTO dto, Cliente cliente) {
         Endereco endereco = new Endereco();
-
         endereco.setCliente(cliente);
-
-        endereco.setLogradouro(dto.getLogradouro());
-        endereco.setNumero(dto.getNumero());
-        endereco.setCep(dto.getCep());
-        endereco.setBairro(dto.getBairro());
-        endereco.setTelefone(dto.getTelefone());
-        endereco.setCidade(dto.getCidade());
-        endereco.setEstado(dto.getEstado());
-        endereco.setEnderecoPrincipal(dto.getEnderecoPrincipal());
-        endereco.setComplemento(dto.getComplemento());
-
+        copiarCamposBasicos(dto, endereco);
         return endereco;
     }
 
-    /**
-     * Sobrescreve os campos de uma entidade Endereco existente com
-     * os dados do DTO de atualização.
-     *
-     * Recebe EnderecoAtualizacaoDTO (não EnderecoCadastroDTO) —
-     * esse DTO não tem clienteId, deixando explícito que a operação
-     * não tem como mover o endereço para outro cliente.
-     *
-     * Usado no fluxo de PUT: o Service busca a entidade pelo id,
-     * passa para o mapper aplicar as mudanças, e o id + cliente
-     * originais são preservados.
-     */
-    public void updateEntity(Endereco endereco, EnderecoAtualizacaoDTO dto) {
-        endereco.setLogradouro(dto.getLogradouro());
-        endereco.setNumero(dto.getNumero());
-        endereco.setCep(dto.getCep());
-        endereco.setBairro(dto.getBairro());
-        endereco.setTelefone(dto.getTelefone());
-        endereco.setCidade(dto.getCidade());
-        endereco.setEstado(dto.getEstado());
-        endereco.setEnderecoPrincipal(dto.getEnderecoPrincipal());
-        endereco.setComplemento(dto.getComplemento());
+//     Atualiza uma entidade Endereco existente com os campos do DTO.
+//     Mantém o id e o cliente — só sobrescreve os dados.
+
+    public void updateEntity(Endereco endereco, EnderecoDTO dto) {
+        copiarCamposBasicos(dto, endereco);
     }
+
+//     Converte a entidade em DTO de saída.
 
     public EnderecoResponseDTO toResponse(Endereco endereco) {
         EnderecoResponseDTO dto = new EnderecoResponseDTO();
-
         dto.setId(endereco.getId());
-        // Pega só o ID do cliente, evitando expor o objeto Cliente inteiro
-        dto.setClienteId(endereco.getCliente() != null ? endereco.getCliente().getId() : null);
-
+        dto.setTipo(endereco.getTipo());
         dto.setLogradouro(endereco.getLogradouro());
         dto.setNumero(endereco.getNumero());
-        dto.setCep(endereco.getCep());
+        dto.setComplemento(endereco.getComplemento());
         dto.setBairro(endereco.getBairro());
-        dto.setTelefone(endereco.getTelefone());
         dto.setCidade(endereco.getCidade());
         dto.setEstado(endereco.getEstado());
-        dto.setEnderecoPrincipal(endereco.getEnderecoPrincipal());
-        dto.setComplemento(endereco.getComplemento());
-
+        dto.setCep(endereco.getCep());
+        dto.setPais(endereco.getPais());
+        dto.setPrincipal(endereco.getPrincipal());
         return dto;
+    }
+
+    // ============================================================
+    // Helpers
+    // ============================================================
+
+    private void copiarCamposBasicos(EnderecoDTO dto, Endereco endereco) {
+        endereco.setTipo(dto.getTipo());
+        endereco.setLogradouro(dto.getLogradouro());
+        endereco.setNumero(dto.getNumero());
+        endereco.setComplemento(dto.getComplemento());
+        endereco.setBairro(dto.getBairro());
+        endereco.setCidade(dto.getCidade());
+        endereco.setEstado(dto.getEstado());
+        endereco.setCep(dto.getCep());
+        endereco.setPais(dto.getPais());
+        endereco.setPrincipal(dto.getPrincipal());
     }
 }
