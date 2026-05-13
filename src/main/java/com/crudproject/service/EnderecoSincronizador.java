@@ -12,14 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Responsável pela lógica de sincronização da lista de endereços
- * de um cliente.
- *
- * Duas operações públicas:
- *   - sincronizar()        → usada no PUT (merge inteligente)
- *   - ajustarPrincipal()   → usada no POST e no final do sincronizar()
- */
+//      Responsável pela lógica de sincronização da lista de endereços
+//      de um cliente.
+//      Duas operações públicas:
+//          - sincronizar()        → usada no PUT (merge inteligente)
+//          - ajustarPrincipal()   → usada no POST e no final do sincronizar()
 
 @Component
 public class EnderecoSincronizador {
@@ -27,17 +24,14 @@ public class EnderecoSincronizador {
     @Autowired
     private EnderecoMapper enderecoMapper;
 
-    /**
-     * Sincroniza a lista atual de endereços do cliente com a lista
-     * recebida no DTO. Três cenários por endereço:
-     *
-     *   DTO tem id existente → atualiza o endereço correspondente
-     *   DTO sem id           → cria novo endereço
-     *   Existe no banco mas
-     *   não está no DTO      → deleta (orphanRemoval = true cuida)
-     *
-     * Ao final, garante que exatamente UM endereço seja principal.
-     */
+//       Sincroniza a lista atual de endereços do cliente com a lista
+//       recebida no DTO. Três cenários por endereço:
+//
+//       DTO tem id existente → atualiza o endereço correspondente
+//       DTO sem id           → cria novo endereço
+//       Existe no banco mas
+//       não está no DTO      → deleta (orphanRemoval = true cuida)
+
     public void sincronizar(Cliente cliente, List<EnderecoDTO> enderecosDoDto) {
 
         // Mapa dos endereços atuais por id, para lookup rápido
@@ -69,12 +63,11 @@ public class EnderecoSincronizador {
         ajustarPrincipal(cliente.getEnderecos());
     }
 
-    /**
-     * Normaliza o flag "principal" da lista:
-     *   - Nenhum marcado → marca o primeiro
-     *   - Mais de um marcado → mantém só o primeiro
-     *   - null vira false
-     */
+//     Normaliza o flag "principal" da lista:
+//       - Nenhum marcado → marca o primeiro
+//       - Mais de um marcado → mantém só o primeiro
+//       - null vira false
+
     public void ajustarPrincipal(List<Endereco> enderecos) {
         if (enderecos == null || enderecos.isEmpty()) return;
 

@@ -1,31 +1,19 @@
 package com.crudproject.service.validation;
 
-/**
- * Utilitário puro para validação matemática de CPF e CNPJ.
- *
- * É uma classe estática: não é gerenciada pelo Spring, não tem
- * dependências, não tem estado. Funciona como um conjunto de
- * "funções soltas" que qualquer parte do código pode chamar.
- *
- * Por que não @Component?
- * Validar dígitos não depende de banco, configuração ou contexto.
- * Métodos estáticos são mais simples e diretos para esse caso.
- *
- * Uso:
- *   if (!DocumentoUtil.isCpfValido(cpf)) { ... }
- */
+// Utilitário puro para validação matemática de CPF e CNPJ.
+// É uma classe estática: não é gerenciada pelo Spring, não tem
+// dependências, não tem estado. É um conjunto de funções soltas
+// que podem ser chamadas em qualquer parte do código.
+
 public final class DocumentoUtil {
 
     // Construtor privado: impede que alguém faça "new DocumentoUtil()".
     // Não faz sentido instanciar — só usamos os métodos estáticos.
+
     private DocumentoUtil() {}
 
-    /**
-     * Valida CPF pelo algoritmo oficial da Receita Federal.
-     *
-     * Espera apenas os 11 dígitos (sem formatação).
-     * Rejeita CPFs com todos os dígitos iguais (ex: 111.111.111-11).
-     */
+    // Validação de CPF com o algoritmo da Receita Federal
+
     public static boolean isCpfValido(String cpf) {
         if (cpf.matches("(\\d)\\1{10}")) return false;
 
@@ -42,11 +30,8 @@ public final class DocumentoUtil {
         return segundo == (cpf.charAt(10) - '0');
     }
 
-    /**
-     * Valida CNPJ pelo algoritmo oficial da Receita Federal.
-     *
-     * Espera apenas os 14 dígitos (sem formatação).
-     */
+    // Valida CNPJ com o Algoritmo da Receita federal
+
     public static boolean isCnpjValido(String cnpj) {
         if (cnpj.matches("(\\d)\\1{13}")) return false;
 

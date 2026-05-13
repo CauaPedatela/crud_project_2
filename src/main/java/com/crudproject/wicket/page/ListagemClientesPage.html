@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clientes — Listagem</title>
+
+  <!-- Bootstrap 5.3 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body { background-color: #f6f7f9; }
+    .app-header { background:#fff; border-bottom:1px solid #e6e8ec; }
+    .page-card { background:#fff; border:1px solid #e6e8ec; border-radius:.5rem; }
+    .table thead th { font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:#5b6573; background:#f9fafb; border-bottom:1px solid #e6e8ec; }
+    .table td { vertical-align: middle; }
+    .btn-icon { width:34px; height:34px; padding:0; display:inline-flex; align-items:center; justify-content:center; }
+    .badge-tipo { font-weight:500; }
+    .footer-actions { background:#fff; border-top:1px solid #e6e8ec; }
+    .search-wrap { max-width: 560px; }
+    .empty-hint { color:#8a93a2; font-size:.85rem; }
+    .table-responsive { border-radius:.5rem; }
+  </style>
+</head>
+<body>
+
+  <!-- ============================ HEADER ============================ -->
+  <header class="app-header py-3">
+    <div class="container-xl d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-people-fill fs-4 text-primary"></i>
+        <h1 class="h5 mb-0">Gestão de Clientes</h1>
+      </div>
+      <nav class="d-none d-md-flex gap-3 small">
+        <a href="listagem-clientes.html" class="text-decoration-none fw-semibold">Clientes</a>
+        <a href="#" class="text-decoration-none text-muted">Relatórios</a>
+        <a href="#" class="text-decoration-none text-muted">Configurações</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ============================ PAGE ============================== -->
+  <main class="container-xl py-4">
+
+    <!-- Title + breadcrumb -->
+    <div class="d-flex flex-wrap align-items-end justify-content-between mb-3">
+      <div>
+        <nav aria-label="breadcrumb" class="mb-1">
+          <ol class="breadcrumb small mb-0">
+            <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Início</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Clientes</li>
+          </ol>
+        </nav>
+        <h2 class="h4 mb-0">Listagem de Clientes</h2>
+      </div>
+    </div>
+
+    <!-- Search bar (centralizada) -->
+    <div class="page-card p-3 p-md-4 mb-3">
+      <form class="d-flex justify-content-center" role="search" onsubmit="return false;">
+        <div class="search-wrap w-100">
+          <label for="campoBusca" class="form-label small text-muted mb-1">Buscar cliente</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+            <input id="campoBusca" type="search" class="form-control" placeholder="Nome, Razão Social, CPF, CNPJ ou e-mail…">
+            <button class="btn btn-primary" type="submit">Buscar</button>
+          </div>
+          <div class="empty-hint mt-2 text-center">A busca considera Pessoa Física e Pessoa Jurídica.</div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Table card -->
+    <div class="page-card">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead>
+            <tr>
+              <th style="width:60px;">#</th>
+              <th>Nome / Razão Social</th>
+              <th style="width:110px;">Tipo</th>
+              <th>Documento</th>
+              <th>E-mail</th>
+              <th style="width:100px;">Ativo</th>
+              <th class="text-end" style="width:170px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Wicket: substituir por <tr wicket:id="listaClientes"> dentro de um ListView -->
+            <tr>
+              <td class="text-muted">1</td>
+              <td class="fw-semibold">Ana Beatriz Carvalho</td>
+              <td><span class="badge text-bg-info-subtle text-info-emphasis badge-tipo">PF</span></td>
+              <td>123.456.789-00</td>
+              <td>ana.carvalho@email.com</td>
+              <td><span class="badge text-bg-success-subtle text-success-emphasis">Sim</span></td>
+              <td class="text-end">
+                <div class="btn-group" role="group" aria-label="Ações da linha">
+                  <a href="DetalhesClientePage.html" class="btn btn-outline-secondary btn-icon" title="Detalhes / Atualizar"><i class="bi bi-pencil"></i></a>
+                  <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
+                  <button type="button" class="btn btn-outline-primary btn-icon" title="Relatório PDF"><i class="bi bi-file-earmark-pdf"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="text-muted">2</td>
+              <td class="fw-semibold">Tecnologia Brasil Ltda.</td>
+              <td><span class="badge text-bg-warning-subtle text-warning-emphasis badge-tipo">PJ</span></td>
+              <td>12.345.678/0001-90</td>
+              <td>contato@tecbrasil.com.br</td>
+              <td><span class="badge text-bg-success-subtle text-success-emphasis">Sim</span></td>
+              <td class="text-end">
+                <div class="btn-group">
+                  <a href="DetalhesClientePage.html" class="btn btn-outline-secondary btn-icon" title="Detalhes / Atualizar"><i class="bi bi-pencil"></i></a>
+                  <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
+                  <button type="button" class="btn btn-outline-primary btn-icon" title="Relatório PDF"><i class="bi bi-file-earmark-pdf"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="text-muted">3</td>
+              <td class="fw-semibold">Carlos Eduardo Souza</td>
+              <td><span class="badge text-bg-info-subtle text-info-emphasis badge-tipo">PF</span></td>
+              <td>987.654.321-00</td>
+              <td>carlos.souza@email.com</td>
+              <td><span class="badge text-bg-secondary-subtle text-secondary-emphasis">Não</span></td>
+              <td class="text-end">
+                <div class="btn-group">
+                  <a href="DetalhesClientePage.html" class="btn btn-outline-secondary btn-icon" title="Detalhes / Atualizar"><i class="bi bi-pencil"></i></a>
+                  <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
+                  <button type="button" class="btn btn-outline-primary btn-icon" title="Relatório PDF"><i class="bi bi-file-earmark-pdf"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="text-muted">4</td>
+              <td class="fw-semibold">Indústrias Aurora S.A.</td>
+              <td><span class="badge text-bg-warning-subtle text-warning-emphasis badge-tipo">PJ</span></td>
+              <td>98.765.432/0001-10</td>
+              <td>contato@aurora.com.br</td>
+              <td><span class="badge text-bg-success-subtle text-success-emphasis">Sim</span></td>
+              <td class="text-end">
+                <div class="btn-group">
+                  <a href="DetalhesClientePage.html" class="btn btn-outline-secondary btn-icon" title="Detalhes / Atualizar"><i class="bi bi-pencil"></i></a>
+                  <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
+                  <button type="button" class="btn btn-outline-primary btn-icon" title="Relatório PDF"><i class="bi bi-file-earmark-pdf"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="text-muted">5</td>
+              <td class="fw-semibold">Mariana Lopes Ferreira</td>
+              <td><span class="badge text-bg-info-subtle text-info-emphasis badge-tipo">PF</span></td>
+              <td>456.789.123-00</td>
+              <td>mariana.ferreira@email.com</td>
+              <td><span class="badge text-bg-success-subtle text-success-emphasis">Sim</span></td>
+              <td class="text-end">
+                <div class="btn-group">
+                  <a href="DetalhesClientePage.html" class="btn btn-outline-secondary btn-icon" title="Detalhes / Atualizar"><i class="bi bi-pencil"></i></a>
+                  <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
+                  <button type="button" class="btn btn-outline-primary btn-icon" title="Relatório PDF"><i class="bi bi-file-earmark-pdf"></i></button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginação -->
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 p-3 border-top">
+        <small class="text-muted">Exibindo <strong>1–5</strong> de <strong>42</strong> registros</small>
+        <nav aria-label="Paginação">
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1"><i class="bi bi-chevron-left"></i></a></li>
+            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+            <li class="page-item"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item"><a class="page-link" href="#">4</a></li>
+            <li class="page-item"><a class="page-link" href="#">5</a></li>
+            <li class="page-item"><a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Footer actions -->
+    <div class="footer-actions page-card mt-3 p-3 d-flex flex-wrap gap-2 justify-content-between">
+      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCriarCliente">
+        <i class="bi bi-person-plus me-1"></i> Adicionar Cliente
+      </button>
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-outline-primary">
+          <i class="bi bi-file-earmark-pdf me-1"></i> Relatório de Todos (PDF)
+        </button>
+        <button type="button" class="btn btn-outline-success">
+          <i class="bi bi-file-earmark-excel me-1"></i> Exportar Excel
+        </button>
+        <button type="button" class="btn btn-outline-secondary">
+          <i class="bi bi-upload me-1"></i> Importar Excel
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ====================================================================== -->
+  <!-- MODAL: CRIAR CLIENTE (PF ou PJ)                                        -->
+  <!-- ====================================================================== -->
+  <div class="modal fade" id="modalCriarCliente" tabindex="-1" aria-labelledby="modalCriarClienteLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalCriarClienteLabel">
+            <i class="bi bi-person-plus me-2"></i>Novo Cliente
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+
+        <div class="modal-body">
+          <form id="formCriarCliente" class="row g-3" onsubmit="return false;">
+
+            <!-- Radio PF / PJ -->
+            <div class="col-12">
+              <label class="form-label fw-semibold">Tipo de Cliente</label>
+              <div class="d-flex flex-wrap gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="tipoCliente" id="tipoPF" value="PF" checked>
+                  <label class="form-check-label" for="tipoPF">Pessoa Física (PF)</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="tipoCliente" id="tipoPJ" value="PJ">
+                  <label class="form-check-label" for="tipoPJ">Pessoa Jurídica (PJ)</label>
+                </div>
+              </div>
+            </div>
+
+            <hr class="mt-2 mb-0">
+
+            <!-- ====================== BLOCO PF ====================== -->
+            <!-- Wicket: envolver com WebMarkupContainer visível somente quando PF -->
+            <div class="col-12" id="blocoCriarPF">
+              <h6 class="text-muted small text-uppercase mb-3">Dados — Pessoa Física</h6>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="pfEmail" class="form-label">E-mail</label>
+                  <input type="email" class="form-control" id="pfEmail" placeholder="cliente@email.com">
+                </div>
+                <div class="col-md-6">
+                  <label for="pfNome" class="form-label">Nome completo</label>
+                  <input type="text" class="form-control" id="pfNome" placeholder="Nome completo">
+                </div>
+                <div class="col-md-4">
+                  <label for="pfCpf" class="form-label">CPF</label>
+                  <input type="text" class="form-control" id="pfCpf" placeholder="000.000.000-00">
+                </div>
+                <div class="col-md-4">
+                  <label for="pfRg" class="form-label">RG</label>
+                  <input type="text" class="form-control" id="pfRg" placeholder="00.000.000-0">
+                </div>
+                <div class="col-md-4">
+                  <label for="pfNasc" class="form-label">Data de Nascimento</label>
+                  <input type="date" class="form-control" id="pfNasc">
+                </div>
+              </div>
+            </div>
+
+            <!-- ====================== BLOCO PJ ====================== -->
+            <!-- Wicket: envolver com WebMarkupContainer visível somente quando PJ -->
+            <div class="col-12 d-none" id="blocoCriarPJ">
+              <h6 class="text-muted small text-uppercase mb-3">Dados — Pessoa Jurídica</h6>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="pjEmail" class="form-label">E-mail</label>
+                  <input type="email" class="form-control" id="pjEmail" placeholder="contato@empresa.com.br">
+                </div>
+                <div class="col-md-6">
+                  <label for="pjCnpj" class="form-label">CNPJ</label>
+                  <input type="text" class="form-control" id="pjCnpj" placeholder="00.000.000/0000-00">
+                </div>
+                <div class="col-md-8">
+                  <label for="pjRazao" class="form-label">Razão Social</label>
+                  <input type="text" class="form-control" id="pjRazao" placeholder="Razão Social">
+                </div>
+                <div class="col-md-4">
+                  <label for="pjIe" class="form-label">Inscrição Estadual (IE)</label>
+                  <input type="text" class="form-control" id="pjIe" placeholder="000.000.000.000">
+                </div>
+                <div class="col-md-4">
+                  <label for="pjCriacao" class="form-label">Data de Criação</label>
+                  <input type="date" class="form-control" id="pjCriacao">
+                </div>
+              </div>
+            </div>
+
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="formCriarCliente" class="btn btn-primary">
+            <i class="bi bi-check2 me-1"></i>Salvar Cliente
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap bundle (somente para preview dos modais; pode ser removido na integração Wicket) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Toggle visual PF/PJ apenas para preview deste mockup.
+    // Na integração Wicket, este comportamento deve ser tratado no servidor (AjaxFormChoiceComponentUpdatingBehavior).
+    document.addEventListener('change', function (e) {
+      if (e.target.name === 'tipoCliente') {
+        const isPF = e.target.value === 'PF';
+        document.getElementById('blocoCriarPF').classList.toggle('d-none', !isPF);
+        document.getElementById('blocoCriarPJ').classList.toggle('d-none',  isPF);
+      }
+    });
+  </script>
+</body>
+</html>

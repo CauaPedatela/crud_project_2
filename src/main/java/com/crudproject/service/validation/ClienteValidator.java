@@ -12,16 +12,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-/**
- * Centraliza as validações de negócio de Cliente.
- *
- * O Service orquestra as operações (salvar, atualizar) e delega
- * as verificações de regras para esse validador. Mantém o Service
- * mais enxuto e facilita testes isolados das regras.
- *
- * É @Component porque depende de ClienteRepository (precisa do banco
- * para checar unicidade de documento).
- */
+// Centraliza as validações de negócio de Cliente.
+//
+// O Service orquestra as operações (salvar, atualizar) e delega
+// as verificações de regras para esse validador. Mantém o Service
+// mais enxuto e facilita testes isolados das regras.
+// É @Component porque depende de ClienteRepository (precisa do banco
+// para checar unicidade de documento).
+
 @Component
 public class ClienteValidator {
 
@@ -68,8 +66,7 @@ public class ClienteValidator {
 
     public void validarUnicidadeDocumento(String cpfCnpj, Long idAtual) {
         Optional<Cliente> existente = clienteRepository.findByCpfCnpj(cpfCnpj);
-        if (existente.isPresent()
-                && !Objects.equals(existente.get().getId(), idAtual)) {
+        if (existente.isPresent() && !Objects.equals(existente.get().getId(), idAtual)) {
             throw new RuntimeException("CPF/CNPJ já cadastrado para outro cliente.");
         }
     }

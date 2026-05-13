@@ -14,17 +14,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Serviço de Cliente — orquestrador.
- *
- * Não tem lógica de validação nem de sincronização de endereços.
- * Apenas chama as classes especializadas na ordem correta:
- *
- *   ClienteValidator       → validações de negócio
- *   ClienteMapper          → conversão DTO ↔ Entity
- *   EnderecoSincronizador  → sync da lista de endereços
- *   ClienteRepository      → acesso ao banco
- */
+// Serviço de Cliente — orquestrador.
+// Não tem lógica de validação nem de sincronização de endereços.
+// Apenas chama as classes especializadas na ordem correta:
+//   ClienteValidator       → validações de negócio
+//   ClienteMapper          → conversão DTO ↔ Entity
+//   EnderecoSincronizador  → sync da lista de endereços
+//   ClienteRepository      → acesso ao banco
 
 @Service
 public class ClienteService {
