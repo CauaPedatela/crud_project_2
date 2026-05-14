@@ -1,5 +1,6 @@
 package com.crudproject.service;
 
+import com.crudproject.dao.ClienteDAO;
 import com.crudproject.dto.cliente.ClienteDTO;
 import com.crudproject.dto.cliente.ClienteResponseDTO;
 import com.crudproject.mapper.ClienteMapper;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,12 +22,18 @@ import java.util.stream.Collectors;
 //   ClienteValidator       → validações de negócio
 //   ClienteMapper          → conversão DTO ↔ Entity
 //   EnderecoSincronizador  → sync da lista de endereços
-//   ClienteRepository      → acesso ao banco
+//   ClienteRepository      → acesso direto ao banco (operações padrão JPA)
+//   ClienteDAO             → acesso ao banco (busca com filtros dinâmicos)
 
 @Service
 public class ClienteService {
 
+    // Operações padrão (save, findAll, findById, deleteById) → direto no Repository
     @Autowired private ClienteRepository clienteRepository;
+
+    // Busca com filtros dinâmicos → via DAO (usa Specification API)
+    @Autowired private ClienteDAO clienteDAO;
+
     @Autowired private ClienteMapper clienteMapper;
     @Autowired private ClienteValidator validator;
     @Autowired private EnderecoSincronizador enderecoSincronizador;
@@ -37,30 +45,43 @@ public class ClienteService {
     @Transactional
     public ClienteResponseDTO salvar(ClienteDTO dto) {
 
-        // 1) Valida tudo antes de tocar no banco
         validator.validarCamposObrigatorios(dto);
         validator.validarDocumento(dto.getCpfCnpj(), dto.getTipoPessoa());
         validator.validarUnicidadeDocumento(dto.getCpfCnpj(), null);
         validator.validarEnderecos(dto.getEnderecos());
 
-        // 2) Converte DTO em entidade (com endereços já vinculados ao cliente)
         Cliente cliente = clienteMapper.toEntity(dto);
-
-        // 3) dataCadastro é gerada agora — sempre no momento do salvamento
         cliente.setDataCadastro(LocalDateTime.now());
-
-        // 4) Garante exatamente UM endereço marcado como principal
         enderecoSincronizador.ajustarPrincipal(cliente.getEnderecos());
 
-        // 5) Persiste (cascade salva os endereços junto)
         Cliente salvo = clienteRepository.save(cliente);
-
-        // 6) Converte resultado em DTO de saída
         return clienteMapper.toResponse(salvo);
     }
 
+    @Transactional
     public List<ClienteResponseDTO> buscarTodos() {
         return clienteRepository.findAll()
+                .stream()
+                .map(clienteMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    // Recebe os filtros como Strings (vindos da página Wicket),
+    // converte as datas para LocalDate e delega a query ao DAO.
+    @Transactional
+    public List<ClienteResponseDTO> buscarComFiltros(
+            String termo,
+            String filtroAtivo,
+            String filtroTipo,
+            String dataInicio,
+            String dataFim) {
+
+        LocalDate inicio = (dataInicio != null && !dataInicio.isBlank())
+                ? LocalDate.parse(dataInicio) : null;
+        LocalDate fim = (dataFim != null && !dataFim.isBlank())
+                ? LocalDate.parse(dataFim) : null;
+
+        return clienteDAO.buscarComFiltros(termo, filtroAtivo, filtroTipo, inicio, fim)
                 .stream()
                 .map(clienteMapper::toResponse)
                 .collect(Collectors.toList());
@@ -73,25 +94,17 @@ public class ClienteService {
     @Transactional
     public ClienteResponseDTO atualizar(Long id, ClienteDTO dto) {
 
-        // 1) Carrega o cliente existente — lança se não encontrar
         Cliente cliente = buscarEntidadePorId(id);
 
-        // 2) Validações específicas de atualização
         validator.validarTipoPessoaImutavel(cliente, dto);
-
-        // 3) Validações comuns — usa o tipoPessoa da entidade (já validado como imutável)
         validator.validarCamposObrigatorios(dto);
         validator.validarDocumento(dto.getCpfCnpj(), cliente.getTipoPessoa());
         validator.validarUnicidadeDocumento(dto.getCpfCnpj(), id);
         validator.validarEnderecos(dto.getEnderecos());
 
-        // 4) Atualiza campos básicos do cliente (sem tocar em endereços)
         clienteMapper.updateEntity(cliente, dto);
-
-        // 5) Sincroniza endereços (semântica de sync)
         enderecoSincronizador.sincronizar(cliente, dto.getEnderecos());
 
-        // 6) Persiste e retorna
         Cliente salvo = clienteRepository.save(cliente);
         return clienteMapper.toResponse(salvo);
     }

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" xmlns:wicket="http://wicket.apache.org/dtds.data/wicket-xhtml1.4-strict.dtd">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -21,6 +21,36 @@
     .search-wrap { max-width: 560px; }
     .empty-hint { color:#8a93a2; font-size:.85rem; }
     .table-responsive { border-radius:.5rem; }
+
+    /* ===== Paginação: estiliza o HTML gerado pelo PagingNavigator do Wicket ===== */
+    /* O PagingNavigator gera spans e links dentro do nav.                         */
+    /* A página atual é envolta pela tag em (sem link). Links inativos = disabled. */
+    #wicketPaginacao { display: flex; align-items: center; }
+    #wicketPaginacao span { display: contents; }
+    #wicketPaginacao a {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 32px; height: 32px; padding: 0 .5rem;
+      margin: 0 1px;
+      border: 1px solid #dee2e6; border-radius: .25rem;
+      font-size: .875rem; text-decoration: none;
+      color: #0d6efd; background: #fff;
+      transition: background .15s, color .15s;
+    }
+    #wicketPaginacao a:hover { background: #e9ecef; color: #0a58ca; }
+    /* Pagina atual — Wicket envolve com tag em */
+    #wicketPaginacao em {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 32px; height: 32px; padding: 0 .5rem;
+      margin: 0 1px;
+      border: 1px solid #0d6efd; border-radius: .25rem;
+      font-size: .875rem; font-style: normal; font-weight: 600;
+      color: #fff; background: #0d6efd;
+    }
+    /* Prev/Next/First/Last desabilitados */
+    #wicketPaginacao a[disabled],
+    #wicketPaginacao a.wicket_disabled {
+      pointer-events: none; opacity: .45;
+    }
   </style>
 </head>
 <body>
@@ -54,17 +84,31 @@
         </nav>
         <h2 class="h4 mb-0">Listagem de Clientes</h2>
       </div>
+      <div class="d-flex gap-4 text-center">
+        <div>
+          <div class="fw-bold fs-4 text-primary" wicket:id="totalClientes">0</div>
+          <small class="text-muted">clientes</small>
+        </div>
+        <div>
+          <div class="fw-bold fs-4 text-success" wicket:id="totalAtivos">0</div>
+          <small class="text-muted">ativos</small>
+        </div>
+      </div>
     </div>
 
     <!-- Search bar (centralizada) -->
     <div class="page-card p-3 p-md-4 mb-3">
-      <form class="d-flex justify-content-center" role="search" onsubmit="return false;">
+      <form wicket:id="formBusca" class="d-flex justify-content-center">
         <div class="search-wrap w-100">
-          <label for="campoBusca" class="form-label small text-muted mb-1">Buscar cliente</label>
+          <label class="form-label small text-muted mb-1">Buscar cliente</label>
           <div class="input-group">
             <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-            <input id="campoBusca" type="search" class="form-control" placeholder="Nome, Razão Social, CPF, CNPJ ou e-mail…">
-            <button class="btn btn-primary" type="submit">Buscar</button>
+            <input type="text" class="form-control" wicket:id="campoBusca" placeholder="Nome, Razão Social, CPF, CNPJ ou e-mail…">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i>Buscar</button>
+            <button class="btn btn-outline-secondary" type="button"
+                    data-bs-toggle="modal" data-bs-target="#modalFiltros">
+              <i class="bi bi-funnel me-1"></i>Filtros
+            </button>
           </div>
           <div class="empty-hint mt-2 text-center">A busca considera Pessoa Física e Pessoa Jurídica.</div>
         </div>
@@ -87,100 +131,29 @@
             </tr>
           </thead>
           <tbody>
-            <!-- Wicket: substituir por <tr wicket:id="listaClientes"> dentro de um ListView -->
-            <tr>
-              <td class="text-muted">1</td>
-              <td class="fw-semibold">Ana Beatriz Carvalho</td>
-              <td><span class="badge text-bg-info-subtle text-info-emphasis badge-tipo">PF</span></td>
-              <td>123.456.789-00</td>
-              <td>ana.carvalho@email.com</td>
-              <td><span class="badge text-bg-success-subtle text-success-emphasis">Sim</span></td>
-              <td class="text-end">
-                <div class="btn-group" role="group" aria-label="Ações da linha">
-                  <a href="DetalhesClientePage.html" class="btn btn-outline-secondary btn-icon" title="Detalhes / Atualizar"><i class="bi bi-pencil"></i></a>
-                  <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
-                  <button type="button" class="btn btn-outline-primary btn-icon" title="Relatório PDF"><i class="bi bi-file-earmark-pdf"></i></button>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td class="text-muted">2</td>
-              <td class="fw-semibold">Tecnologia Brasil Ltda.</td>
-              <td><span class="badge text-bg-warning-subtle text-warning-emphasis badge-tipo">PJ</span></td>
-              <td>12.345.678/0001-90</td>
-              <td>contato@tecbrasil.com.br</td>
-              <td><span class="badge text-bg-success-subtle text-success-emphasis">Sim</span></td>
-              <td class="text-end">
-                <div class="btn-group">
-                  <a href="DetalhesClientePage.html" class="btn btn-outline-secondary btn-icon" title="Detalhes / Atualizar"><i class="bi bi-pencil"></i></a>
-                  <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
-                  <button type="button" class="btn btn-outline-primary btn-icon" title="Relatório PDF"><i class="bi bi-file-earmark-pdf"></i></button>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td class="text-muted">3</td>
-              <td class="fw-semibold">Carlos Eduardo Souza</td>
-              <td><span class="badge text-bg-info-subtle text-info-emphasis badge-tipo">PF</span></td>
-              <td>987.654.321-00</td>
-              <td>carlos.souza@email.com</td>
-              <td><span class="badge text-bg-secondary-subtle text-secondary-emphasis">Não</span></td>
-              <td class="text-end">
-                <div class="btn-group">
-                  <a href="DetalhesClientePage.html" class="btn btn-outline-secondary btn-icon" title="Detalhes / Atualizar"><i class="bi bi-pencil"></i></a>
-                  <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
-                  <button type="button" class="btn btn-outline-primary btn-icon" title="Relatório PDF"><i class="bi bi-file-earmark-pdf"></i></button>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td class="text-muted">4</td>
-              <td class="fw-semibold">Indústrias Aurora S.A.</td>
-              <td><span class="badge text-bg-warning-subtle text-warning-emphasis badge-tipo">PJ</span></td>
-              <td>98.765.432/0001-10</td>
-              <td>contato@aurora.com.br</td>
-              <td><span class="badge text-bg-success-subtle text-success-emphasis">Sim</span></td>
-              <td class="text-end">
-                <div class="btn-group">
-                  <a href="DetalhesClientePage.html" class="btn btn-outline-secondary btn-icon" title="Detalhes / Atualizar"><i class="bi bi-pencil"></i></a>
-                  <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
-                  <button type="button" class="btn btn-outline-primary btn-icon" title="Relatório PDF"><i class="bi bi-file-earmark-pdf"></i></button>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td class="text-muted">5</td>
-              <td class="fw-semibold">Mariana Lopes Ferreira</td>
-              <td><span class="badge text-bg-info-subtle text-info-emphasis badge-tipo">PF</span></td>
-              <td>456.789.123-00</td>
-              <td>mariana.ferreira@email.com</td>
-              <td><span class="badge text-bg-success-subtle text-success-emphasis">Sim</span></td>
-              <td class="text-end">
-                <div class="btn-group">
-                  <a href="DetalhesClientePage.html" class="btn btn-outline-secondary btn-icon" title="Detalhes / Atualizar"><i class="bi bi-pencil"></i></a>
-                  <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
-                  <button type="button" class="btn btn-outline-primary btn-icon" title="Relatório PDF"><i class="bi bi-file-earmark-pdf"></i></button>
-                </div>
-              </td>
-            </tr>
+          <tr wicket:id="listaClientes">
+            <td class="text-muted" wicket:id="numero">1</td>
+            <td class="fw-semibold" wicket:id="nome">Nome</td>
+            <td><span class="badge badge-tipo" wicket:id="tipo">PF</span></td>
+            <td wicket:id="documento">000.000.000-00</td>
+            <td wicket:id="email">email@email.com</td>
+            <td><span class="badge" wicket:id="ativo">Sim</span></td>
+            <td class="text-end">
+              <div class="btn-group" role="group" aria-label="Ações da linha">
+                <a href="#" class="btn btn-outline-secondary btn-icon" title="Detalhes"><i class="bi bi-pencil"></i></a>
+                <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
+                <button type="button" class="btn btn-outline-primary btn-icon" title="Relatório PDF"><i class="bi bi-file-earmark-pdf"></i></button>
+              </div>
+            </td>
+          </tr>
           </tbody>
         </table>
       </div>
 
       <!-- Paginação -->
       <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 p-3 border-top">
-        <small class="text-muted">Exibindo <strong>1–5</strong> de <strong>42</strong> registros</small>
-        <nav aria-label="Paginação">
-          <ul class="pagination pagination-sm mb-0">
-            <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1"><i class="bi bi-chevron-left"></i></a></li>
-            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-            <li class="page-item"><a class="page-link" href="#">2</a></li>
-            <li class="page-item"><a class="page-link" href="#">3</a></li>
-            <li class="page-item"><a class="page-link" href="#">4</a></li>
-            <li class="page-item"><a class="page-link" href="#">5</a></li>
-            <li class="page-item"><a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a></li>
-          </ul>
-        </nav>
+        <small class="text-muted" wicket:id="contadorPagina">Exibindo registros</small>
+        <nav id="wicketPaginacao" aria-label="Paginação" wicket:id="paginacao"></nav>
       </div>
     </div>
 
@@ -306,11 +279,97 @@
     </div>
   </div>
 
-  <!-- Bootstrap bundle (somente para preview dos modais; pode ser removido na integração Wicket) -->
+  <!-- ====================================================================== -->
+  <!-- MODAL: FILTROS                                                        -->
+  <!-- ====================================================================== -->
+  <div class="modal fade" id="modalFiltros" tabindex="-1" aria-labelledby="modalFiltrosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalFiltrosLabel">
+            <i class="bi bi-funnel me-2"></i>Filtros
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+
+        <!-- O form Wicket envolve apenas o corpo e rodapé do modal. -->
+        <!-- Ao clicar "Aplicar", o Form.onSubmit() é chamado e os campos   -->
+        <!-- são atualizados via PropertyModel antes da re-renderização.     -->
+        <form wicket:id="formFiltros">
+          <div class="modal-body row g-4">
+
+            <!-- Status -->
+            <div class="col-12">
+              <label class="form-label fw-semibold">Status</label>
+              <div class="d-flex flex-wrap gap-3" wicket:id="grupoFiltroAtivo">
+                <label class="form-check">
+                  <input class="form-check-input" type="radio" wicket:id="radioAtivoTodos">
+                  <span class="form-check-label">Todos</span>
+                </label>
+                <label class="form-check">
+                  <input class="form-check-input" type="radio" wicket:id="radioAtivoAtivo">
+                  <span class="form-check-label">Ativo</span>
+                </label>
+                <label class="form-check">
+                  <input class="form-check-input" type="radio" wicket:id="radioAtivoInativo">
+                  <span class="form-check-label">Inativo</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Tipo de Pessoa -->
+            <div class="col-12">
+              <label class="form-label fw-semibold">Tipo de Pessoa</label>
+              <div class="d-flex flex-wrap gap-3" wicket:id="grupoFiltroTipo">
+                <label class="form-check">
+                  <input class="form-check-input" type="radio" wicket:id="radioTipoTodos">
+                  <span class="form-check-label">Todos</span>
+                </label>
+                <label class="form-check">
+                  <input class="form-check-input" type="radio" wicket:id="radioTipoPF">
+                  <span class="form-check-label">Pessoa Física</span>
+                </label>
+                <label class="form-check">
+                  <input class="form-check-input" type="radio" wicket:id="radioTipoPJ">
+                  <span class="form-check-label">Pessoa Jurídica</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Intervalo de data de criação -->
+            <!-- type="text" aqui pois o Wicket 7 só aceita TextField em type="text". -->
+            <!-- O Java adiciona type="date" via AttributeModifier antes de renderizar. -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Criado de</label>
+              <input type="text" class="form-control" wicket:id="dataCriacaoInicio">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Criado até</label>
+              <input type="text" class="form-control" wicket:id="dataCriacaoFim">
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <!-- Limpar: wicket:id mapeado para Button com setDefaultFormProcessing(false) -->
+            <button type="submit" wicket:id="btnLimparFiltros" class="btn btn-outline-secondary">
+              <i class="bi bi-x-circle me-1"></i>Limpar
+            </button>
+            <!-- Aplicar: submit normal, chama Form.onSubmit() -->
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check2 me-1"></i>Aplicar Filtros
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Toggle visual PF/PJ apenas para preview deste mockup.
-    // Na integração Wicket, este comportamento deve ser tratado no servidor (AjaxFormChoiceComponentUpdatingBehavior).
+    // Toggle visual PF/PJ para o modal de criar cliente.
     document.addEventListener('change', function (e) {
       if (e.target.name === 'tipoCliente') {
         const isPF = e.target.value === 'PF';

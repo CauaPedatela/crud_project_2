@@ -82,6 +82,18 @@
         </dependency>
 
         <!--
+            Apache Wicket Spring:
+            Habilita a anotação @SpringBean nas páginas Wicket.
+            Com ela, podemos injetar um Service do Spring diretamente
+            na página, sem passar pelo Controller REST.
+        -->
+        <dependency>
+            <groupId>org.apache.wicket</groupId>
+            <artifactId>wicket-spring</artifactId>
+            <version>${wicket.version}</version>
+        </dependency>
+
+        <!--
             ATENÇÃO: a versão 3.x do wicket-spring-boot-starter exige Wicket 9+.
             Como estamos em Wicket 7 (compatível com o restante do desafio),
             essa dependência está REMOVIDA por enquanto.

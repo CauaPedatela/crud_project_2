@@ -2,13 +2,19 @@ package com.crudproject.dto.endereco;
 
 import com.crudproject.model.TipoEndereco;
 
+import java.io.Serializable;
+
 //  DTO de saída para Endereço.
 //  Estrutura espelhando o EnderecoDTO (entrada), com o id sempre
 //  preenchido. Não expõe o objeto Cliente completo para evitar
 //  ciclo de serialização — o endereço sempre é retornado dentro
 //  do ClienteResponseDTO, então o cliente já está implícito.
+//  Implementa Serializable porque está dentro de ClienteResponseDTO,
+//  que precisa ser serializável para o Wicket.
 
-public class EnderecoResponseDTO {
+public class EnderecoResponseDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private Long id;
     private TipoEndereco tipo;

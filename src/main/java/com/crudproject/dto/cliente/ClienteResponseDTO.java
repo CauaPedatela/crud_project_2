@@ -3,6 +3,7 @@ package com.crudproject.dto.cliente;
 import com.crudproject.dto.endereco.EnderecoResponseDTO;
 import com.crudproject.model.TipoPessoa;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -10,8 +11,12 @@ import java.util.List;
 // DTO de saída para Cliente.
 // Inclui o id e a dataCadastro (gerados pelo banco/servidor) e
 // a lista completa de endereços já com seus ids.
+// Implementa Serializable para que o Wicket consiga salvar o estado
+// da página na sessão HTTP (necessário para a paginação funcionar).
 
-public class ClienteResponseDTO {
+public class ClienteResponseDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private Long id;
     private TipoPessoa tipoPessoa;
