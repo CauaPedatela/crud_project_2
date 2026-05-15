@@ -1,0 +1,28 @@
+<html xmlns:wicket="http://wicket.apache.org/dtds.data/wicket-xhtml1.4-strict.dtd">
+<body>
+<wicket:panel>
+
+  <div class="page-card p-3 p-md-4 mb-3">
+    <form wicket:id="formBusca" class="d-flex justify-content-center">
+      <div class="search-wrap w-100">
+        <label class="form-label small text-muted mb-1">Buscar cliente</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" wicket:id="campoBusca"
+                 placeholder="Nome, Razão Social, CPF, CNPJ ou e-mail…">
+          <button class="btn btn-primary" type="submit">
+            <i class="bi bi-search me-1"></i>Buscar
+          </button>
+          <button class="btn btn-outline-secondary" type="button"
+                  data-bs-toggle="modal" data-bs-target="#modalFiltros">
+            <i class="bi bi-funnel me-1"></i>Filtros
+          </button>
+        </div>
+        <div class="empty-hint mt-2 text-center">A busca considera Pessoa Física e Pessoa Jurídica.</div>
+      </div>
+    </form>
+  </div>
+
+</wicket:panel>
+</body>
+</html>

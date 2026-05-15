@@ -22,9 +22,7 @@
     .empty-hint { color:#8a93a2; font-size:.85rem; }
     .table-responsive { border-radius:.5rem; }
 
-    /* ===== Paginação: estiliza o HTML gerado pelo PagingNavigator do Wicket ===== */
-    /* O PagingNavigator gera spans e links dentro do nav.                         */
-    /* A página atual é envolta pela tag em (sem link). Links inativos = disabled. */
+    /* ===== Paginacao: estiliza o HTML gerado pelo PagingNavigator do Wicket ===== */
     #wicketPaginacao { display: flex; align-items: center; }
     #wicketPaginacao span { display: contents; }
     #wicketPaginacao a {
@@ -37,7 +35,6 @@
       transition: background .15s, color .15s;
     }
     #wicketPaginacao a:hover { background: #e9ecef; color: #0a58ca; }
-    /* Pagina atual — Wicket envolve com tag em */
     #wicketPaginacao em {
       display: inline-flex; align-items: center; justify-content: center;
       min-width: 32px; height: 32px; padding: 0 .5rem;
@@ -46,7 +43,6 @@
       font-size: .875rem; font-style: normal; font-weight: 600;
       color: #fff; background: #0d6efd;
     }
-    /* Prev/Next/First/Last desabilitados */
     #wicketPaginacao a[disabled],
     #wicketPaginacao a.wicket_disabled {
       pointer-events: none; opacity: .45;
@@ -73,7 +69,7 @@
   <!-- ============================ PAGE ============================== -->
   <main class="container-xl py-4">
 
-    <!-- Title + breadcrumb -->
+    <!-- Titulo + contadores do header (sempre exibem o total geral) -->
     <div class="d-flex flex-wrap align-items-end justify-content-between mb-3">
       <div>
         <nav aria-label="breadcrumb" class="mb-1">
@@ -96,68 +92,13 @@
       </div>
     </div>
 
-    <!-- Search bar (centralizada) -->
-    <div class="page-card p-3 p-md-4 mb-3">
-      <form wicket:id="formBusca" class="d-flex justify-content-center">
-        <div class="search-wrap w-100">
-          <label class="form-label small text-muted mb-1">Buscar cliente</label>
-          <div class="input-group">
-            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-            <input type="text" class="form-control" wicket:id="campoBusca" placeholder="Nome, Razão Social, CPF, CNPJ ou e-mail…">
-            <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i>Buscar</button>
-            <button class="btn btn-outline-secondary" type="button"
-                    data-bs-toggle="modal" data-bs-target="#modalFiltros">
-              <i class="bi bi-funnel me-1"></i>Filtros
-            </button>
-          </div>
-          <div class="empty-hint mt-2 text-center">A busca considera Pessoa Física e Pessoa Jurídica.</div>
-        </div>
-      </form>
-    </div>
+    <!-- BuscaPanel: barra de pesquisa + botão de filtros -->
+    <div wicket:id="buscaPanel"></div>
 
-    <!-- Table card -->
-    <div class="page-card">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle">
-          <thead>
-            <tr>
-              <th style="width:60px;">#</th>
-              <th>Nome / Razão Social</th>
-              <th style="width:110px;">Tipo</th>
-              <th>Documento</th>
-              <th>E-mail</th>
-              <th style="width:100px;">Ativo</th>
-              <th class="text-end" style="width:170px;">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-          <tr wicket:id="listaClientes">
-            <td class="text-muted" wicket:id="numero">1</td>
-            <td class="fw-semibold" wicket:id="nome">Nome</td>
-            <td><span class="badge badge-tipo" wicket:id="tipo">PF</span></td>
-            <td wicket:id="documento">000.000.000-00</td>
-            <td wicket:id="email">email@email.com</td>
-            <td><span class="badge" wicket:id="ativo">Sim</span></td>
-            <td class="text-end">
-              <div class="btn-group" role="group" aria-label="Ações da linha">
-                <a href="#" class="btn btn-outline-secondary btn-icon" title="Detalhes"><i class="bi bi-pencil"></i></a>
-                <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
-                <button type="button" class="btn btn-outline-primary btn-icon" title="Relatório PDF"><i class="bi bi-file-earmark-pdf"></i></button>
-              </div>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
+    <!-- TabelaClientesPanel: tabela filtrada + paginacao -->
+    <div wicket:id="tabelaPanel"></div>
 
-      <!-- Paginação -->
-      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 p-3 border-top">
-        <small class="text-muted" wicket:id="contadorPagina">Exibindo registros</small>
-        <nav id="wicketPaginacao" aria-label="Paginação" wicket:id="paginacao"></nav>
-      </div>
-    </div>
-
-    <!-- Footer actions -->
+    <!-- Rodapé com acoes globais -->
     <div class="footer-actions page-card mt-3 p-3 d-flex flex-wrap gap-2 justify-content-between">
       <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCriarCliente">
         <i class="bi bi-person-plus me-1"></i> Adicionar Cliente
@@ -177,8 +118,12 @@
 
   </main>
 
+  <!-- FiltrosPanel: modal de filtros (renderizado diretamente no DOM pelo setRenderBodyOnly) -->
+  <span wicket:id="filtrosPanel"></span>
+
   <!-- ====================================================================== -->
-  <!-- MODAL: CRIAR CLIENTE (PF ou PJ)                                        -->
+  <!-- MODAL: CRIAR CLIENTE (PF ou PJ) — ainda estatico, sera conectado ao    -->
+  <!-- Wicket em etapa futura                                                  -->
   <!-- ====================================================================== -->
   <div class="modal fade" id="modalCriarCliente" tabindex="-1" aria-labelledby="modalCriarClienteLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
@@ -210,8 +155,7 @@
 
             <hr class="mt-2 mb-0">
 
-            <!-- ====================== BLOCO PF ====================== -->
-            <!-- Wicket: envolver com WebMarkupContainer visível somente quando PF -->
+            <!-- Bloco PF -->
             <div class="col-12" id="blocoCriarPF">
               <h6 class="text-muted small text-uppercase mb-3">Dados — Pessoa Física</h6>
               <div class="row g-3">
@@ -238,8 +182,7 @@
               </div>
             </div>
 
-            <!-- ====================== BLOCO PJ ====================== -->
-            <!-- Wicket: envolver com WebMarkupContainer visível somente quando PJ -->
+            <!-- Bloco PJ -->
             <div class="col-12 d-none" id="blocoCriarPJ">
               <h6 class="text-muted small text-uppercase mb-3">Dados — Pessoa Jurídica</h6>
               <div class="row g-3">
@@ -279,97 +222,10 @@
     </div>
   </div>
 
-  <!-- ====================================================================== -->
-  <!-- MODAL: FILTROS                                                        -->
-  <!-- ====================================================================== -->
-  <div class="modal fade" id="modalFiltros" tabindex="-1" aria-labelledby="modalFiltrosLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="modalFiltrosLabel">
-            <i class="bi bi-funnel me-2"></i>Filtros
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-        </div>
-
-        <!-- O form Wicket envolve apenas o corpo e rodapé do modal. -->
-        <!-- Ao clicar "Aplicar", o Form.onSubmit() é chamado e os campos   -->
-        <!-- são atualizados via PropertyModel antes da re-renderização.     -->
-        <form wicket:id="formFiltros">
-          <div class="modal-body row g-4">
-
-            <!-- Status -->
-            <div class="col-12">
-              <label class="form-label fw-semibold">Status</label>
-              <div class="d-flex flex-wrap gap-3" wicket:id="grupoFiltroAtivo">
-                <label class="form-check">
-                  <input class="form-check-input" type="radio" wicket:id="radioAtivoTodos">
-                  <span class="form-check-label">Todos</span>
-                </label>
-                <label class="form-check">
-                  <input class="form-check-input" type="radio" wicket:id="radioAtivoAtivo">
-                  <span class="form-check-label">Ativo</span>
-                </label>
-                <label class="form-check">
-                  <input class="form-check-input" type="radio" wicket:id="radioAtivoInativo">
-                  <span class="form-check-label">Inativo</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Tipo de Pessoa -->
-            <div class="col-12">
-              <label class="form-label fw-semibold">Tipo de Pessoa</label>
-              <div class="d-flex flex-wrap gap-3" wicket:id="grupoFiltroTipo">
-                <label class="form-check">
-                  <input class="form-check-input" type="radio" wicket:id="radioTipoTodos">
-                  <span class="form-check-label">Todos</span>
-                </label>
-                <label class="form-check">
-                  <input class="form-check-input" type="radio" wicket:id="radioTipoPF">
-                  <span class="form-check-label">Pessoa Física</span>
-                </label>
-                <label class="form-check">
-                  <input class="form-check-input" type="radio" wicket:id="radioTipoPJ">
-                  <span class="form-check-label">Pessoa Jurídica</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Intervalo de data de criação -->
-            <!-- type="text" aqui pois o Wicket 7 só aceita TextField em type="text". -->
-            <!-- O Java adiciona type="date" via AttributeModifier antes de renderizar. -->
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Criado de</label>
-              <input type="text" class="form-control" wicket:id="dataCriacaoInicio">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Criado até</label>
-              <input type="text" class="form-control" wicket:id="dataCriacaoFim">
-            </div>
-
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <!-- Limpar: wicket:id mapeado para Button com setDefaultFormProcessing(false) -->
-            <button type="submit" wicket:id="btnLimparFiltros" class="btn btn-outline-secondary">
-              <i class="bi bi-x-circle me-1"></i>Limpar
-            </button>
-            <!-- Aplicar: submit normal, chama Form.onSubmit() -->
-            <button type="submit" class="btn btn-primary">
-              <i class="bi bi-check2 me-1"></i>Aplicar Filtros
-            </button>
-          </div>
-        </form>
-
-      </div>
-    </div>
-  </div>
-
   <!-- Bootstrap bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Toggle visual PF/PJ para o modal de criar cliente.
+    // Toggle visual PF/PJ para o modal de criar cliente
     document.addEventListener('change', function (e) {
       if (e.target.name === 'tipoCliente') {
         const isPF = e.target.value === 'PF';

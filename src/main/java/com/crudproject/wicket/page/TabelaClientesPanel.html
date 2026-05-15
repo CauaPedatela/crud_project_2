@@ -1,0 +1,48 @@
+<html xmlns:wicket="http://wicket.apache.org/dtds.data/wicket-xhtml1.4-strict.dtd">
+<body>
+<wicket:panel>
+
+  <div class="page-card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead>
+          <tr>
+            <th style="width:60px;">#</th>
+            <th>Nome / Razão Social</th>
+            <th style="width:110px;">Tipo</th>
+            <th>Documento</th>
+            <th>E-mail</th>
+            <th style="width:100px;">Ativo</th>
+            <th class="text-end" style="width:170px;">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+        <tr wicket:id="listaClientes">
+          <td class="text-muted" wicket:id="numero">1</td>
+          <td class="fw-semibold" wicket:id="nome">Nome</td>
+          <td><span class="badge badge-tipo" wicket:id="tipo">PF</span></td>
+          <td wicket:id="documento">000.000.000-00</td>
+          <td wicket:id="email">email@email.com</td>
+          <td><span class="badge" wicket:id="ativo">Sim</span></td>
+          <td class="text-end">
+            <div class="btn-group" role="group" aria-label="Ações da linha">
+              <a href="#" class="btn btn-outline-secondary btn-icon" title="Detalhes"><i class="bi bi-pencil"></i></a>
+              <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
+              <button type="button" class="btn btn-outline-primary btn-icon" title="Relatório PDF"><i class="bi bi-file-earmark-pdf"></i></button>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Contador e navegação de páginas -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 p-3 border-top">
+      <small class="text-muted" wicket:id="contadorPagina">Exibindo registros</small>
+      <nav id="wicketPaginacao" aria-label="Paginação" wicket:id="paginacao"></nav>
+    </div>
+  </div>
+
+</wicket:panel>
+</body>
+</html>

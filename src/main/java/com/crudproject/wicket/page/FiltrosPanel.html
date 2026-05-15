@@ -1,0 +1,83 @@
+<html xmlns:wicket="http://wicket.apache.org/dtds.data/wicket-xhtml1.4-strict.dtd">
+<body>
+<wicket:panel>
+
+  <div class="modal fade" id="modalFiltros" tabindex="-1"
+       aria-labelledby="modalFiltrosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalFiltrosLabel">
+            <i class="bi bi-funnel me-2"></i>Filtros
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+
+        <form wicket:id="formFiltros">
+          <div class="modal-body row g-4">
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Status</label>
+              <div class="d-flex flex-wrap gap-3" wicket:id="grupoFiltroAtivo">
+                <label class="form-check">
+                  <input class="form-check-input" type="radio" wicket:id="radioAtivoTodos">
+                  <span class="form-check-label">Todos</span>
+                </label>
+                <label class="form-check">
+                  <input class="form-check-input" type="radio" wicket:id="radioAtivoAtivo">
+                  <span class="form-check-label">Ativo</span>
+                </label>
+                <label class="form-check">
+                  <input class="form-check-input" type="radio" wicket:id="radioAtivoInativo">
+                  <span class="form-check-label">Inativo</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Tipo de Pessoa</label>
+              <div class="d-flex flex-wrap gap-3" wicket:id="grupoFiltroTipo">
+                <label class="form-check">
+                  <input class="form-check-input" type="radio" wicket:id="radioTipoTodos">
+                  <span class="form-check-label">Todos</span>
+                </label>
+                <label class="form-check">
+                  <input class="form-check-input" type="radio" wicket:id="radioTipoPF">
+                  <span class="form-check-label">Pessoa Física</span>
+                </label>
+                <label class="form-check">
+                  <input class="form-check-input" type="radio" wicket:id="radioTipoPJ">
+                  <span class="form-check-label">Pessoa Jurídica</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Criado de</label>
+              <input type="text" class="form-control" wicket:id="dataCriacaoInicio">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Criado até</label>
+              <input type="text" class="form-control" wicket:id="dataCriacaoFim">
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" wicket:id="btnLimparFiltros" class="btn btn-outline-secondary">
+              <i class="bi bi-x-circle me-1"></i>Limpar
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check2 me-1"></i>Aplicar Filtros
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+</wicket:panel>
+</body>
+</html>
