@@ -98,22 +98,14 @@
     <!-- TabelaClientesPanel: tabela filtrada + paginacao -->
     <div wicket:id="tabelaPanel"></div>
 
-    <!-- Rodapé com acoes globais -->
-    <div class="footer-actions page-card mt-3 p-3 d-flex flex-wrap gap-2 justify-content-between">
-      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCriarCliente">
-        <i class="bi bi-person-plus me-1"></i> Adicionar Cliente
-      </button>
-      <div class="d-flex flex-wrap gap-2">
-        <button type="button" class="btn btn-outline-primary">
-          <i class="bi bi-file-earmark-pdf me-1"></i> Relatório de Todos (PDF)
-        </button>
-        <button type="button" class="btn btn-outline-success">
-          <i class="bi bi-file-earmark-excel me-1"></i> Exportar Excel
-        </button>
-        <button type="button" class="btn btn-outline-secondary">
-          <i class="bi bi-upload me-1"></i> Importar Excel
-        </button>
-      </div>
+    <!-- Rodapé com botões de relatório global -->
+    <div class="footer-actions page-card mt-3 p-3 d-flex flex-wrap gap-2 justify-content-end">
+      <a href="/api/relatorios/clientes/pdf" target="_blank" class="btn btn-outline-primary">
+        <i class="bi bi-file-earmark-pdf me-1"></i> Relatório de Todos (PDF)
+      </a>
+      <a href="/api/relatorios/clientes/excel" target="_blank" class="btn btn-outline-success">
+        <i class="bi bi-file-earmark-excel me-1"></i> Exportar Excel
+      </a>
     </div>
 
   </main>
@@ -122,101 +114,32 @@
   <span wicket:id="filtrosPanel"></span>
 
   <!-- ====================================================================== -->
-  <!-- MODAL: CRIAR CLIENTE (PF ou PJ) — ainda estatico, sera conectado ao    -->
-  <!-- Wicket em etapa futura                                                  -->
+  <!-- MODAL: EMITIR RELATÓRIO POR CLIENTE (por linha da tabela)              -->
+  <!-- Os links recebem o href correto via JS antes da abertura do modal.     -->
   <!-- ====================================================================== -->
-  <div class="modal fade" id="modalCriarCliente" tabindex="-1" aria-labelledby="modalCriarClienteLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+  <div class="modal fade" id="modalRelatorioLista" tabindex="-1"
+       aria-labelledby="modalRelatorioListaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="modalCriarClienteLabel">
-            <i class="bi bi-person-plus me-2"></i>Novo Cliente
+          <h5 class="modal-title" id="modalRelatorioListaLabel">
+            <i class="bi bi-file-earmark-text me-2"></i>Emitir Relatório
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
         </div>
-
         <div class="modal-body">
-          <form id="formCriarCliente" class="row g-3" onsubmit="return false;">
-
-            <!-- Radio PF / PJ -->
-            <div class="col-12">
-              <label class="form-label fw-semibold">Tipo de Cliente</label>
-              <div class="d-flex flex-wrap gap-3">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="tipoCliente" id="tipoPF" value="PF" checked>
-                  <label class="form-check-label" for="tipoPF">Pessoa Física (PF)</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="tipoCliente" id="tipoPJ" value="PJ">
-                  <label class="form-check-label" for="tipoPJ">Pessoa Jurídica (PJ)</label>
-                </div>
-              </div>
-            </div>
-
-            <hr class="mt-2 mb-0">
-
-            <!-- Bloco PF -->
-            <div class="col-12" id="blocoCriarPF">
-              <h6 class="text-muted small text-uppercase mb-3">Dados — Pessoa Física</h6>
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <label for="pfEmail" class="form-label">E-mail</label>
-                  <input type="email" class="form-control" id="pfEmail" placeholder="cliente@email.com">
-                </div>
-                <div class="col-md-6">
-                  <label for="pfNome" class="form-label">Nome completo</label>
-                  <input type="text" class="form-control" id="pfNome" placeholder="Nome completo">
-                </div>
-                <div class="col-md-4">
-                  <label for="pfCpf" class="form-label">CPF</label>
-                  <input type="text" class="form-control" id="pfCpf" placeholder="000.000.000-00">
-                </div>
-                <div class="col-md-4">
-                  <label for="pfRg" class="form-label">RG</label>
-                  <input type="text" class="form-control" id="pfRg" placeholder="00.000.000-0">
-                </div>
-                <div class="col-md-4">
-                  <label for="pfNasc" class="form-label">Data de Nascimento</label>
-                  <input type="date" class="form-control" id="pfNasc">
-                </div>
-              </div>
-            </div>
-
-            <!-- Bloco PJ -->
-            <div class="col-12 d-none" id="blocoCriarPJ">
-              <h6 class="text-muted small text-uppercase mb-3">Dados — Pessoa Jurídica</h6>
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <label for="pjEmail" class="form-label">E-mail</label>
-                  <input type="email" class="form-control" id="pjEmail" placeholder="contato@empresa.com.br">
-                </div>
-                <div class="col-md-6">
-                  <label for="pjCnpj" class="form-label">CNPJ</label>
-                  <input type="text" class="form-control" id="pjCnpj" placeholder="00.000.000/0000-00">
-                </div>
-                <div class="col-md-8">
-                  <label for="pjRazao" class="form-label">Razão Social</label>
-                  <input type="text" class="form-control" id="pjRazao" placeholder="Razão Social">
-                </div>
-                <div class="col-md-4">
-                  <label for="pjIe" class="form-label">Inscrição Estadual (IE)</label>
-                  <input type="text" class="form-control" id="pjIe" placeholder="000.000.000.000">
-                </div>
-                <div class="col-md-4">
-                  <label for="pjCriacao" class="form-label">Data de Criação</label>
-                  <input type="date" class="form-control" id="pjCriacao">
-                </div>
-              </div>
-            </div>
-
-          </form>
+          <p class="text-muted small mb-3">Selecione o formato para o cliente selecionado:</p>
+          <div class="d-grid gap-2">
+            <a id="linkRelatorioPdfLista" href="#" class="btn btn-outline-danger" target="_blank">
+              <i class="bi bi-file-earmark-pdf me-2"></i>Gerar PDF
+            </a>
+            <a id="linkRelatorioExcelLista" href="#" class="btn btn-outline-success" target="_blank">
+              <i class="bi bi-file-earmark-excel me-2"></i>Exportar Excel
+            </a>
+          </div>
         </div>
-
         <div class="modal-footer">
-          <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" form="formCriarCliente" class="btn btn-primary">
-            <i class="bi bi-check2 me-1"></i>Salvar Cliente
-          </button>
+          <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Fechar</button>
         </div>
       </div>
     </div>
@@ -225,14 +148,15 @@
   <!-- Bootstrap bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Toggle visual PF/PJ para o modal de criar cliente
-    document.addEventListener('change', function (e) {
-      if (e.target.name === 'tipoCliente') {
-        const isPF = e.target.value === 'PF';
-        document.getElementById('blocoCriarPF').classList.toggle('d-none', !isPF);
-        document.getElementById('blocoCriarPJ').classList.toggle('d-none',  isPF);
-      }
-    });
+    // Abre o modal de relatório e ajusta os links de PDF e Excel para o cliente correto.
+    // Chamado pelo onclick do botão "Relatório" em cada linha da tabela.
+    function abrirModalRelatorio(id) {
+      document.getElementById('linkRelatorioPdfLista').href =
+        '/api/relatorios/cliente/detalhes/pdf?id=' + id;
+      document.getElementById('linkRelatorioExcelLista').href =
+        '/api/relatorios/cliente/detalhes/excel?id=' + id;
+      new bootstrap.Modal(document.getElementById('modalRelatorioLista')).show();
+    }
   </script>
 </body>
 </html>

@@ -19,17 +19,13 @@
         <tbody>
         <tr wicket:id="listaClientes">
           <td class="text-muted" wicket:id="numero">1</td>
-          <td class="fw-semibold" wicket:id="nome">Nome</td>
+          <td class="fw-semibold"><a wicket:id="linkNome" class="text-decoration-none text-dark"><span wicket:id="nomeTexto">Nome</span></a></td>
           <td><span class="badge badge-tipo" wicket:id="tipo">PF</span></td>
           <td wicket:id="documento">000.000.000-00</td>
           <td wicket:id="email">email@email.com</td>
           <td><span class="badge" wicket:id="ativo">Sim</span></td>
           <td class="text-end">
-            <div class="btn-group" role="group" aria-label="Ações da linha">
-              <a href="#" class="btn btn-outline-secondary btn-icon" title="Detalhes"><i class="bi bi-pencil"></i></a>
-              <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
-              <button type="button" class="btn btn-outline-primary btn-icon" title="Relatório PDF"><i class="bi bi-file-earmark-pdf"></i></button>
-            </div>
+            <button type="button" wicket:id="btnRelatorio" class="btn btn-outline-primary btn-icon" title="Relatório"><i class="bi bi-file-earmark-pdf"></i></button>
           </td>
         </tr>
         </tbody>

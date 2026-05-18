@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" xmlns:wicket="http://wicket.apache.org/dtds.data/wicket-xhtml1.4-strict.dtd">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,12 +12,8 @@
     body { background-color: #f6f7f9; }
     .app-header { background:#fff; border-bottom:1px solid #e6e8ec; }
     .page-card { background:#fff; border:1px solid #e6e8ec; border-radius:.5rem; }
-    .table thead th { font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:#5b6573; background:#f9fafb; border-bottom:1px solid #e6e8ec; }
-    .table td { vertical-align: middle; }
-    .btn-icon { width:34px; height:34px; padding:0; display:inline-flex; align-items:center; justify-content:center; }
     .field-label { font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; color:#6b7280; margin-bottom:.15rem; }
     .field-value { font-size:1rem; color:#111827; font-weight:500; }
-    .field-value.empty { color:#9aa3b2; font-weight:400; font-style:italic; }
     .section-title { font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:#6b7280; }
     .avatar { width:48px; height:48px; border-radius:50%; background:#eef2ff; color:#3949ab; display:inline-flex; align-items:center; justify-content:center; font-weight:600; font-size:1.05rem; }
   </style>
@@ -32,7 +28,7 @@
         <h1 class="h5 mb-0">Gestão de Clientes</h1>
       </div>
       <nav class="d-none d-md-flex gap-3 small">
-        <a href="ListagemClientesPage.html" class="text-decoration-none fw-semibold">Clientes</a>
+        <a wicket:id="linkNavClientes" class="text-decoration-none fw-semibold">Clientes</a>
         <a href="#" class="text-decoration-none text-muted">Relatórios</a>
         <a href="#" class="text-decoration-none text-muted">Configurações</a>
       </nav>
@@ -42,111 +38,80 @@
   <!-- ============================ PAGE ============================== -->
   <main class="container-xl py-4">
 
-    <!-- Title + breadcrumb -->
+    <!-- Título + breadcrumb + botões de ação -->
     <div class="d-flex flex-wrap align-items-end justify-content-between mb-3 gap-2">
       <div>
         <nav aria-label="breadcrumb" class="mb-1">
           <ol class="breadcrumb small mb-0">
-            <li class="breadcrumb-item"><a href="ListagemClientesPage.html" class="text-decoration-none">Clientes</a></li>
+            <li class="breadcrumb-item"><a wicket:id="linkBreadcrumb" class="text-decoration-none">Clientes</a></li>
             <li class="breadcrumb-item active" aria-current="page">Detalhes</li>
           </ol>
         </nav>
         <h2 class="h4 mb-0">Detalhes do Cliente</h2>
       </div>
-      <div class="d-flex gap-2">
-        <a href="ListagemClientesPage.html" class="btn btn-outline-secondary">
+      <div class="d-flex gap-2 flex-wrap">
+        <a wicket:id="linkVoltar" class="btn btn-outline-secondary">
           <i class="bi bi-arrow-left me-1"></i>Voltar
         </a>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalEditarCliente">
-          <i class="bi bi-pencil me-1"></i>Editar Cliente
+        <button type="button" class="btn btn-outline-primary"
+                data-bs-toggle="modal" data-bs-target="#modalRelatorio">
+          <i class="bi bi-file-earmark-text me-1"></i>Relatório
         </button>
       </div>
     </div>
 
     <!-- ================================================================ -->
-    <!-- CARD: Dados do cliente (somente leitura)                          -->
+    <!-- CARD: Dados do cliente                                            -->
     <!-- ================================================================ -->
     <div class="page-card p-4 mb-3">
 
       <div class="d-flex align-items-center gap-3 mb-4">
-        <div class="avatar">AB</div>
+        <div class="avatar" wicket:id="avatarIniciais">AB</div>
         <div class="flex-grow-1">
           <div class="d-flex flex-wrap align-items-center gap-2">
-            <h3 class="h5 mb-0">Ana Beatriz Carvalho</h3>
-            <span class="badge text-bg-info-subtle text-info-emphasis">PF</span>
-            <span class="badge text-bg-success-subtle text-success-emphasis">Ativo</span>
+            <h3 class="h5 mb-0" wicket:id="nomeCliente">Nome</h3>
+            <span class="badge" wicket:id="badgeTipo">PF</span>
+            <span class="badge" wicket:id="badgeAtivo">Ativo</span>
           </div>
-          <div class="text-muted small">Cliente #1 · cadastrado em 12/03/2024</div>
+          <div class="text-muted small" wicket:id="infoCliente">Cliente #1</div>
         </div>
       </div>
 
-      <!-- ===================== BLOCO PF (leitura) ===================== -->
-      <!-- Wicket: WebMarkupContainer visível quando tipo == PF -->
-      <div id="leituraPF">
-        <div class="section-title mb-2">Dados — Pessoa Física</div>
-        <div class="row g-4">
-          <div class="col-sm-6 col-lg-4">
-            <div class="field-label">Nome</div>
-            <div class="field-value">Ana Beatriz Carvalho</div>
-          </div>
-          <div class="col-sm-6 col-lg-4">
-            <div class="field-label">E-mail</div>
-            <div class="field-value">ana.carvalho@email.com</div>
-          </div>
-          <div class="col-sm-6 col-lg-4">
-            <div class="field-label">Ativo</div>
-            <div class="field-value">Sim</div>
-          </div>
-          <div class="col-sm-6 col-lg-4">
-            <div class="field-label">CPF</div>
-            <div class="field-value">123.456.789-00</div>
-          </div>
-          <div class="col-sm-6 col-lg-4">
-            <div class="field-label">RG</div>
-            <div class="field-value">12.345.678-9</div>
-          </div>
-          <div class="col-sm-6 col-lg-4">
-            <div class="field-label">Data de Nascimento</div>
-            <div class="field-value">15/04/1990</div>
-          </div>
+      <!-- Bloco unificado PF/PJ: nomes e valores são Labels dinâmicos -->
+      <div class="row g-4">
+        <div class="col-sm-6 col-lg-4">
+          <div class="field-label" wicket:id="labelNome">Nome</div>
+          <div class="field-value" wicket:id="valorNome">—</div>
         </div>
-      </div>
-
-      <!-- ===================== BLOCO PJ (leitura) ===================== -->
-      <!-- Wicket: WebMarkupContainer visível quando tipo == PJ -->
-      <div id="leituraPJ" class="d-none">
-        <div class="section-title mb-2">Dados — Pessoa Jurídica</div>
-        <div class="row g-4">
-          <div class="col-sm-6 col-lg-4">
-            <div class="field-label">Razão Social</div>
-            <div class="field-value">Tecnologia Brasil Ltda.</div>
-          </div>
-          <div class="col-sm-6 col-lg-4">
-            <div class="field-label">E-mail</div>
-            <div class="field-value">contato@tecbrasil.com.br</div>
-          </div>
-          <div class="col-sm-6 col-lg-4">
-            <div class="field-label">Ativo</div>
-            <div class="field-value">Sim</div>
-          </div>
-          <div class="col-sm-6 col-lg-4">
-            <div class="field-label">CNPJ</div>
-            <div class="field-value">12.345.678/0001-90</div>
-          </div>
-          <div class="col-sm-6 col-lg-4">
-            <div class="field-label">Inscrição Estadual</div>
-            <div class="field-value">123.456.789.000</div>
-          </div>
-          <div class="col-sm-6 col-lg-4">
-            <div class="field-label">Data de Criação</div>
-            <div class="field-value">07/08/2010</div>
-          </div>
+        <div class="col-sm-6 col-lg-4">
+          <div class="field-label">E-mail</div>
+          <div class="field-value" wicket:id="valorEmail">—</div>
+        </div>
+        <div class="col-sm-6 col-lg-4">
+          <div class="field-label">Ativo</div>
+          <div class="field-value" wicket:id="valorAtivo">—</div>
+        </div>
+        <div class="col-sm-6 col-lg-4">
+          <div class="field-label" wicket:id="labelDocumento">CPF / CNPJ</div>
+          <div class="field-value" wicket:id="valorDocumento">—</div>
+        </div>
+        <div class="col-sm-6 col-lg-4">
+          <div class="field-label" wicket:id="labelIdentificacao">RG / IE</div>
+          <div class="field-value" wicket:id="valorIdentificacao">—</div>
+        </div>
+        <div class="col-sm-6 col-lg-4">
+          <div class="field-label" wicket:id="labelData">Data</div>
+          <div class="field-value" wicket:id="valorData">—</div>
+        </div>
+        <div class="col-sm-6 col-lg-4">
+          <div class="field-label">Telefone</div>
+          <div class="field-value" wicket:id="valorTelefone">—</div>
         </div>
       </div>
     </div>
 
     <!-- ================================================================ -->
-    <!-- CARD: Endereços                                                   -->
+    <!-- CARD: Endereços (apenas visualização)                             -->
     <!-- ================================================================ -->
     <div class="page-card">
       <div class="d-flex align-items-center justify-content-between p-3 border-bottom">
@@ -156,75 +121,53 @@
         </div>
       </div>
 
-      <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle">
-          <thead>
-            <tr>
-              <th style="width:60px;">#</th>
-              <th>Logradouro</th>
-              <th style="width:90px;">Número</th>
-              <th>Bairro</th>
-              <th>Cidade / UF</th>
-              <th>CEP</th>
-              <th style="width:100px;">Principal</th>
-              <th class="text-end" style="width:120px;">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Wicket: substituir por <tr wicket:id="listaEnderecos"> dentro de um ListView -->
-            <tr>
-              <td class="text-muted">1</td>
-              <td class="fw-semibold">Rua das Acácias</td>
-              <td>250</td>
-              <td>Jardim Botânico</td>
-              <td>Curitiba / PR</td>
-              <td>80210-100</td>
-              <td><span class="badge text-bg-primary-subtle text-primary-emphasis">Sim</span></td>
-              <td class="text-end">
-                <div class="btn-group">
-                  <button type="button" class="btn btn-outline-secondary btn-icon" title="Atualizar" data-bs-toggle="modal" data-bs-target="#modalEditarEndereco"><i class="bi bi-pencil"></i></button>
-                  <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td class="text-muted">2</td>
-              <td class="fw-semibold">Avenida Sete de Setembro</td>
-              <td>1402</td>
-              <td>Centro</td>
-              <td>Curitiba / PR</td>
-              <td>80060-070</td>
-              <td><span class="badge text-bg-secondary-subtle text-secondary-emphasis">Não</span></td>
-              <td class="text-end">
-                <div class="btn-group">
-                  <button type="button" class="btn btn-outline-secondary btn-icon" title="Atualizar" data-bs-toggle="modal" data-bs-target="#modalEditarEndereco"><i class="bi bi-pencil"></i></button>
-                  <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td class="text-muted">3</td>
-              <td class="fw-semibold">Rua XV de Novembro</td>
-              <td>980</td>
-              <td>Centro</td>
-              <td>Curitiba / PR</td>
-              <td>80020-310</td>
-              <td><span class="badge text-bg-secondary-subtle text-secondary-emphasis">Não</span></td>
-              <td class="text-end">
-                <div class="btn-group">
-                  <button type="button" class="btn btn-outline-secondary btn-icon" title="Atualizar" data-bs-toggle="modal" data-bs-target="#modalEditarEndereco"><i class="bi bi-pencil"></i></button>
-                  <button type="button" class="btn btn-outline-danger btn-icon" title="Deletar"><i class="bi bi-trash"></i></button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="p-3 d-flex flex-column gap-2">
+        <!-- ListView: este <div> é repetido uma vez para cada endereço -->
+        <div wicket:id="listaEnderecos" class="rounded border p-3">
 
-      <div class="p-3 border-top d-flex justify-content-end">
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCriarEndereco">
-          <i class="bi bi-plus-lg me-1"></i>Novo Endereço
-        </button>
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex gap-2 flex-wrap">
+              <span class="badge" wicket:id="endTipo">RESIDENCIAL</span>
+              <span class="badge" wicket:id="endPrincipal">Principal</span>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-sm-6 col-lg-4">
+              <div class="field-label">Logradouro</div>
+              <div class="field-value" wicket:id="endLogradouro">—</div>
+            </div>
+            <div class="col-sm-3 col-lg-2">
+              <div class="field-label">Número</div>
+              <div class="field-value" wicket:id="endNumeroEndereco">—</div>
+            </div>
+            <div class="col-sm-3 col-lg-3">
+              <div class="field-label">Complemento</div>
+              <div class="field-value" wicket:id="endComplemento">—</div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+              <div class="field-label">Bairro</div>
+              <div class="field-value" wicket:id="endBairro">—</div>
+            </div>
+            <div class="col-sm-4 col-lg-3">
+              <div class="field-label">Cidade</div>
+              <div class="field-value" wicket:id="endCidade">—</div>
+            </div>
+            <div class="col-sm-2 col-lg-1">
+              <div class="field-label">UF</div>
+              <div class="field-value" wicket:id="endEstado">—</div>
+            </div>
+            <div class="col-sm-3 col-lg-2">
+              <div class="field-label">CEP</div>
+              <div class="field-value" wicket:id="endCep">—</div>
+            </div>
+            <div class="col-sm-3 col-lg-3">
+              <div class="field-label">País</div>
+              <div class="field-value" wicket:id="endPais">—</div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
 
@@ -232,244 +175,35 @@
 
 
   <!-- ====================================================================== -->
-  <!-- MODAL: EDITAR CLIENTE (PF ou PJ)                                       -->
-  <!-- CPF e CNPJ NÃO são editáveis                                           -->
+  <!-- MODAL: RELATÓRIO DO CLIENTE (PDF ou Excel)                             -->
+  <!-- Os href são gerados dinamicamente pelo Wicket (WebMarkupContainer)     -->
   <!-- ====================================================================== -->
-  <div class="modal fade" id="modalEditarCliente" tabindex="-1" aria-labelledby="modalEditarClienteLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+  <div class="modal fade" id="modalRelatorio" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="modalEditarClienteLabel">
-            <i class="bi bi-pencil-square me-2"></i>Editar Cliente
+          <h5 class="modal-title">
+            <i class="bi bi-file-earmark-text me-2"></i>Emitir Relatório
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
         </div>
-
-        <div class="modal-body">
-          <form id="formEditarCliente" class="row g-3" onsubmit="return false;">
-
-            <!-- ===================== BLOCO PF (edição) ===================== -->
-            <div class="col-12" id="editarPF">
-              <h6 class="text-muted small text-uppercase mb-3">Editar — Pessoa Física</h6>
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <label for="editPfEmail" class="form-label">E-mail</label>
-                  <input type="email" class="form-control" id="editPfEmail" value="ana.carvalho@email.com">
-                </div>
-                <div class="col-md-6">
-                  <label for="editPfNome" class="form-label">Nome completo</label>
-                  <input type="text" class="form-control" id="editPfNome" value="Ana Beatriz Carvalho">
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">CPF <small class="text-muted">(não editável)</small></label>
-                  <input type="text" class="form-control" value="123.456.789-00" readonly disabled>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label d-block">Ativo</label>
-                  <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="editPfAtivo" checked>
-                    <label class="form-check-label" for="editPfAtivo">Cliente ativo</label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- ===================== BLOCO PJ (edição) ===================== -->
-            <div class="col-12 d-none" id="editarPJ">
-              <h6 class="text-muted small text-uppercase mb-3">Editar — Pessoa Jurídica</h6>
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <label for="editPjEmail" class="form-label">E-mail</label>
-                  <input type="email" class="form-control" id="editPjEmail" value="contato@tecbrasil.com.br">
-                </div>
-                <div class="col-md-6">
-                  <label for="editPjRazao" class="form-label">Razão Social</label>
-                  <input type="text" class="form-control" id="editPjRazao" value="Tecnologia Brasil Ltda.">
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">CNPJ <small class="text-muted">(não editável)</small></label>
-                  <input type="text" class="form-control" value="12.345.678/0001-90" readonly disabled>
-                </div>
-                <div class="col-md-3">
-                  <label for="editPjIe" class="form-label">Inscrição Estadual</label>
-                  <input type="text" class="form-control" id="editPjIe" value="123.456.789.000">
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label d-block">Ativo</label>
-                  <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="editPjAtivo" checked>
-                    <label class="form-check-label" for="editPjAtivo">Cliente ativo</label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </form>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" form="formEditarCliente" class="btn btn-primary">
-            <i class="bi bi-check2 me-1"></i>Salvar Alterações
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ====================================================================== -->
-  <!-- MODAL: CRIAR ENDEREÇO                                                  -->
-  <!-- ====================================================================== -->
-  <div class="modal fade" id="modalCriarEndereco" tabindex="-1" aria-labelledby="modalCriarEnderecoLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="modalCriarEnderecoLabel">
-            <i class="bi bi-geo-alt me-2"></i>Novo Endereço
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-        </div>
-
-        <div class="modal-body">
-          <form id="formCriarEndereco" class="row g-3" onsubmit="return false;">
-
-            <div class="col-md-3">
-              <label for="novoCep" class="form-label">CEP</label>
-              <input type="text" class="form-control" id="novoCep" placeholder="00000-000">
-            </div>
-            <div class="col-md-7">
-              <label for="novoLogradouro" class="form-label">Logradouro</label>
-              <input type="text" class="form-control" id="novoLogradouro" placeholder="Rua, Avenida, Travessa…">
-            </div>
-            <div class="col-md-2">
-              <label for="novoNumero" class="form-label">Número</label>
-              <input type="text" class="form-control" id="novoNumero" placeholder="123">
-            </div>
-
-            <div class="col-md-6">
-              <label for="novoBairro" class="form-label">Bairro</label>
-              <input type="text" class="form-control" id="novoBairro" placeholder="Bairro">
-            </div>
-            <div class="col-md-4">
-              <label for="novoCidade" class="form-label">Cidade</label>
-              <input type="text" class="form-control" id="novoCidade" placeholder="Cidade">
-            </div>
-            <div class="col-md-2">
-              <label for="novoEstado" class="form-label">Estado (UF)</label>
-              <select class="form-select" id="novoEstado">
-                <option selected disabled value="">UF</option>
-                <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
-                <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
-                <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
-                <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
-                <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
-                <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
-                <option>SP</option><option>SE</option><option>TO</option>
-              </select>
-            </div>
-
-            <div class="col-md-6">
-              <label for="novoTelefone" class="form-label">Telefone</label>
-              <input type="tel" class="form-control" id="novoTelefone" placeholder="(00) 00000-0000">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label d-block">Endereço Principal?</label>
-              <div class="d-flex gap-3 pt-2">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="novoPrincipal" id="novoPrincipalSim" value="S">
-                  <label class="form-check-label" for="novoPrincipalSim">Sim</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="novoPrincipal" id="novoPrincipalNao" value="N" checked>
-                  <label class="form-check-label" for="novoPrincipalNao">Não</label>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-12">
-              <label for="novoComplemento" class="form-label">Complemento</label>
-              <textarea class="form-control" id="novoComplemento" rows="2" placeholder="Apto, bloco, referência…"></textarea>
-            </div>
-
-          </form>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" form="formCriarEndereco" class="btn btn-primary">
-            <i class="bi bi-check2 me-1"></i>Salvar Endereço
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ====================================================================== -->
-  <!-- MODAL: EDITAR ENDEREÇO                                                 -->
-  <!-- Apenas Número, Telefone, Principal, Complemento                        -->
-  <!-- ====================================================================== -->
-  <div class="modal fade" id="modalEditarEndereco" tabindex="-1" aria-labelledby="modalEditarEnderecoLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="modalEditarEnderecoLabel">
-            <i class="bi bi-pencil-square me-2"></i>Editar Endereço
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-        </div>
-
-        <div class="modal-body">
-          <!-- Trecho somente leitura (para contexto) -->
-          <div class="alert alert-light border small mb-3">
-            <i class="bi bi-info-circle me-1 text-secondary"></i>
-            <strong>Rua das Acácias</strong>, Jardim Botânico — Curitiba/PR — CEP 80210-100
-            <div class="text-muted">Logradouro, CEP, bairro, cidade e estado não são editáveis nesta tela.</div>
+        <div class="modal-body text-center py-4">
+          <p class="text-muted mb-4">Escolha o formato do relatório deste cliente:</p>
+          <div class="d-flex justify-content-center gap-3">
+            <a wicket:id="linkRelatorioPdf" href="#" class="btn btn-outline-danger btn-lg" target="_blank">
+              <i class="bi bi-file-earmark-pdf me-2"></i>PDF
+            </a>
+            <a wicket:id="linkRelatorioExcel" href="#" class="btn btn-outline-success btn-lg" target="_blank">
+              <i class="bi bi-file-earmark-excel me-2"></i>Excel
+            </a>
           </div>
-
-          <form id="formEditarEndereco" class="row g-3" onsubmit="return false;">
-
-            <div class="col-md-3">
-              <label for="editNumero" class="form-label">Número</label>
-              <input type="text" class="form-control" id="editNumero" value="250">
-            </div>
-            <div class="col-md-5">
-              <label for="editTelefone" class="form-label">Telefone</label>
-              <input type="tel" class="form-control" id="editTelefone" value="(41) 99999-0000">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label d-block">Endereço Principal?</label>
-              <div class="d-flex gap-3 pt-2">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="editPrincipal" id="editPrincipalSim" value="S" checked>
-                  <label class="form-check-label" for="editPrincipalSim">Sim</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="editPrincipal" id="editPrincipalNao" value="N">
-                  <label class="form-check-label" for="editPrincipalNao">Não</label>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-12">
-              <label for="editComplemento" class="form-label">Complemento</label>
-              <textarea class="form-control" id="editComplemento" rows="2">Apto 302, bloco B</textarea>
-            </div>
-
-          </form>
         </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" form="formEditarEndereco" class="btn btn-primary">
-            <i class="bi bi-check2 me-1"></i>Salvar Alterações
-          </button>
+        <div class="modal-footer justify-content-center">
+          <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Fechar</button>
         </div>
       </div>
     </div>
   </div>
-
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

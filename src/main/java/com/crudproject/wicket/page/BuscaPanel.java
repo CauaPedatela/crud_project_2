@@ -20,3 +20,4 @@ public class BuscaPanel extends Panel {
         add(formBusca);
     }
 }
+

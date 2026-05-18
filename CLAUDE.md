@@ -35,22 +35,25 @@ com.crudproject
 │
 ├── dto/
 │   ├── cliente/
-│   │   ├── ClienteDTO.java        — entrada (POST/PUT)
-│   │   └── ClienteResponseDTO.java — saída (GET)
+│   │   ├── ClienteDTO.java          — entrada (POST/PUT)
+│   │   └── ClienteResponseDTO.java  — saída (GET), implements Serializable (Wicket)
 │   └── endereco/
 │       ├── EnderecoDTO.java
-│       └── EnderecoResponseDTO.java
+│       └── EnderecoResponseDTO.java  — implements Serializable (Wicket)
 │
 ├── mapper/
 │   ├── ClienteMapper.java     — DTO ↔ Entity
 │   └── EnderecoMapper.java
 │
 ├── repository/
-│   ├── ClienteRepository.java
+│   ├── ClienteRepository.java  — JpaRepository + JpaSpecificationExecutor
 │   └── EnderecoRepository.java
 │
+├── dao/
+│   └── ClienteDAO.java        — busca filtrada via JPA Specification API (WHERE dinâmico)
+│
 ├── service/
-│   ├── ClienteService.java        — orquestrador principal
+│   ├── ClienteService.java        — orquestrador principal; delega ao DAO para filtros
 │   ├── EnderecoSincronizador.java — lógica de sync no PUT
 │   ├── ReportService.java         — geração PDF e Excel
 │   └── validation/
@@ -62,11 +65,15 @@ com.crudproject
 │   └── ReportController.java
 │
 └── wicket/
-    ├── WicketApplication.java — classe principal do Wicket (homepage = ListagemClientesPage)
+    ├── WicketApplication.java — homepage = ListagemClientesPage; registra SpringComponentInjector
     ├── WicketConfig.java      — registra WicketFilter no Spring Boot para /*
     └── page/
-        ├── ListagemClientesPage.java  + .html  ← EM DESENVOLVIMENTO
-        └── DetalhesClientePage.java   + .html  ← EM DESENVOLVIMENTO
+        ├── FiltroState.java           — POJO Serializable com termo, ativo, tipo, datas
+        ├── BuscaPanel.java    + .html  — barra de pesquisa por nome/doc/email
+        ├── FiltrosPanel.java  + .html  — modal de filtros (status, tipo, data)
+        ├── TabelaClientesPanel.java + .html — tabela paginada (PageableListView, PagingNavigator)
+        ├── ListagemClientesPage.java  + .html  — ✅ PRONTO (orquestra os 3 panels)
+        └── DetalhesClientePage.java   + .html  — ✅ PRONTO (exibe cliente + endereços)
 ```
 
 ---
@@ -158,27 +165,44 @@ O Controller REST existe em paralelo e ficará disponível para a futura migraç
 
 ## Estado Atual e Próximos Passos
 
-### Feito ✅
+> **Decisão de roadmap (2026-05-18):** o frontend Wicket foi revertido para o estado de
+> **apenas visualização + relatórios**. Todas as funcionalidades de criar/editar/excluir
+> (cliente e endereço) foram removidas. O CRUD será reconstruído **passo a passo**, uma
+> operação por vez, explicando os conceitos Wicket envolvidos antes de codar.
+
+### Feito ✅ — Backend
 - Banco de dados (entidades, migrations implícitas via Hibernate)
 - Camada completa: Model → DTO → Mapper → Validator → Service → Repository
 - REST Controllers (para testes e futura integração Angular)
 - Relatórios: PDF e Excel (lista + detalhes individuais) via Jasper
-- Integração Wicket+Spring Boot (WicketApplication + WicketConfig)
-- HTML mockups das duas páginas (ListagemClientesPage, DetalhesClientePage)
-- Classes Java das páginas criadas (vazias)
+- `ClienteDAO` com busca filtrada via JPA Specification API
 
-### Pendente Wicket ⏳
-1. `ListagemClientesPage` — tabela dinâmica com dados reais do banco
-2. `ListagemClientesPage` — busca/filtro
-3. `ListagemClientesPage` — modal "Novo Cliente" funcional
-4. `ListagemClientesPage` — paginação real
-5. `DetalhesClientePage` — exibir dados do cliente
-6. `DetalhesClientePage` — modal "Editar Cliente"
-7. `DetalhesClientePage` — CRUD de endereços
-8. Botões de relatório (PDF/Excel) nas páginas
-9. Importação via Excel (endpoint + tela)
-10. `FeedbackPanel` para mensagens de sucesso/erro
-11. Confirmação de exclusão (JS confirm ou ModalWindow)
+### Feito ✅ — Frontend Wicket (visualização)
+- Integração Wicket+Spring Boot (`WicketApplication` + `WicketConfig`)
+- `ListagemClientesPage` — orquestra 3 panels + contadores no header
+  - `BuscaPanel` — barra de busca por nome/doc/email
+  - `TabelaClientesPanel` — `PageableListView` + `PagingNavigator`
+  - `FiltrosPanel` — modal de filtros (status, tipo, data)
+  - `FiltroState` — POJO `Serializable` compartilhando estado entre panels
+  - Rodapé com botões de **Relatório de Todos (PDF)** e **Exportar Excel**
+- `DetalhesClientePage` — exibe os dados do cliente e os endereços
+  - Clique no nome da lista → navega via `BookmarkablePageLink`
+  - Labels dinâmicos PF/PJ (mesmo wicket:id, valor diferente conforme o tipo)
+  - `ListView` itera os endereços (apenas leitura, sem botões de ação)
+  - Modal de **Relatório** com links `PDF` / `Excel` (`AttributeModifier.replace("href", ...)`)
+- Cada linha da tabela tem botão de **Relatório por cliente** (modal via JS)
+
+### Pendente Wicket ⏳ — CRUD a reconstruir um passo de cada vez
+A ordem de implementação não está fixada; será definida com o usuário antes de cada etapa.
+Cada item abaixo é uma sessão de trabalho independente.
+
+1. **Excluir cliente** (a partir da lista e da página de detalhes)
+2. **Editar cliente** (a partir da lista ou da página de detalhes)
+3. **Criar cliente** com pelo menos 1 endereço principal
+4. **CRUD de endereços** dentro da `DetalhesClientePage` (criar, editar, excluir)
+5. `FeedbackPanel` para mostrar exceções do backend ao usuário
+6. Avaliar refatoração para Wicket AJAX (`AjaxButton`, `target.add(...)`)
+7. Importação via Excel (endpoint + tela)
 
 ### Pendente Backend ⏳
 - Endpoint `POST /api/clientes/importar` (upload Excel)

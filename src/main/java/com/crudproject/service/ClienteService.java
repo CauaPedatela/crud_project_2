@@ -87,6 +87,7 @@ public class ClienteService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public ClienteResponseDTO buscarPorId(Long id) {
         return clienteMapper.toResponse(buscarEntidadePorId(id));
     }

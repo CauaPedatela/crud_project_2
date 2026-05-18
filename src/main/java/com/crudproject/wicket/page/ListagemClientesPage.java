@@ -1,7 +1,7 @@
 /*
- * ListagemClientesPage — página principal do sistema, ponto de entrada da listagem.
- * Orquestra os três panels: BuscaPanel, TabelaClientesPanel e FiltrosPanel.
- * Também exibe os contadores do header (sempre sobre o total geral, sem filtros).
+ * ListagemClientesPage — página principal do sistema.
+ * Orquestra os 3 panels (Busca, Tabela, Filtros) e exibe contadores no header.
+ * Apenas visualização — sem editar, excluir ou criar.
  */
 package com.crudproject.wicket.page;
 
@@ -28,6 +28,7 @@ public class ListagemClientesPage extends WebPage {
         adicionarPanels();
     }
 
+    // Contadores do topo direito — sempre sobre o total geral, ignorando filtros.
     private void adicionarContadoresHeader() {
         IModel<List<ClienteResponseDTO>> todosClientesModel =
                 new LoadableDetachableModel<List<ClienteResponseDTO>>() {
@@ -44,7 +45,7 @@ public class ListagemClientesPage extends WebPage {
             }
         }));
 
-        add (new Label("totalAtivos", new AbstractReadOnlyModel<Integer>() {
+        add(new Label("totalAtivos", new AbstractReadOnlyModel<Integer>() {
             @Override
             public Integer getObject() {
                 return (int) todosClientesModel.getObject().stream()
