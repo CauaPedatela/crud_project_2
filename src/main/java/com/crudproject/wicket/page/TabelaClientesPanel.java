@@ -14,8 +14,8 @@ import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.markup.html.list.ListItem;
+import org.apache.wicket.ajax.markup.html.navigation.paging.AjaxPagingNavigator;
 import org.apache.wicket.markup.html.list.PageableListView;
-import org.apache.wicket.markup.html.navigation.paging.PagingNavigator;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.IModel;
@@ -34,8 +34,7 @@ public class TabelaClientesPanel extends Panel {
     public TabelaClientesPanel(String id, FiltroState filtros) {
         super(id);
 
-        IModel<List<ClienteResponseDTO>> clientesFiltradosModel =
-                new LoadableDetachableModel<List<ClienteResponseDTO>>() {
+        IModel<List<ClienteResponseDTO>> clientesFiltradosModel = new LoadableDetachableModel<List<ClienteResponseDTO>>() {
                     @Override
                     protected List<ClienteResponseDTO> load() {
                         return clienteService.buscarComFiltros(
@@ -54,8 +53,7 @@ public class TabelaClientesPanel extends Panel {
             }
         }));
 
-        PageableListView<ClienteResponseDTO> listView =
-                new PageableListView<ClienteResponseDTO>("listaClientes", clientesFiltradosModel, 5) {
+        PageableListView<ClienteResponseDTO> listView = new PageableListView<ClienteResponseDTO>("listaClientes", clientesFiltradosModel, 5) {
                     @Override
                     protected void populateItem(ListItem<ClienteResponseDTO> item) {
                         ClienteResponseDTO cliente = item.getModelObject();
@@ -65,8 +63,7 @@ public class TabelaClientesPanel extends Panel {
                         // Link no nome → navega para a página de detalhes
                         PageParameters pp = new PageParameters();
                         pp.add("id", cliente.getId());
-                        BookmarkablePageLink<Void> linkNome =
-                                new BookmarkablePageLink<>("linkNome", DetalhesClientePage.class, pp);
+                        BookmarkablePageLink<Void> linkNome = new BookmarkablePageLink<>("linkNome", DetalhesClientePage.class, pp);
                         linkNome.add(new Label("nomeTexto", cliente.getNome()));
                         item.add(linkNome);
 
@@ -86,14 +83,22 @@ public class TabelaClientesPanel extends Panel {
                         item.add(ativoLabel);
 
                         // Botão de relatório → abre modal de relatório na página pai via JS
+                        WebMarkupContainer btnExcluir = new WebMarkupContainer("btnExcluir");
+                        btnExcluir.add(AttributeModifier.replace
+                                ("onclick" , "abrirModalExclusao(" + cliente.getId() + ")"));
+                        item.add(btnExcluir);
+
                         WebMarkupContainer btnRelatorio = new WebMarkupContainer("btnRelatorio");
-                        btnRelatorio.add(AttributeModifier.replace("onclick",
-                                "abrirModalRelatorio(" + cliente.getId() + ")"));
+                        btnRelatorio.add(AttributeModifier.replace
+                                ("onclick", "abrirModalRelatorio(" + cliente.getId() + ")"));
                         item.add(btnRelatorio);
                     }
                 };
 
+        // setOutputMarkupId(true) é necessário porque o AjaxPagingNavigator
+        // chama target.add(listView) ao trocar de página.
+        listView.setOutputMarkupId(true);
         add(listView);
-        add(new PagingNavigator("paginacao", listView));
+        add(new AjaxPagingNavigator("paginacao", listView));
     }
 }

@@ -1,12 +1,21 @@
 /*
  * FiltrosPanel — renderiza o modal de filtros (status, tipo de pessoa, datas).
- * Quando o usuário clica em "Aplicar", os valores são gravados em FiltroState
- * e a tabela reflete os novos critérios. O botão "Limpar" reseta tudo para "todos".
+ *
+ * Botão "Aplicar Filtros" (AjaxButton):
+ *   - Wicket grava os valores do form em FiltroState (via PropertyModel),
+ *   - target.add(tabelaParaAtualizar) re-renderiza só a tabela,
+ *   - target.appendJavaScript(...) fecha o modal sem recarregar a página.
+ *
+ * Botão "Limpar" (AjaxButton com setDefaultFormProcessing(false)):
+ *   - Não grava os campos do form (descarta o input pendente),
+ *   - Reseta FiltroState manualmente,
+ *   - Re-renderiza form (para os campos mostrarem os valores limpos) + tabela.
  */
 package com.crudproject.wicket.page;
 
 import org.apache.wicket.AttributeModifier;
-import org.apache.wicket.markup.html.form.Button;
+import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.Radio;
 import org.apache.wicket.markup.html.form.RadioGroup;
@@ -17,10 +26,13 @@ import org.apache.wicket.model.PropertyModel;
 
 public class FiltrosPanel extends Panel {
 
-    public FiltrosPanel(String id, FiltroState filtros) {
+    public FiltrosPanel(String id, FiltroState filtros, TabelaClientesPanel tabelaParaAtualizar) {
         super(id);
 
         Form<?> formFiltros = new Form<Void>("formFiltros");
+        // O setOutputMarkupId(true) é necessário porque o botão "Limpar" chama
+        // target.add(formFiltros) para reexibir os campos com os valores resetados.
+        formFiltros.setOutputMarkupId(true);
 
         RadioGroup<String> grupoAtivo = new RadioGroup<>("grupoFiltroAtivo", PropertyModel.<String>of(filtros, "filtroAtivo"));
         grupoAtivo.add(new Radio<>("radioAtivoTodos",   Model.of("todos")));
@@ -42,15 +54,28 @@ public class FiltrosPanel extends Panel {
         campoDataFim.add(AttributeModifier.replace("type", "date"));
         formFiltros.add(campoDataFim);
 
-        formFiltros.add(new Button("btnLimparFiltros") {
+        // Limpar: reseta os filtros e re-renderiza form + tabela (modal continua aberto).
+        formFiltros.add(new AjaxButton("btnLimparFiltros", formFiltros) {
             @Override
-            public void onSubmit() {
+            protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
                 filtros.setFiltroAtivo("todos");
                 filtros.setFiltroTipo("todos");
                 filtros.setDataCriacaoInicio("");
                 filtros.setDataCriacaoFim("");
+                target.add(formFiltros, tabelaParaAtualizar);
             }
         }.setDefaultFormProcessing(false));
+
+        // Aplicar: re-renderiza tabela e fecha o modal via JS.
+        formFiltros.add(new AjaxButton("btnAplicarFiltros", formFiltros) {
+            @Override
+            protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
+                target.add(tabelaParaAtualizar);
+                target.appendJavaScript(
+                        "var m = bootstrap.Modal.getInstance(document.getElementById('modalFiltros'));" +
+                        "if (m) m.hide();");
+            }
+        });
 
         add(formFiltros);
     }
