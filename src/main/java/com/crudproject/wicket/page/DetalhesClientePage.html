@@ -38,6 +38,9 @@
   <!-- ============================ PAGE ============================== -->
   <main class="container-xl py-4">
 
+    <!-- Mensagens de sucesso/erro (alimentadas pelo FeedbackPanel via info()/error() no Java) -->
+    <div wicket:id="feedback"></div>
+
     <!-- Título + breadcrumb + botões de ação -->
     <div class="d-flex flex-wrap align-items-end justify-content-between mb-3 gap-2">
       <div>
@@ -57,13 +60,17 @@
                 data-bs-toggle="modal" data-bs-target="#modalRelatorio">
           <i class="bi bi-file-earmark-text me-1"></i>Relatório
         </button>
+        <!-- Botão Editar: data-* gerados via Behavior no Java, onclick definido lá também -->
+        <button type="button" wicket:id="btnEditarCliente" class="btn btn-primary">
+          <i class="bi bi-pencil-square me-1"></i>Editar
+        </button>
       </div>
     </div>
 
     <!-- ================================================================ -->
-    <!-- CARD: Dados do cliente                                            -->
+    <!-- CARD: Dados do cliente (re-renderizável via AJAX após editar)     -->
     <!-- ================================================================ -->
-    <div class="page-card p-4 mb-3">
+    <div wicket:id="cardCliente" class="page-card p-4 mb-3">
 
       <div class="d-flex align-items-center gap-3 mb-4">
         <div class="avatar" wicket:id="avatarIniciais">AB</div>
@@ -205,6 +212,105 @@
     </div>
   </div>
 
+  <!-- ====================================================================== -->
+  <!-- MODAL: EDITAR CLIENTE                                                   -->
+  <!-- Mesma estrutura do modal da listagem. O Form Wicket envolve o modal.   -->
+  <!-- Aberto via JS por abrirModalEdicao(btn).                                -->
+  <!-- ====================================================================== -->
+  <form wicket:id="formEditarCliente">
+    <input type="hidden" wicket:id="hiddenEditClienteId"/>
+    <div class="modal fade" id="modalEditarCliente" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar Cliente</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+
+              <!-- Nome (apenas visual — não editável) -->
+              <div class="col-md-6">
+                <label class="form-label">
+                  <span id="editLabelNome">Nome completo</span>
+                  <span class="text-muted small">(não editável)</span>
+                </label>
+                <input type="text" class="form-control" id="editNome" disabled>
+              </div>
+
+              <!-- CPF/CNPJ (apenas visual — não editável) -->
+              <div class="col-md-6">
+                <label class="form-label">
+                  <span id="editLabelCpfCnpj">CPF</span>
+                  <span class="text-muted small">(não editável)</span>
+                </label>
+                <input type="text" class="form-control" id="editCpfCnpj" disabled>
+              </div>
+
+              <!-- E-mail (editável) -->
+              <div class="col-md-6">
+                <label class="form-label">E-mail</label>
+                <input type="text" class="form-control" wicket:id="formEmail">
+              </div>
+
+              <!-- Telefone (editável) -->
+              <div class="col-md-6">
+                <label class="form-label">Telefone</label>
+                <input type="text" class="form-control" wicket:id="formTelefone">
+              </div>
+
+              <!-- IE (editável, só visível para PJ — controlado por JS) -->
+              <div class="col-md-6" id="editCampoIeContainer" style="display:none;">
+                <label class="form-label">Inscrição Estadual</label>
+                <input type="text" class="form-control" wicket:id="formRgIe">
+              </div>
+
+              <!-- Ativo (editável) -->
+              <div class="col-12">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" wicket:id="formAtivo">
+                  <label class="form-check-label">Cliente ativo</label>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" wicket:id="btnSalvarEdicao" class="btn btn-primary">
+              <i class="bi bi-check2 me-1"></i>Salvar Alterações
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Pré-preenche o modal de edição com os data-* do botão clicado e o abre.
+    // Igual ao usado na ListagemClientesPage — mesmos ids HTML.
+    function abrirModalEdicao(btn) {
+      const isPJ = btn.dataset.tipo === 'JURIDICA';
+
+      // Visuais (não editáveis)
+      document.getElementById('editNome').value    = btn.dataset.nome    || '';
+      document.getElementById('editCpfCnpj').value = btn.dataset.cpfCnpj || '';
+
+      // Wicket (editáveis)
+      document.getElementById('editClienteId').value = btn.dataset.id;
+      document.getElementById('editEmail').value     = btn.dataset.email    || '';
+      document.getElementById('editTelefone').value  = btn.dataset.telefone || '';
+      document.getElementById('editRgIe').value      = btn.dataset.rgIe     || '';
+      document.getElementById('editAtivo').checked   = btn.dataset.ativo === 'true';
+
+      // Labels e visibilidade dinâmicos PF/PJ
+      document.getElementById('editLabelNome').textContent    = isPJ ? 'Razão Social' : 'Nome completo';
+      document.getElementById('editLabelCpfCnpj').textContent = isPJ ? 'CNPJ' : 'CPF';
+      document.getElementById('editCampoIeContainer').style.display = isPJ ? '' : 'none';
+
+      new bootstrap.Modal(document.getElementById('modalEditarCliente')).show();
+    }
+  </script>
 </body>
 </html>

@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Clientes — Listagem</title>
 
-  <!-- Bootstrap 5.3 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
@@ -47,62 +46,67 @@
     #wicketPaginacao a.wicket_disabled {
       pointer-events: none; opacity: .45;
     }
+
+    /* ===== FeedbackPanel: estiliza como alert do Bootstrap ===== */
+    .feedbackPanel { list-style: none; padding: 0; margin: 0 0 1rem 0; }
+    .feedbackPanel li { padding: .75rem 1rem; border-radius: .375rem; margin-bottom: .25rem; font-size: .9rem; }
+    .feedbackPanelERROR   { color: #842029; background-color: #f8d7da; border: 1px solid #f5c2c7; }
+    .feedbackPanelINFO    { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }
+    .feedbackPanelWARNING { color: #664d03; background-color: #fff3cd; border: 1px solid #ffecb5; }
   </style>
 </head>
 <body>
 
-  <!-- ============================ HEADER ============================ -->
-  <header class="app-header py-3">
-    <div class="container-xl d-flex align-items-center justify-content-between">
-      <div class="d-flex align-items-center gap-2">
-        <i class="bi bi-people-fill fs-4 text-primary"></i>
-        <h1 class="h5 mb-0">Gestão de Clientes</h1>
-      </div>
-      <nav class="d-none d-md-flex gap-3 small">
-        <a href="listagem-clientes.html" class="text-decoration-none fw-semibold">Clientes</a>
-        <a href="#" class="text-decoration-none text-muted">Relatórios</a>
-        <a href="#" class="text-decoration-none text-muted">Configurações</a>
+<header class="app-header py-3">
+  <div class="container-xl d-flex align-items-center justify-content-between">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-people-fill fs-4 text-primary"></i>
+      <h1 class="h5 mb-0">Gestão de Clientes</h1>
+    </div>
+    <nav class="d-none d-md-flex gap-3 small">
+      <a href="listagem-clientes.html" class="text-decoration-none fw-semibold">Clientes</a>
+      <a href="#" class="text-decoration-none text-muted">Relatórios</a>
+      <a href="#" class="text-decoration-none text-muted">Configurações</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container-xl py-4">
+
+  <div wicket:id="feedback"></div>
+
+  <div class="d-flex flex-wrap align-items-end justify-content-between mb-3">
+    <div>
+      <nav aria-label="breadcrumb" class="mb-1">
+        <ol class="breadcrumb small mb-0">
+          <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Início</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Clientes</li>
+        </ol>
       </nav>
+      <h2 class="h4 mb-0">Listagem de Clientes</h2>
     </div>
-  </header>
-
-  <!-- ============================ PAGE ============================== -->
-  <main class="container-xl py-4">
-
-    <!-- Mensagens de sucesso/erro (alimentadas pelo FeedbackPanel via info()/error() no Java) -->
-    <div wicket:id="feedback"></div>
-
-    <!-- Titulo + contadores do header (sempre exibem o total geral) -->
-    <div class="d-flex flex-wrap align-items-end justify-content-between mb-3">
+    <div class="d-flex gap-4 text-center">
       <div>
-        <nav aria-label="breadcrumb" class="mb-1">
-          <ol class="breadcrumb small mb-0">
-            <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Início</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Clientes</li>
-          </ol>
-        </nav>
-        <h2 class="h4 mb-0">Listagem de Clientes</h2>
+        <div class="fw-bold fs-4 text-primary" wicket:id="totalClientes">0</div>
+        <small class="text-muted">clientes</small>
       </div>
-      <div class="d-flex gap-4 text-center">
-        <div>
-          <div class="fw-bold fs-4 text-primary" wicket:id="totalClientes">0</div>
-          <small class="text-muted">clientes</small>
-        </div>
-        <div>
-          <div class="fw-bold fs-4 text-success" wicket:id="totalAtivos">0</div>
-          <small class="text-muted">ativos</small>
-        </div>
+      <div>
+        <div class="fw-bold fs-4 text-success" wicket:id="totalAtivos">0</div>
+        <small class="text-muted">ativos</small>
       </div>
     </div>
+  </div>
 
-    <!-- BuscaPanel: barra de pesquisa + botão de filtros -->
-    <div wicket:id="buscaPanel"></div>
+  <div wicket:id="buscaPanel"></div>
 
-    <!-- TabelaClientesPanel: tabela filtrada + paginacao -->
-    <div wicket:id="tabelaPanel"></div>
+  <div wicket:id="tabelaPanel"></div>
 
-    <!-- Rodapé com botões de relatório global -->
-    <div class="footer-actions page-card mt-3 p-3 d-flex flex-wrap gap-2 justify-content-end">
+  <div class="footer-actions page-card mt-3 p-3 d-flex flex-wrap gap-2 justify-content-between">
+    <button type="button" class="btn btn-primary"
+            data-bs-toggle="modal" data-bs-target="#modalCriarCliente">
+      <i class="bi bi-person-plus me-1"></i> Adicionar Cliente
+    </button>
+    <div class="d-flex flex-wrap gap-2">
       <a href="/api/relatorios/clientes/pdf" target="_blank" class="btn btn-outline-primary">
         <i class="bi bi-file-earmark-pdf me-1"></i> Relatório de Todos (PDF)
       </a>
@@ -110,98 +114,353 @@
         <i class="bi bi-file-earmark-excel me-1"></i> Exportar Excel
       </a>
     </div>
+  </div>
 
-  </main>
+</main>
 
-  <!-- FiltrosPanel: modal de filtros (renderizado diretamente no DOM pelo setRenderBodyOnly) -->
-  <span wicket:id="filtrosPanel"></span>
+<span wicket:id="filtrosPanel"></span>
 
-  <!-- ====================================================================== -->
-  <!-- MODAL: EMITIR RELATÓRIO POR CLIENTE (por linha da tabela)              -->
-  <!-- Os links recebem o href correto via JS antes da abertura do modal.     -->
-  <!-- ====================================================================== -->
-  <div class="modal fade" id="modalRelatorioLista" tabindex="-1"
-       aria-labelledby="modalRelatorioListaLabel" aria-hidden="true">
+<div class="modal fade" id="modalRelatorioLista" tabindex="-1"
+     aria-labelledby="modalRelatorioListaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalRelatorioListaLabel">
+          <i class="bi bi-file-earmark-text me-2"></i>Emitir Relatório
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3">Selecione o formato para o cliente selecionado:</p>
+        <div class="d-grid gap-2">
+          <a id="linkRelatorioPdfLista" href="#" class="btn btn-outline-danger" target="_blank">
+            <i class="bi bi-file-earmark-pdf me-2"></i>Gerar PDF
+          </a>
+          <a id="linkRelatorioExcelLista" href="#" class="btn btn-outline-success" target="_blank">
+            <i class="bi bi-file-earmark-excel me-2"></i>Exportar Excel
+          </a>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<form wicket:id="formExcluirCliente">
+  <input type="hidden" wicket:id="hiddenClienteId"/>
+  <div class="modal fade" id="modalConfirmarExclusao" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="modalRelatorioListaLabel">
-            <i class="bi bi-file-earmark-text me-2"></i>Emitir Relatório
-          </h5>
+        <div class="modal-header border-0 pb-0">
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
         </div>
-        <div class="modal-body">
-          <p class="text-muted small mb-3">Selecione o formato para o cliente selecionado:</p>
-          <div class="d-grid gap-2">
-            <a id="linkRelatorioPdfLista" href="#" class="btn btn-outline-danger" target="_blank">
-              <i class="bi bi-file-earmark-pdf me-2"></i>Gerar PDF
-            </a>
-            <a id="linkRelatorioExcelLista" href="#" class="btn btn-outline-success" target="_blank">
-              <i class="bi bi-file-earmark-excel me-2"></i>Exportar Excel
-            </a>
+        <div class="modal-body text-center px-5 pb-2">
+          <div class="mb-3">
+            <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size:3rem;"></i>
           </div>
+          <h5 class="fw-bold mb-1">Excluir Cliente?</h5>
+          <p class="text-muted mb-0">
+            Esta ação é irreversível. Todos os endereços vinculados também serão removidos.
+          </p>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Fechar</button>
+        <div class="modal-footer border-0 justify-content-center pb-4 gap-2">
+          <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" wicket:id="btnConfirmarExclusao" class="btn btn-danger px-4">
+            <i class="bi bi-trash me-1"></i>Confirmar Exclusão
+          </button>
         </div>
       </div>
     </div>
   </div>
+</form>
 
-  <!-- ====================================================================== -->
-  <!-- MODAL: CONFIRMAR EXCLUSÃO DO CLIENTE                                    -->
-  <!-- O <form> envolve o modal pro Wicket processar o submit do botão.       -->
-  <!-- O hidden field recebe o id via JS antes do submit.                     -->
-  <!-- ====================================================================== -->
-  <form wicket:id="formExcluirCliente">
-    <input type="hidden" wicket:id="hiddenClienteId"/>
-    <div class="modal fade" id="modalConfirmarExclusao" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header border-0 pb-0">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-          </div>
-          <div class="modal-body text-center px-5 pb-2">
-            <div class="mb-3">
-              <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size:3rem;"></i>
+<form wicket:id="formEditarCliente">
+  <input type="hidden" wicket:id="hiddenEditClienteId"/>
+  <div class="modal fade" id="modalEditarCliente" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar Cliente</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+
+            <div class="col-md-6">
+              <label class="form-label">
+                <span id="editLabelNome">Nome completo</span>
+                <span class="text-muted small">(não editável)</span>
+              </label>
+              <input type="text" class="form-control" id="editNome" disabled>
             </div>
-            <h5 class="fw-bold mb-1">Excluir Cliente?</h5>
-            <p class="text-muted mb-0">
-              Esta ação é irreversível. Todos os endereços vinculados também serão removidos.
-            </p>
+
+            <div class="col-md-6">
+              <label class="form-label">
+                <span id="editLabelCpfCnpj">CPF</span>
+                <span class="text-muted small">(não editável)</span>
+              </label>
+              <input type="text" class="form-control" id="editCpfCnpj" disabled>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">E-mail</label>
+              <input type="text" class="form-control" wicket:id="formEmail">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Telefone</label>
+              <input type="text" class="form-control" wicket:id="formTelefone">
+            </div>
+
+            <div class="col-md-6" id="editCampoIeContainer" style="display:none;">
+              <label class="form-label">Inscrição Estadual</label>
+              <input type="text" class="form-control" wicket:id="formRgIe">
+            </div>
+
+            <div class="col-12">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" wicket:id="formAtivo">
+                <label class="form-check-label">Cliente ativo</label>
+              </div>
+            </div>
+
           </div>
-          <div class="modal-footer border-0 justify-content-center pb-4 gap-2">
-            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" wicket:id="btnConfirmarExclusao" class="btn btn-danger px-4">
-              <i class="bi bi-trash me-1"></i>Confirmar Exclusão
-            </button>
-          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" wicket:id="btnSalvarEdicao" class="btn btn-primary">
+            <i class="bi bi-check2 me-1"></i>Salvar Alterações
+          </button>
         </div>
       </div>
     </div>
-  </form>
+  </div>
+</form>
 
-  <!-- Bootstrap bundle -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // Abre o modal de relatório e ajusta os links de PDF e Excel para o cliente correto.
-    // Chamado pelo onclick do botão "Relatório" em cada linha da tabela.
-    function abrirModalRelatorio(id) {
-      document.getElementById('linkRelatorioPdfLista').href =
-        '/api/relatorios/cliente/detalhes/pdf?id=' + id;
-      document.getElementById('linkRelatorioExcelLista').href =
-        '/api/relatorios/cliente/detalhes/excel?id=' + id;
-      new bootstrap.Modal(document.getElementById('modalRelatorioLista')).show();
-    }
-  </script>
-  <script>
-    // Abre o modal de confirmação de exclusão.
-    // Por enquanto ignoramos o id — na Etapa 4 vamos gravar ele num campo oculto
-    // pro Wicket conseguir saber qual cliente excluir.
-    function abrirModalExclusao(id) {
-      document.getElementById('idClienteParaExcluir').value = id;
-      new bootstrap.Modal(document.getElementById('modalConfirmarExclusao')).show();
-    }
-  </script>
+<!-- ====================================================================== -->
+<!-- MODAL: CADASTRAR NOVO CLIENTE                                          -->
+<!-- IMPORTANTE: o <div class="modal"> envolve o <form>, e NÃO o contrário. -->
+<!-- Assim o target.add(form) só substitui o conteúdo interno do modal,    -->
+<!-- preservando a instância do Bootstrap para o .hide() funcionar limpo.  -->
+<!-- ====================================================================== -->
+<div class="modal fade" id="modalCriarCliente" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <div class="modal-header bg-light">
+        <h5 class="modal-title"><i class="bi bi-person-plus-fill me-2 text-primary"></i>Cadastrar Novo Cliente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+
+      <form wicket:id="formCriarCliente">
+        <div class="modal-body">
+
+          <!-- FeedbackPanel local: mostra erros sem precisar fechar o modal -->
+          <div wicket:id="feedbackCriar"></div>
+
+          <!-- ===== Dados do Cliente ===== -->
+          <h6 class="text-uppercase text-muted mb-3"><i class="bi bi-person-badge me-2"></i>Dados do Cliente</h6>
+          <div class="row g-3">
+
+            <div class="col-md-4">
+              <label class="form-label fw-bold text-primary">Tipo de Pessoa</label>
+              <select class="form-select border-primary" wicket:id="criarTipoPessoa" onchange="alternarLabelsCriacao(this)">
+              </select>
+            </div>
+
+            <div class="col-md-8">
+              <label class="form-label" id="lblCriarNome">Nome completo</label>
+              <input type="text" class="form-control" wicket:id="criarNome" required>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label" id="lblCriarCpfCnpj">CPF</label>
+              <input type="text" class="form-control" wicket:id="criarCpfCnpj" required>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label" id="lblCriarRgIe">RG</label>
+              <input type="text" class="form-control" wicket:id="criarRgIe">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label" id="lblCriarData">Data de Nascimento</label>
+              <input type="text" class="form-control" placeholder="AAAA-MM-DD" wicket:id="criarData">
+            </div>
+
+            <div class="col-md-5">
+              <label class="form-label">E-mail</label>
+              <input type="text" class="form-control" wicket:id="criarEmail" required>
+            </div>
+
+            <div class="col-md-5">
+              <label class="form-label">Telefone</label>
+              <input type="text" class="form-control" wicket:id="criarTelefone" required>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end pb-2">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" wicket:id="criarAtivo" checked>
+                <label class="form-check-label">Ativo</label>
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- ===== Endereços (lista dinâmica) ===== -->
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="text-uppercase text-muted mb-0"><i class="bi bi-geo-alt me-2"></i>Endereços</h6>
+            <!--
+              formnovalidate: pula a validação HTML5 (required) ao clicar.
+              defaultFormProcessing=true (no Java) garante que os valores já digitados
+              sejam levados aos PropertyModels dos EnderecoDTOs antes de adicionar o novo.
+            -->
+            <button type="submit" formnovalidate wicket:id="btnAdicionarEndereco"
+                    class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-plus-lg me-1"></i>Adicionar outro endereço
+            </button>
+          </div>
+
+          <div wicket:id="containerEnderecos">
+            <!-- ListView: este bloco repete uma vez por endereço -->
+            <div wicket:id="listaEnderecosCriar" class="border rounded p-3 mb-3">
+
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">
+                  <span wicket:id="numeroEndereco">Endereço 1</span>
+                  <span wicket:id="badgePrincipal" class="badge bg-primary ms-2">Principal</span>
+                </h6>
+                <div class="d-flex gap-1">
+                  <button type="submit" formnovalidate wicket:id="btnTornarPrincipal"
+                          class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-star me-1"></i>Tornar Principal
+                  </button>
+                  <button type="submit" formnovalidate wicket:id="btnRemoverEndereco"
+                          class="btn btn-sm btn-outline-danger" title="Remover">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="row g-2">
+                <div class="col-md-3">
+                  <label class="form-label small mb-1">CEP</label>
+                  <input type="text" class="form-control form-control-sm" wicket:id="endCep">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small mb-1">Tipo</label>
+                  <select class="form-select form-select-sm" wicket:id="endTipo"></select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small mb-1">Logradouro</label>
+                  <input type="text" class="form-control form-control-sm" wicket:id="endLogradouro">
+                </div>
+
+                <div class="col-md-2">
+                  <label class="form-label small mb-1">Número</label>
+                  <input type="text" class="form-control form-control-sm" wicket:id="endNumero">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small mb-1">Complemento</label>
+                  <input type="text" class="form-control form-control-sm" wicket:id="endComplemento">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small mb-1">Bairro</label>
+                  <input type="text" class="form-control form-control-sm" wicket:id="endBairro">
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label small mb-1">Cidade</label>
+                  <input type="text" class="form-control form-control-sm" wicket:id="endCidade">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label small mb-1">UF</label>
+                  <input type="text" class="form-control form-control-sm" wicket:id="endEstado">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small mb-1">País</label>
+                  <input type="text" class="form-control form-control-sm" wicket:id="endPais">
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" wicket:id="btnSalvarNovoCliente" class="btn btn-primary px-4">
+            <i class="bi bi-check-circle me-2"></i>Cadastrar Cliente
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // Abre o modal de relatório e ajusta os links de PDF e Excel para o cliente correto.
+  // Chamado pelo onclick do botão "Relatório" em cada linha da tabela.
+  function abrirModalRelatorio(id) {
+    document.getElementById('linkRelatorioPdfLista').href =
+            '/api/relatorios/cliente/detalhes/pdf?id=' + id;
+    document.getElementById('linkRelatorioExcelLista').href =
+            '/api/relatorios/cliente/detalhes/excel?id=' + id;
+    new bootstrap.Modal(document.getElementById('modalRelatorioLista')).show();
+  }
+</script>
+
+<script>
+  // Abre o modal de confirmação de exclusão, gravando o id no hidden field
+  // para o Wicket ler quando processar o submit.
+  function abrirModalExclusao(id) {
+    document.getElementById('idClienteParaExcluir').value = id;
+    new bootstrap.Modal(document.getElementById('modalConfirmarExclusao')).show();
+  }
+</script>
+
+<script>
+  // Altera os rótulos do formulário de criação dependendo do tipo de pessoa selecionada
+  function alternarLabelsCriacao(selectElement) {
+    const isPJ = selectElement.value === 'JURIDICA';
+
+    document.getElementById('lblCriarNome').textContent    = isPJ ? 'Razão Social' : 'Nome completo';
+    document.getElementById('lblCriarCpfCnpj').textContent = isPJ ? 'CNPJ' : 'CPF';
+    document.getElementById('lblCriarRgIe').textContent    = isPJ ? 'Inscrição Estadual' : 'RG';
+    document.getElementById('lblCriarData').textContent    = isPJ ? 'Data de Fundação' : 'Data de Nascimento';
+  }
+</script>
+
+<script>
+  // Pré-preenche o modal de edição com os data-* attributes do botão clicado
+  // e o abre. Campos editáveis (com markupId conhecido) vão para inputs Wicket;
+  // nome e CPF/CNPJ são apenas visuais (inputs disabled — não chegam ao servidor).
+  function abrirModalEdicao(btn) {
+    const isPJ = btn.dataset.tipo === 'JURIDICA';
+
+    // Visuais (não editáveis)
+    document.getElementById('editNome').value    = btn.dataset.nome    || '';
+    document.getElementById('editCpfCnpj').value = btn.dataset.cpfCnpj || '';
+
+    // Wicket (editáveis)
+    document.getElementById('editClienteId').value = btn.dataset.id;
+    document.getElementById('editEmail').value     = btn.dataset.email    || '';
+    document.getElementById('editTelefone').value  = btn.dataset.telefone || '';
+    document.getElementById('editRgIe').value      = btn.dataset.rgIe     || '';
+    document.getElementById('editAtivo').checked   = btn.dataset.ativo === 'true';
+
+    // Labels e visibilidade dinâmicos PF/PJ
+    document.getElementById('editLabelNome').textContent    = isPJ ? 'Razão Social' : 'Nome completo';
+    document.getElementById('editLabelCpfCnpj').textContent = isPJ ? 'CNPJ' : 'CPF';
+    document.getElementById('editCampoIeContainer').style.display = isPJ ? '' : 'none';
+
+    new bootstrap.Modal(document.getElementById('modalEditarCliente')).show();
+  }
+</script>
 </body>
 </html>

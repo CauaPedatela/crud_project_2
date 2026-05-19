@@ -69,11 +69,11 @@ com.crudproject
     ├── WicketConfig.java      — registra WicketFilter no Spring Boot para /*
     └── page/
         ├── FiltroState.java           — POJO Serializable com termo, ativo, tipo, datas
-        ├── BuscaPanel.java    + .html  — barra de pesquisa por nome/doc/email
-        ├── FiltrosPanel.java  + .html  — modal de filtros (status, tipo, data)
-        ├── TabelaClientesPanel.java + .html — tabela paginada (PageableListView, PagingNavigator)
-        ├── ListagemClientesPage.java  + .html  — ✅ PRONTO (orquestra os 3 panels)
-        └── DetalhesClientePage.java   + .html  — ✅ PRONTO (exibe cliente + endereços)
+        ├── BuscaPanel.java    + .html  — barra de pesquisa (AjaxButton → atualiza tabela)
+        ├── FiltrosPanel.java  + .html  — modal de filtros (AjaxButton Aplicar/Limpar)
+        ├── TabelaClientesPanel.java + .html — tabela (PageableListView + AjaxPagingNavigator)
+        ├── ListagemClientesPage.java  + .html  — ✅ orquestra panels + CRUD de cliente (criar/editar/excluir)
+        └── DetalhesClientePage.java   + .html  — ✅ visualiza + edita cliente (cardCliente AJAX-atualizável)
 ```
 
 ---
@@ -165,47 +165,61 @@ O Controller REST existe em paralelo e ficará disponível para a futura migraç
 
 ## Estado Atual e Próximos Passos
 
-> **Decisão de roadmap (2026-05-18):** o frontend Wicket foi revertido para o estado de
-> **apenas visualização + relatórios**. Todas as funcionalidades de criar/editar/excluir
-> (cliente e endereço) foram removidas. O CRUD será reconstruído **passo a passo**, uma
-> operação por vez, explicando os conceitos Wicket envolvidos antes de codar.
-
 ### Feito ✅ — Backend
 - Banco de dados (entidades, migrations implícitas via Hibernate)
 - Camada completa: Model → DTO → Mapper → Validator → Service → Repository
 - REST Controllers (para testes e futura integração Angular)
 - Relatórios: PDF e Excel (lista + detalhes individuais) via Jasper
 - `ClienteDAO` com busca filtrada via JPA Specification API
+- `ClienteDAO.buscarComFiltros` ordena por `dataCadastro DESC` (cliente novo aparece no topo)
 
-### Feito ✅ — Frontend Wicket (visualização)
+### Feito ✅ — Frontend Wicket (visualização e relatórios)
 - Integração Wicket+Spring Boot (`WicketApplication` + `WicketConfig`)
 - `ListagemClientesPage` — orquestra 3 panels + contadores no header
-  - `BuscaPanel` — barra de busca por nome/doc/email
-  - `TabelaClientesPanel` — `PageableListView` + `PagingNavigator`
-  - `FiltrosPanel` — modal de filtros (status, tipo, data)
+  - `BuscaPanel` — barra de busca AJAX (`AjaxButton`)
+  - `TabelaClientesPanel` — `PageableListView` + `AjaxPagingNavigator`
+  - `FiltrosPanel` — modal de filtros AJAX (Aplicar/Limpar via `AjaxButton`)
   - `FiltroState` — POJO `Serializable` compartilhando estado entre panels
-  - Rodapé com botões de **Relatório de Todos (PDF)** e **Exportar Excel**
-- `DetalhesClientePage` — exibe os dados do cliente e os endereços
+  - Rodapé com botão **Adicionar Cliente** + **Relatório de Todos (PDF/Excel)**
+- `DetalhesClientePage` — exibe dados do cliente (via `LoadableDetachableModel` + `cardCliente` re-renderizável) e endereços (apenas leitura)
   - Clique no nome da lista → navega via `BookmarkablePageLink`
-  - Labels dinâmicos PF/PJ (mesmo wicket:id, valor diferente conforme o tipo)
-  - `ListView` itera os endereços (apenas leitura, sem botões de ação)
-  - Modal de **Relatório** com links `PDF` / `Excel` (`AttributeModifier.replace("href", ...)`)
+  - Labels dinâmicos PF/PJ via `AbstractReadOnlyModel`
+  - Modal de **Relatório** com links `PDF` / `Excel`
 - Cada linha da tabela tem botão de **Relatório por cliente** (modal via JS)
 
-### Pendente Wicket ⏳ — CRUD a reconstruir um passo de cada vez
-A ordem de implementação não está fixada; será definida com o usuário antes de cada etapa.
-Cada item abaixo é uma sessão de trabalho independente.
+### Feito ✅ — Frontend Wicket (CRUD de cliente, tudo AJAX)
+- **Excluir cliente** a partir da listagem (botão lixeira na linha) — modal de confirmação + `AjaxButton` + `target.add(tabelaPanel, contadores)`
+- **Editar cliente** a partir da listagem (botão lápis) **e** da página de detalhes (botão "Editar"):
+  - Modal pré-preenchido via `data-*` attributes + JS (`abrirModalEdicao(btn)`)
+  - Campos editáveis: email, telefone, IE (PJ), ativo
+  - Nome e CPF/CNPJ exibidos `disabled` (imutáveis após cadastro)
+  - `onSubmit` recarrega o cliente do banco pra preservar campos imutáveis + endereços
+  - Após salvar: re-renderiza `tabelaPanel`/`cardCliente`/`contadores`/`btnEditarCliente` via `target.add(...)`
+- **Criar cliente** com 1 ou mais endereços (modal "Cadastrar Novo Cliente"):
+  - Estrutura `<div class="modal">` envolvendo `<form wicket:id>` (necessário pra `target.add(form)` não quebrar o Bootstrap)
+  - `<select wicket:id="criarTipoPessoa">` com `ChoiceRenderer` customizado (display "Pessoa Física"/"Pessoa Jurídica", value `name()`)
+  - JS `alternarLabelsCriacao(select)` troca labels PF/PJ ao mudar o tipo
+  - **Lista dinâmica de endereços** via `ListView` + `containerEnderecos.setOutputMarkupId(true)`:
+    - "Adicionar outro endereço" (`AjaxButton` com `formnovalidate`)
+    - "Tornar Principal" por item — desmarca todos e marca o clicado
+    - "Remover" por item — desabilitado quando há só 1 endereço
+  - Cliente novo aparece no topo da tabela (graças ao sort do DAO)
+- **`FeedbackPanel` em dois níveis:**
+  - **Page-level** (`#feedback` no topo da página) — para sucesso/erro de excluir e editar
+  - **Modal-scoped** (`#feedbackCriar` dentro do modal de criar) com `ComponentFeedbackMessageFilter(form)` — erros aparecem dentro do modal sem fechá-lo, usuário corrige e tenta de novo
+  - CSS no `<style>` da página deixa os panels com cara de alert Bootstrap (`.feedbackPanelERROR`/`INFO`/`WARNING`)
+- **AJAX em tudo:** busca, filtros, paginação, excluir, editar, criar
 
-1. **Excluir cliente** (a partir da lista e da página de detalhes)
-2. **Editar cliente** (a partir da lista ou da página de detalhes)
-3. **Criar cliente** com pelo menos 1 endereço principal
-4. **CRUD de endereços** dentro da `DetalhesClientePage` (criar, editar, excluir)
-5. `FeedbackPanel` para mostrar exceções do backend ao usuário
-6. Avaliar refatoração para Wicket AJAX (`AjaxButton`, `target.add(...)`)
-7. Importação via Excel (endpoint + tela)
+### Pendente Wicket ⏳
+1. **CRUD de endereços** dentro de `DetalhesClientePage` (adicionar/editar/excluir endereço de cliente já existente)
+2. **Importação via Excel** (UI)
+3. **Mensagens flutuantes com auto-dismiss** (toast) — requisito do desafio
+4. Validações HTML5/jQuery (máscaras de CPF/CNPJ/CEP/telefone)
 
 ### Pendente Backend ⏳
 - Endpoint `POST /api/clientes/importar` (upload Excel)
+- Testes JUnit dos CRUDs
+- Pelo menos uma consulta HQL pura e uma SQL nativa (requisito explícito do desafio em 8.4)
 
 ### Fase futura — Angular ⏳
 - Replicar tudo em Angular 14 + Angular Material, consumindo os REST Controllers

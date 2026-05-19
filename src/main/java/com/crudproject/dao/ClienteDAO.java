@@ -4,6 +4,7 @@ import com.crudproject.model.Cliente;
 import com.crudproject.model.TipoPessoa;
 import com.crudproject.repository.ClienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
@@ -62,7 +63,8 @@ public class ClienteDAO {
             spec = spec.and(cadastradoAntesDe(dataFim));
         }
 
-        return clienteRepository.findAll(spec);
+        // Ordena por dataCadastro DESC para que clientes recém-criados apareçam no topo da listagem.
+        return clienteRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "dataCadastro"));
     }
 
     // ============================================================

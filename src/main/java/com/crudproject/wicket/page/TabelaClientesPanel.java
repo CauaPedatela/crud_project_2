@@ -82,7 +82,20 @@ public class TabelaClientesPanel extends Panel {
                                 Model.of(isAtivo ? " text-bg-success" : " text-bg-danger"), " "));
                         item.add(ativoLabel);
 
-                        // Botão de relatório → abre modal de relatório na página pai via JS
+                        // Botão lápis → abre modal de edição na página pai, passando dados via data-*
+                        WebMarkupContainer btnEditar = new WebMarkupContainer("btnEditar");
+                        btnEditar.add(AttributeModifier.replace("onclick",       "abrirModalEdicao(this)"));
+                        btnEditar.add(AttributeModifier.replace("data-id",       String.valueOf(cliente.getId())));
+                        btnEditar.add(AttributeModifier.replace("data-nome",     safe(cliente.getNome())));
+                        btnEditar.add(AttributeModifier.replace("data-email",    safe(cliente.getEmail())));
+                        btnEditar.add(AttributeModifier.replace("data-telefone", safe(cliente.getTelefone())));
+                        btnEditar.add(AttributeModifier.replace("data-ativo",    String.valueOf(Boolean.TRUE.equals(cliente.getAtivo()))));
+                        btnEditar.add(AttributeModifier.replace("data-tipo",     cliente.getTipoPessoa() != null ? cliente.getTipoPessoa().name() : "FISICA"));
+                        btnEditar.add(AttributeModifier.replace("data-cpf-cnpj", safe(cliente.getCpfCnpj())));
+                        btnEditar.add(AttributeModifier.replace("data-rg-ie",    safe(cliente.getRgInscricaoEstadual())));
+                        item.add(btnEditar);
+
+                        // Botão lixeira → abre modal de confirmação na página pai via JS
                         WebMarkupContainer btnExcluir = new WebMarkupContainer("btnExcluir");
                         btnExcluir.add(AttributeModifier.replace
                                 ("onclick" , "abrirModalExclusao(" + cliente.getId() + ")"));
@@ -100,5 +113,10 @@ public class TabelaClientesPanel extends Panel {
         listView.setOutputMarkupId(true);
         add(listView);
         add(new AjaxPagingNavigator("paginacao", listView));
+    }
+
+    // Helper para garantir que data-* attributes nunca sejam "null" (vira string vazia).
+    private static String safe(String v) {
+        return v != null ? v : "";
     }
 }
