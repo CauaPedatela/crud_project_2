@@ -2,6 +2,8 @@ package com.crudproject.dto.endereco;
 
 import com.crudproject.model.TipoEndereco;
 
+import java.io.Serializable;
+
 //  DTO unificado para Endereço — usado embedded no ClienteDTO.
 //
 //  Quando vem dentro do ClienteDTO numa requisição PUT:
@@ -11,8 +13,15 @@ import com.crudproject.model.TipoEndereco;
 //
 // Quando vem num POST:
 //    - id é sempre ignorado (o banco gera)
+//
+// Implements Serializable: o Wicket guarda este DTO como campo de página
+// (na ListagemClientesPage, dentro da lista de endereços do modal de criar).
+// Toda página Wicket é serializada na sessão entre requisições — todos os
+// objetos referenciados a partir dela precisam ser Serializable também.
 
-public class EnderecoDTO {
+public class EnderecoDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private Long id;
     private TipoEndereco tipo;

@@ -1,5 +1,8 @@
 package com.crudproject.service.validation;
 
+import br.com.caelum.stella.validation.CNPJValidator;
+import br.com.caelum.stella.validation.CPFValidator;
+import br.com.caelum.stella.validation.InvalidStateException;
 import com.crudproject.dto.cliente.ClienteDTO;
 import com.crudproject.dto.endereco.EnderecoDTO;
 import com.crudproject.model.Cliente;
@@ -13,12 +16,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 // Centraliza as validações de negócio de Cliente.
-//
-// O Service orquestra as operações (salvar, atualizar) e delega
-// as verificações de regras para esse validador. Mantém o Service
-// mais enxuto e facilita testes isolados das regras.
-// É @Component porque depende de ClienteRepository (precisa do banco
-// para checar unicidade de documento).
 
 @Component
 public class ClienteValidator {
@@ -31,41 +28,67 @@ public class ClienteValidator {
             throw new RuntimeException("Tipo de pessoa é obrigatório.");
         }
         if (dto.getNome() == null || dto.getNome().isBlank()) {
-            throw new RuntimeException("Nome é obrigatório.");
+            throw new RuntimeException("Nome/Razão Social é obrigatório.");
         }
         if (dto.getCpfCnpj() == null || dto.getCpfCnpj().isBlank()) {
             throw new RuntimeException("CPF/CNPJ é obrigatório.");
         }
-        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
-            throw new RuntimeException("E-mail é obrigatório.");
-        }
         if (dto.getAtivo() == null) {
             throw new RuntimeException("O campo ativo é obrigatório.");
         }
-    }
 
-    public void validarDocumento(String cpfCnpj, TipoPessoa tipoPessoa) {
-        String digitos = cpfCnpj.replaceAll("[^0-9]", "");
+        // Validação de E-mail
+        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
+            throw new RuntimeException("E-mail é obrigatório.");
+        }
+        // Regex simples e eficiente para validar formato de e-mail
+        if (!dto.getEmail().matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+            throw new RuntimeException("O formato do e-mail é inválido.");
+        }
 
-        if (tipoPessoa == TipoPessoa.FISICA) {
-            if (digitos.length() != 11) {
-                throw new RuntimeException("CPF deve ter 11 dígitos.");
+        // Validação de Telefone (com DDD)
+        if (dto.getTelefone() == null || dto.getTelefone().isBlank()) {
+            throw new RuntimeException("O telefone é obrigatório.");
+        }
+        // Como o Service limpou a formatação, só restam números.
+        // 10 dígitos = Fixo (ex: 6233334444) | 11 dígitos = Celular (ex: 62988887777)
+        if (dto.getTelefone().length() < 10 || dto.getTelefone().length() > 11) {
+            throw new RuntimeException("O telefone deve conter 10 ou 11 dígitos (incluindo o DDD).");
+        }
+
+        // Validação dinâmica do RG ou Inscrição Estadual
+        if (dto.getTipoPessoa() == TipoPessoa.FISICA) {
+            if (dto.getRgInscricaoEstadual() == null || dto.getRgInscricaoEstadual().isBlank()) {
+                throw new RuntimeException("O RG é obrigatório para Pessoa Física.");
             }
-            if (!DocumentoUtil.isCpfValido(digitos)) {
-                throw new RuntimeException("CPF inválido.");
-            }
-        } else {
-            if (digitos.length() != 14) {
-                throw new RuntimeException("CNPJ deve ter 14 dígitos.");
-            }
-            if (!DocumentoUtil.isCnpjValido(digitos)) {
-                throw new RuntimeException("CNPJ inválido.");
+        } else if (dto.getTipoPessoa() == TipoPessoa.JURIDICA) {
+            if (dto.getRgInscricaoEstadual() == null || dto.getRgInscricaoEstadual().isBlank()) {
+                throw new RuntimeException("A Inscrição Estadual é obrigatória para Pessoa Jurídica.");
             }
         }
     }
 
-    public void validarUnicidadeDocumento(String cpfCnpj, Long idAtual) {
-        Optional<Cliente> existente = clienteRepository.findByCpfCnpj(cpfCnpj);
+    public void validarDocumento(String cpfCnpjLimpo, TipoPessoa tipoPessoa) {
+        // Como o Service já chamou o DocumentoUtil.limparFormatacao,
+        // a variável cpfCnpjLimpo aqui só contém os números puros.
+        if (cpfCnpjLimpo == null || cpfCnpjLimpo.isBlank()) return;
+
+        try {
+            if (tipoPessoa == TipoPessoa.FISICA) {
+                // O Stella valida tanto o tamanho (11) quanto a matemática
+                new CPFValidator().assertValid(cpfCnpjLimpo);
+            } else {
+                // O Stella valida tamanho (14) e matemática
+                new CNPJValidator().assertValid(cpfCnpjLimpo);
+            }
+        } catch (InvalidStateException e) {
+            String tipo = tipoPessoa == TipoPessoa.FISICA ? "CPF" : "CNPJ";
+            throw new RuntimeException("O " + tipo + " informado é inválido.");
+        }
+    }
+
+    public void validarUnicidadeDocumento(String cpfCnpjLimpo, Long idAtual) {
+        Optional<Cliente> existente = clienteRepository.findByCpfCnpj(cpfCnpjLimpo);
         if (existente.isPresent() && !Objects.equals(existente.get().getId(), idAtual)) {
             throw new RuntimeException("CPF/CNPJ já cadastrado para outro cliente.");
         }
@@ -85,10 +108,16 @@ public class ClienteValidator {
             if (e.getCep() == null || e.getCep().isBlank()) {
                 throw new RuntimeException("CEP é obrigatório.");
             }
+            if (e.getCep().length() != 8) {
+                throw new RuntimeException("O CEP deve conter exatamente 8 dígitos.");
+            }
             if (e.getCidade() == null || e.getCidade().isBlank()) {
                 throw new RuntimeException("Cidade é obrigatória.");
             }
             if (e.getEstado() == null || e.getEstado().isBlank()) {
+                throw new RuntimeException("Estado é obrigatório.");
+            }
+            if (e.getBairro() == null || e.getBairro().isBlank()) {
                 throw new RuntimeException("Estado é obrigatório.");
             }
             if (e.getPais() == null || e.getPais().isBlank()) {

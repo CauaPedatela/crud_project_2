@@ -368,7 +368,8 @@ public class ListagemClientesPage extends WebPage {
                     dto.setRgInscricaoEstadual(criarRgIe);
 
                     if (criarData != null && !criarData.trim().isEmpty()) {
-                        dto.setDataNascimento(LocalDate.parse(criarData));
+                        java.time.format.DateTimeFormatter formatterBr = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                        dto.setDataNascimento(java.time.LocalDate.parse(criarData, formatterBr));
                     }
 
                     dto.setAtivo(criarAtivo != null ? criarAtivo : false);

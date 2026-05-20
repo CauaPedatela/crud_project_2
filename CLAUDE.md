@@ -18,6 +18,8 @@ Desafio de estágio: sistema CRUD de Clientes (Pessoa Física e Jurídica) com s
 | Apache Wicket | 7.18.0 |
 | JasperReports | 6.20.0 |
 | Apache POI (Excel) | 5.2.3 |
+| Caelum Stella | 2.1.6 (validação matemática CPF/CNPJ) |
+| jQuery Mask Plugin | 1.14.16 (máscaras de campo no frontend) |
 | Angular | 14 (fase futura) |
 | Bootstrap | 5.3 (nos HTMLs Wicket) |
 
@@ -172,6 +174,13 @@ O Controller REST existe em paralelo e ficará disponível para a futura migraç
 - Relatórios: PDF e Excel (lista + detalhes individuais) via Jasper
 - `ClienteDAO` com busca filtrada via JPA Specification API
 - `ClienteDAO.buscarComFiltros` ordena por `dataCadastro DESC` (cliente novo aparece no topo)
+- **Blindagem de validações (fase atual):**
+  - `ClienteDTO` e `EnderecoDTO` implementam `Serializable` (exigência do Wicket para serialização de sessão)
+  - `DocumentoUtil.limparFormatacao()` remove máscaras (pontos, traços, barras) de CPF/CNPJ, telefone e CEP antes de qualquer validação
+  - `ClienteService.normalizarDados()` chama o `DocumentoUtil` no início de `salvar()` e `atualizar()` — garante que o validator sempre recebe dados limpos
+  - `ClienteValidator` usa **Caelum Stella** (`CPFValidator`/`CNPJValidator`) para validação matemática (dígito verificador) de CPF e CNPJ
+  - `ClienteValidator` valida e-mail via regex e telefone por comprimento (10 dígitos = fixo, 11 = celular, ambos com DDD)
+  - `ClienteValidator.validarEnderecos` exige bairro como campo obrigatório
 
 ### Feito ✅ — Frontend Wicket (visualização e relatórios)
 - Integração Wicket+Spring Boot (`WicketApplication` + `WicketConfig`)
@@ -209,12 +218,14 @@ O Controller REST existe em paralelo e ficará disponível para a futura migraç
   - **Modal-scoped** (`#feedbackCriar` dentro do modal de criar) com `ComponentFeedbackMessageFilter(form)` — erros aparecem dentro do modal sem fechá-lo, usuário corrige e tenta de novo
   - CSS no `<style>` da página deixa os panels com cara de alert Bootstrap (`.feedbackPanelERROR`/`INFO`/`WARNING`)
 - **AJAX em tudo:** busca, filtros, paginação, excluir, editar, criar
+- **Data de nascimento** no modal de criar: campo com máscara `dd/mm/aaaa` via **jQuery Mask Plugin**; o Java parseia via `DateTimeFormatter.ofPattern("dd/MM/yyyy")`
+- **CSS fix para scroll do modal de criar:** `form { display: contents }` faz o `<form>` sumir do layout flex do Bootstrap, restaurando o scroll do `.modal-body` sem quebrar o submit
 
 ### Pendente Wicket ⏳
 1. **CRUD de endereços** dentro de `DetalhesClientePage` (adicionar/editar/excluir endereço de cliente já existente)
 2. **Importação via Excel** (UI)
 3. **Mensagens flutuantes com auto-dismiss** (toast) — requisito do desafio
-4. Validações HTML5/jQuery (máscaras de CPF/CNPJ/CEP/telefone)
+4. Máscaras de CPF/CNPJ, CEP e telefone no frontend (jQuery Mask — data já feita)
 
 ### Pendente Backend ⏳
 - Endpoint `POST /api/clientes/importar` (upload Excel)

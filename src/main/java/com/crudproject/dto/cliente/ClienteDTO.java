@@ -3,6 +3,7 @@ package com.crudproject.dto.cliente;
 import com.crudproject.dto.endereco.EnderecoDTO;
 import com.crudproject.model.TipoPessoa;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -18,8 +19,13 @@ import java.util.List;
 //                        endereços que sumiram da lista = deletados
 //
 // Já o campo "id" dos endereços é FUNCIONAL — dirige a lógica de sync.]
+//
+// Implements Serializable: usado como campo intermediário no form de criação
+// da ListagemClientesPage; o Wicket serializa a página inteira na sessão.
 
-public class ClienteDTO {
+public class ClienteDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private TipoPessoa tipoPessoa;
     private String nome;

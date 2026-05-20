@@ -7,6 +7,7 @@ import com.crudproject.mapper.ClienteMapper;
 import com.crudproject.model.Cliente;
 import com.crudproject.repository.ClienteRepository;
 import com.crudproject.service.validation.ClienteValidator;
+import com.crudproject.service.validation.DocumentoUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -44,7 +45,10 @@ public class ClienteService {
 
     @Transactional
     public ClienteResponseDTO salvar(ClienteDTO dto) {
+        // 1. A MÁGICA ACONTECE AQUI: Limpa os dados antes de qualquer coisa
+        normalizarDados(dto);
 
+        // 2. Agora o validator recebe os dados já limpos!
         validator.validarCamposObrigatorios(dto);
         validator.validarDocumento(dto.getCpfCnpj(), dto.getTipoPessoa());
         validator.validarUnicidadeDocumento(dto.getCpfCnpj(), null);
@@ -94,8 +98,10 @@ public class ClienteService {
 
     @Transactional
     public ClienteResponseDTO atualizar(Long id, ClienteDTO dto) {
-
         Cliente cliente = buscarEntidadePorId(id);
+
+        // 1. Limpa os dados antes de validar
+        normalizarDados(dto);
 
         validator.validarTipoPessoaImutavel(cliente, dto);
         validator.validarCamposObrigatorios(dto);
@@ -125,5 +131,16 @@ public class ClienteService {
     private Cliente buscarEntidadePorId(Long id) {
         return clienteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cliente não encontrado."));
+    }
+
+    private void normalizarDados(ClienteDTO dto) {
+        dto.setCpfCnpj(DocumentoUtil.limparFormatacao(dto.getCpfCnpj()));
+        dto.setTelefone(DocumentoUtil.limparFormatacao(dto.getTelefone()));
+
+        if (dto.getEnderecos() != null) {
+            dto.getEnderecos().forEach(e -> {
+                e.setCep(DocumentoUtil.limparFormatacao(e.getCep()));
+            });
+        }
     }
 }

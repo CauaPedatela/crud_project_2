@@ -53,6 +53,17 @@
     .feedbackPanelERROR   { color: #842029; background-color: #f8d7da; border: 1px solid #f5c2c7; }
     .feedbackPanelINFO    { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }
     .feedbackPanelWARNING { color: #664d03; background-color: #fff3cd; border: 1px solid #ffecb5; }
+
+    /* ===== Modal Criar Cliente: forca scroll no modal-body =====
+       O Bootstrap implementa modal-dialog-scrollable assumindo que .modal-body
+       eh filho direto de .modal-content (flexbox). O elemento de formulario
+       envolvendo body+footer quebra essa hierarquia. display:contents faz o
+       formulario sumir do layout (continua funcionando para submit), e o flex
+       do Bootstrap volta a enxergar body e footer como irmaos do header. */
+    #modalCriarCliente form              { display: contents; }
+    #modalCriarCliente .modal-dialog     { max-height: calc(100vh - 2rem); }
+    #modalCriarCliente .modal-content    { max-height: calc(100vh - 2rem); }
+    #modalCriarCliente .modal-body       { overflow-y: auto; flex: 1 1 auto; min-height: 0; }
   </style>
 </head>
 <body>
@@ -257,10 +268,8 @@
       <form wicket:id="formCriarCliente">
         <div class="modal-body">
 
-          <!-- FeedbackPanel local: mostra erros sem precisar fechar o modal -->
           <div wicket:id="feedbackCriar"></div>
 
-          <!-- ===== Dados do Cliente ===== -->
           <h6 class="text-uppercase text-muted mb-3"><i class="bi bi-person-badge me-2"></i>Dados do Cliente</h6>
           <div class="row g-3">
 
@@ -287,7 +296,7 @@
 
             <div class="col-md-4">
               <label class="form-label" id="lblCriarData">Data de Nascimento</label>
-              <input type="text" class="form-control" placeholder="AAAA-MM-DD" wicket:id="criarData">
+              <input type="text" class="form-control" id="criarDataMask" placeholder="dd/mm/aaaa" wicket:id="criarData">
             </div>
 
             <div class="col-md-5">
@@ -310,14 +319,8 @@
 
           <hr class="my-4">
 
-          <!-- ===== Endereços (lista dinâmica) ===== -->
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h6 class="text-uppercase text-muted mb-0"><i class="bi bi-geo-alt me-2"></i>Endereços</h6>
-            <!--
-              formnovalidate: pula a validação HTML5 (required) ao clicar.
-              defaultFormProcessing=true (no Java) garante que os valores já digitados
-              sejam levados aos PropertyModels dos EnderecoDTOs antes de adicionar o novo.
-            -->
             <button type="submit" formnovalidate wicket:id="btnAdicionarEndereco"
                     class="btn btn-sm btn-outline-primary">
               <i class="bi bi-plus-lg me-1"></i>Adicionar outro endereço
@@ -325,7 +328,6 @@
           </div>
 
           <div wicket:id="containerEnderecos">
-            <!-- ListView: este bloco repete uma vez por endereço -->
             <div wicket:id="listaEnderecosCriar" class="border rounded p-3 mb-3">
 
               <div class="d-flex justify-content-between align-items-center mb-3">
@@ -462,5 +464,14 @@
     new bootstrap.Modal(document.getElementById('modalEditarCliente')).show();
   }
 </script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+
+<script>
+  $(document).ready(function(){
+    $('#criarDataMask').mask('00/00/0000');
+  });
+</script>
+
 </body>
 </html>
