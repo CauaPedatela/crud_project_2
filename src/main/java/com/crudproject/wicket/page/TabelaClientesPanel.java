@@ -88,7 +88,6 @@ public class TabelaClientesPanel extends Panel {
                         btnEditar.add(AttributeModifier.replace("data-id",       String.valueOf(cliente.getId())));
                         btnEditar.add(AttributeModifier.replace("data-nome",     safe(cliente.getNome())));
                         btnEditar.add(AttributeModifier.replace("data-email",    safe(cliente.getEmail())));
-                        btnEditar.add(AttributeModifier.replace("data-telefone", safe(cliente.getTelefone())));
                         btnEditar.add(AttributeModifier.replace("data-ativo",    String.valueOf(Boolean.TRUE.equals(cliente.getAtivo()))));
                         btnEditar.add(AttributeModifier.replace("data-tipo",     cliente.getTipoPessoa() != null ? cliente.getTipoPessoa().name() : "FISICA"));
                         btnEditar.add(AttributeModifier.replace("data-cpf-cnpj", safe(cliente.getCpfCnpj())));

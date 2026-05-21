@@ -36,6 +36,10 @@ public class ClienteValidator {
         if (dto.getAtivo() == null) {
             throw new RuntimeException("O campo ativo é obrigatório.");
         }
+        if (dto.getDataNascimento() == null) {
+            String campo = dto.getTipoPessoa() == TipoPessoa.JURIDICA ? "Data de Fundação" : "Data de Nascimento";
+            throw new RuntimeException(campo + " é obrigatória.");
+        }
 
         // Validação de E-mail
         if (dto.getEmail() == null || dto.getEmail().isBlank()) {
@@ -46,17 +50,7 @@ public class ClienteValidator {
             throw new RuntimeException("O formato do e-mail é inválido.");
         }
 
-        // Validação de Telefone (com DDD)
-        if (dto.getTelefone() == null || dto.getTelefone().isBlank()) {
-            throw new RuntimeException("O telefone é obrigatório.");
-        }
-        // Como o Service limpou a formatação, só restam números.
-        // 10 dígitos = Fixo (ex: 6233334444) | 11 dígitos = Celular (ex: 62988887777)
-        if (dto.getTelefone().length() < 10 || dto.getTelefone().length() > 11) {
-            throw new RuntimeException("O telefone deve conter 10 ou 11 dígitos (incluindo o DDD).");
-        }
-
-        // Validação dinâmica do RG ou Inscrição Estadual
+        // Obrigatoriedade do RG ou Inscrição Estadual
         if (dto.getTipoPessoa() == TipoPessoa.FISICA) {
             if (dto.getRgInscricaoEstadual() == null || dto.getRgInscricaoEstadual().isBlank()) {
                 throw new RuntimeException("O RG é obrigatório para Pessoa Física.");
@@ -64,6 +58,18 @@ public class ClienteValidator {
         } else if (dto.getTipoPessoa() == TipoPessoa.JURIDICA) {
             if (dto.getRgInscricaoEstadual() == null || dto.getRgInscricaoEstadual().isBlank()) {
                 throw new RuntimeException("A Inscrição Estadual é obrigatória para Pessoa Jurídica.");
+            }
+        }
+
+        // Validação de sanidade do RG/IE — tamanho e caracteres permitidos
+        String rgIe = dto.getRgInscricaoEstadual();
+        if (rgIe != null && !rgIe.isBlank()) {
+            String nomeCampo = dto.getTipoPessoa() == TipoPessoa.JURIDICA ? "Inscrição Estadual" : "RG";
+            if (rgIe.length() < 4 || rgIe.length() > 20) {
+                throw new RuntimeException(nomeCampo + " deve ter entre 4 e 20 caracteres.");
+            }
+            if (!rgIe.matches("[a-zA-Z0-9.\\-/ ]+")) {
+                throw new RuntimeException(nomeCampo + " contém caracteres inválidos. São permitidos apenas letras, números, pontos, traços, barras e espaços.");
             }
         }
     }
@@ -105,6 +111,9 @@ public class ClienteValidator {
             if (e.getLogradouro() == null || e.getLogradouro().isBlank()) {
                 throw new RuntimeException("Logradouro é obrigatório.");
             }
+            if (e.getNumero() == null || e.getNumero().isBlank()) {
+                throw new RuntimeException("Número do endereço é obrigatório. Use 'SN' para endereços sem número.");
+            }
             if (e.getCep() == null || e.getCep().isBlank()) {
                 throw new RuntimeException("CEP é obrigatório.");
             }
@@ -118,10 +127,16 @@ public class ClienteValidator {
                 throw new RuntimeException("Estado é obrigatório.");
             }
             if (e.getBairro() == null || e.getBairro().isBlank()) {
-                throw new RuntimeException("Estado é obrigatório.");
+                throw new RuntimeException("Bairro é obrigatório.");
             }
             if (e.getPais() == null || e.getPais().isBlank()) {
                 throw new RuntimeException("País é obrigatório.");
+            }
+            // Telefone é opcional; se informado, deve ter 10 ou 11 dígitos (com DDD)
+            if (e.getTelefone() != null && !e.getTelefone().isBlank()) {
+                if (e.getTelefone().length() < 10 || e.getTelefone().length() > 11) {
+                    throw new RuntimeException("O telefone do endereço deve conter 10 ou 11 dígitos (incluindo o DDD).");
+                }
             }
         }
     }

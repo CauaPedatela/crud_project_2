@@ -16,4 +16,12 @@ public final class DocumentoUtil {
         }
         return valor.replaceAll("\\D", "");
     }
+
+    // Remove apenas pontuação e espaços do RG/IE, mantendo letras e dígitos.
+    // RG pode conter letras (ex: "X" como dígito verificador em SP), por isso
+    // não podemos usar limparFormatacao (que remove tudo que não é número).
+    public static String limparFormatacaoRg(String valor) {
+        if (valor == null) return null;
+        return valor.replaceAll("[^a-zA-Z0-9]", "");
+    }
 }

@@ -33,6 +33,7 @@ public class EnderecoDTO implements Serializable {
     private String estado;
     private String cep;
     private String pais;
+    private String telefone;
     private Boolean principal;
 
     // ============================================================
@@ -68,6 +69,9 @@ public class EnderecoDTO implements Serializable {
 
     public String getPais() { return pais; }
     public void setPais(String pais) { this.pais = pais; }
+
+    public String getTelefone() { return telefone; }
+    public void setTelefone(String telefone) { this.telefone = telefone; }
 
     public Boolean getPrincipal() { return principal; }
     public void setPrincipal(Boolean principal) { this.principal = principal; }

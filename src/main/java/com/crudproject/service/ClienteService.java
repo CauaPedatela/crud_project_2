@@ -135,11 +135,14 @@ public class ClienteService {
 
     private void normalizarDados(ClienteDTO dto) {
         dto.setCpfCnpj(DocumentoUtil.limparFormatacao(dto.getCpfCnpj()));
-        dto.setTelefone(DocumentoUtil.limparFormatacao(dto.getTelefone()));
+        if (dto.getRgInscricaoEstadual() != null && !dto.getRgInscricaoEstadual().isBlank()) {
+            dto.setRgInscricaoEstadual(dto.getRgInscricaoEstadual().trim().toUpperCase());
+        }
 
         if (dto.getEnderecos() != null) {
             dto.getEnderecos().forEach(e -> {
                 e.setCep(DocumentoUtil.limparFormatacao(e.getCep()));
+                e.setTelefone(DocumentoUtil.limparFormatacao(e.getTelefone()));
             });
         }
     }

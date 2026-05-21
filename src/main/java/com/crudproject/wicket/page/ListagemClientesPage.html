@@ -60,6 +60,7 @@
        envolvendo body+footer quebra essa hierarquia. display:contents faz o
        formulario sumir do layout (continua funcionando para submit), e o flex
        do Bootstrap volta a enxergar body e footer como irmaos do header. */
+    #modalEditarCliente form             { display: contents; }
     #modalCriarCliente form              { display: contents; }
     #modalCriarCliente .modal-dialog     { max-height: calc(100vh - 2rem); }
     #modalCriarCliente .modal-content    { max-height: calc(100vh - 2rem); }
@@ -197,6 +198,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
         </div>
         <div class="modal-body">
+          <div wicket:id="feedbackEditar"></div>
           <div class="row g-3">
 
             <div class="col-md-6">
@@ -218,11 +220,6 @@
             <div class="col-md-6">
               <label class="form-label">E-mail</label>
               <input type="text" class="form-control" wicket:id="formEmail">
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Telefone</label>
-              <input type="text" class="form-control" wicket:id="formTelefone">
             </div>
 
             <div class="col-md-6" id="editCampoIeContainer" style="display:none;">
@@ -296,17 +293,12 @@
 
             <div class="col-md-4">
               <label class="form-label" id="lblCriarData">Data de Nascimento</label>
-              <input type="text" class="form-control" id="criarDataMask" placeholder="dd/mm/aaaa" wicket:id="criarData">
+              <input type="text" class="form-control" id="criarDataMask" placeholder="dd/mm/aaaa" wicket:id="criarData" required>
             </div>
 
-            <div class="col-md-5">
+            <div class="col-md-10">
               <label class="form-label">E-mail</label>
               <input type="text" class="form-control" wicket:id="criarEmail" required>
-            </div>
-
-            <div class="col-md-5">
-              <label class="form-label">Telefone</label>
-              <input type="text" class="form-control" wicket:id="criarTelefone" required>
             </div>
 
             <div class="col-md-2 d-flex align-items-end pb-2">
@@ -362,19 +354,24 @@
                 </div>
 
                 <div class="col-md-2">
-                  <label class="form-label small mb-1">Número</label>
-                  <input type="text" class="form-control form-control-sm" wicket:id="endNumero">
+                  <label class="form-label small mb-1">Número <span class="text-danger">*</span></label>
+                  <div class="input-group input-group-sm">
+                    <input type="text" class="form-control form-control-sm" wicket:id="endNumero">
+                    <button type="button" class="btn btn-outline-secondary" title="Sem número"
+                            onclick="toggleSemNumero(this)">S/N</button>
+                  </div>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label small mb-1">Complemento</label>
-                  <input type="text" class="form-control form-control-sm" wicket:id="endComplemento">
+                  <input type="text" class="form-control form-control-sm" wicket:id="endComplemento"
+                         placeholder="(opcional)">
                 </div>
                 <div class="col-md-6">
                   <label class="form-label small mb-1">Bairro</label>
                   <input type="text" class="form-control form-control-sm" wicket:id="endBairro">
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-5">
                   <label class="form-label small mb-1">Cidade</label>
                   <input type="text" class="form-control form-control-sm" wicket:id="endCidade">
                 </div>
@@ -382,9 +379,13 @@
                   <label class="form-label small mb-1">UF</label>
                   <input type="text" class="form-control form-control-sm" wicket:id="endEstado">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <label class="form-label small mb-1">País</label>
                   <input type="text" class="form-control form-control-sm" wicket:id="endPais">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label small mb-1">Telefone</label>
+                  <input type="text" class="form-control form-control-sm" wicket:id="endTelefone" placeholder="(opcional)">
                 </div>
               </div>
             </div>
@@ -451,9 +452,8 @@
 
     // Wicket (editáveis)
     document.getElementById('editClienteId').value = btn.dataset.id;
-    document.getElementById('editEmail').value     = btn.dataset.email    || '';
-    document.getElementById('editTelefone').value  = btn.dataset.telefone || '';
-    document.getElementById('editRgIe').value      = btn.dataset.rgIe     || '';
+    document.getElementById('editEmail').value     = btn.dataset.email || '';
+    document.getElementById('editRgIe').value      = btn.dataset.rgIe  || '';
     document.getElementById('editAtivo').checked   = btn.dataset.ativo === 'true';
 
     // Labels e visibilidade dinâmicos PF/PJ
@@ -471,6 +471,25 @@
   $(document).ready(function(){
     $('#criarDataMask').mask('00/00/0000');
   });
+</script>
+
+<script>
+  // Botão S/N: alterna o campo Número entre "SN" (readonly) e vazio (editável).
+  // Usa readonly em vez de disabled para que o valor chegue ao servidor no submit.
+  function toggleSemNumero(btn) {
+    var input = btn.closest('.input-group').querySelector('input');
+    if (input.readOnly) {
+      input.readOnly = false;
+      input.value = '';
+      btn.classList.remove('btn-secondary');
+      btn.classList.add('btn-outline-secondary');
+    } else {
+      input.value = 'SN';
+      input.readOnly = true;
+      btn.classList.remove('btn-outline-secondary');
+      btn.classList.add('btn-secondary');
+    }
+  }
 </script>
 
 </body>

@@ -52,7 +52,6 @@ public class ClienteMapper {
         cliente.setRgInscricaoEstadual(dto.getRgInscricaoEstadual());
         cliente.setDataNascimento(dto.getDataNascimento());
         cliente.setEmail(dto.getEmail());
-        cliente.setTelefone(dto.getTelefone());
         cliente.setAtivo(dto.getAtivo());
     }
 
@@ -68,7 +67,6 @@ public class ClienteMapper {
         dto.setRgInscricaoEstadual(cliente.getRgInscricaoEstadual());
         dto.setDataNascimento(cliente.getDataNascimento());
         dto.setEmail(cliente.getEmail());
-        dto.setTelefone(cliente.getTelefone());
         dto.setAtivo(cliente.getAtivo());
         dto.setDataCadastro(cliente.getDataCadastro());
 
@@ -94,7 +92,6 @@ public class ClienteMapper {
         cliente.setRgInscricaoEstadual(dto.getRgInscricaoEstadual());
         cliente.setDataNascimento(dto.getDataNascimento());
         cliente.setEmail(dto.getEmail());
-        cliente.setTelefone(dto.getTelefone());
         cliente.setAtivo(dto.getAtivo());
     }
 }

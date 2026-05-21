@@ -46,6 +46,9 @@ public class Endereco {
     @Column(name = "pais", nullable = false, length = 50)
     private String pais;
 
+    @Column(name = "telefone", length = 20)
+    private String telefone;
+
     @Column(name = "principal", nullable = false)
     private Boolean principal;
 
@@ -90,6 +93,9 @@ public class Endereco {
 
     public String getPais() { return pais; }
     public void setPais(String pais) { this.pais = pais; }
+
+    public String getTelefone() { return telefone; }
+    public void setTelefone(String telefone) { this.telefone = telefone; }
 
     public Boolean getPrincipal() { return principal; }
     public void setPrincipal(Boolean principal) { this.principal = principal; }

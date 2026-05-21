@@ -40,6 +40,7 @@ public class EnderecoMapper {
         dto.setEstado(endereco.getEstado());
         dto.setCep(endereco.getCep());
         dto.setPais(endereco.getPais());
+        dto.setTelefone(endereco.getTelefone());
         dto.setPrincipal(endereco.getPrincipal());
         return dto;
     }
@@ -58,6 +59,7 @@ public class EnderecoMapper {
         endereco.setEstado(dto.getEstado());
         endereco.setCep(dto.getCep());
         endereco.setPais(dto.getPais());
+        endereco.setTelefone(dto.getTelefone());
         endereco.setPrincipal(dto.getPrincipal());
     }
 }

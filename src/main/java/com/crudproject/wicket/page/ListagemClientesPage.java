@@ -48,7 +48,6 @@ public class ListagemClientesPage extends WebPage {
     // Campos do form de edição — preenchidos pelo JS antes do submit (via PropertyModel)
     private Long    idParaEditar;
     private String  formEmail;
-    private String  formTelefone;
     private String  formRgIe;
     private Boolean formAtivo;
 
@@ -60,7 +59,6 @@ public class ListagemClientesPage extends WebPage {
     private String            criarData; // String formato yyyy-MM-dd (parseada para LocalDate no submit)
     private Boolean           criarAtivo = true;
     private String            criarEmail;
-    private String            criarTelefone;
 
     // Lista dinâmica de endereços do novo cliente. Sempre começa com 1 endereço (principal).
     // Pode crescer/encolher via os botões "Adicionar/Remover" do modal.
@@ -68,6 +66,7 @@ public class ListagemClientesPage extends WebPage {
 
     // Componentes do modal de criar que precisam ser referenciados em outros métodos
     private FeedbackPanel       feedbackPanelCriar;
+    private FeedbackPanel       feedbackPanelEditar;
     private WebMarkupContainer  containerEnderecos;
 
     public ListagemClientesPage() {
@@ -158,11 +157,12 @@ public class ListagemClientesPage extends WebPage {
         add(form);
     }
 
-    // Form de edição de cliente. Os campos editáveis (email, telefone, RG/IE, ativo)
-    // são pré-preenchidos pelo JS antes do submit; nome e CPF/CNPJ são imutáveis
-    // (não chegam ao servidor — preservamos os valores atuais via clienteService.buscarPorId).
     private void adicionarFormEditar() {
         Form<Void> form = new Form<>("formEditarCliente");
+
+        feedbackPanelEditar = new FeedbackPanel("feedbackEditar", new ComponentFeedbackMessageFilter(form));
+        feedbackPanelEditar.setOutputMarkupId(true);
+        form.add(feedbackPanelEditar);
 
         HiddenField<Long> hiddenId = new HiddenField<>("hiddenEditClienteId",
                 new PropertyModel<Long>(this, "idParaEditar"), Long.class);
@@ -175,12 +175,6 @@ public class ListagemClientesPage extends WebPage {
         tfEmail.setMarkupId("editEmail");
         tfEmail.setOutputMarkupId(true);
         form.add(tfEmail);
-
-        TextField<String> tfTelefone = new TextField<>("formTelefone",
-                new PropertyModel<>(this, "formTelefone"));
-        tfTelefone.setMarkupId("editTelefone");
-        tfTelefone.setOutputMarkupId(true);
-        form.add(tfTelefone);
 
         TextField<String> tfRgIe = new TextField<>("formRgIe",
                 new PropertyModel<>(this, "formRgIe"));
@@ -203,13 +197,11 @@ public class ListagemClientesPage extends WebPage {
 
                     ClienteDTO dto = new ClienteDTO();
                     dto.setTipoPessoa(current.getTipoPessoa());
-                    dto.setNome(current.getNome());                     // imutável
-                    dto.setCpfCnpj(current.getCpfCnpj());                 // imutável
-                    dto.setDataNascimento(current.getDataNascimento());   // imutável
+                    dto.setNome(current.getNome());
+                    dto.setCpfCnpj(current.getCpfCnpj());
+                    dto.setDataNascimento(current.getDataNascimento());
                     dto.setEmail(formEmail);
-                    dto.setTelefone(formTelefone);
                     dto.setAtivo(formAtivo);
-                    // IE: para PJ usa o form; para PF preserva o valor atual (campo fica oculto pelo JS)
                     dto.setRgInscricaoEstadual(
                             current.getTipoPessoa() == TipoPessoa.JURIDICA
                                     ? formRgIe
@@ -218,21 +210,19 @@ public class ListagemClientesPage extends WebPage {
 
                     clienteService.atualizar(idParaEditar, dto);
                     info("Cliente atualizado com sucesso.");
-                    // tabela: re-renderiza com novo email/telefone/etc
-                    // totalAtivosLabel: pode mudar se o usuário alterou "ativo"
                     target.add(feedbackPanel, tabelaPanel, totalAtivosLabel);
+                    target.appendJavaScript(
+                            "var m = bootstrap.Modal.getInstance(document.getElementById('modalEditarCliente'));" +
+                            "if (m) m.hide();");
                 } catch (Exception ex) {
-                    error("Erro ao atualizar: " + ex.getMessage());
-                    target.add(feedbackPanel);
+                    form.error("Erro ao atualizar: " + ex.getMessage());
+                    target.add(feedbackPanelEditar);
                 }
-                target.appendJavaScript(
-                        "var m = bootstrap.Modal.getInstance(document.getElementById('modalEditarCliente'));" +
-                                "if (m) m.hide();");
             }
 
             @Override
             protected void onError(AjaxRequestTarget target, Form<?> formClicked) {
-                target.add(feedbackPanel);
+                target.add(feedbackPanelEditar);
             }
         });
 
@@ -277,7 +267,6 @@ public class ListagemClientesPage extends WebPage {
         form.add(new TextField<>("criarData",     new PropertyModel<>(this, "criarData")));
         form.add(new CheckBox  ("criarAtivo",    new PropertyModel<>(this, "criarAtivo")));
         form.add(new TextField<>("criarEmail",    new PropertyModel<>(this, "criarEmail")));
-        form.add(new TextField<>("criarTelefone", new PropertyModel<>(this, "criarTelefone")));
 
         // ===== Endereços (lista dinâmica via ListView) =====
         containerEnderecos = new WebMarkupContainer("containerEnderecos");
@@ -337,6 +326,7 @@ public class ListagemClientesPage extends WebPage {
                 item.add(new TextField<>("endCidade",      new PropertyModel<>(endereco, "cidade")));
                 item.add(new TextField<>("endEstado",      new PropertyModel<>(endereco, "estado")));
                 item.add(new TextField<>("endPais",        new PropertyModel<>(endereco, "pais")));
+                item.add(new TextField<>("endTelefone",    new PropertyModel<>(endereco, "telefone")));
             }
         };
         listaEnderecos.setReuseItems(false);   // sempre recria os itens — necessário com AjaxButtons internos
@@ -368,13 +358,16 @@ public class ListagemClientesPage extends WebPage {
                     dto.setRgInscricaoEstadual(criarRgIe);
 
                     if (criarData != null && !criarData.trim().isEmpty()) {
-                        java.time.format.DateTimeFormatter formatterBr = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
-                        dto.setDataNascimento(java.time.LocalDate.parse(criarData, formatterBr));
+                        try {
+                            java.time.format.DateTimeFormatter formatterBr = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                            dto.setDataNascimento(java.time.LocalDate.parse(criarData.trim(), formatterBr));
+                        } catch (Exception e) {
+                            throw new RuntimeException("Data inválida. Use o formato dd/mm/aaaa.");
+                        }
                     }
 
                     dto.setAtivo(criarAtivo != null ? criarAtivo : false);
                     dto.setEmail(criarEmail);
-                    dto.setTelefone(criarTelefone);
 
                     // Garante país preenchido em todos os endereços (default Brasil)
                     for (EnderecoDTO e : enderecosCriacao) {
@@ -419,7 +412,6 @@ public class ListagemClientesPage extends WebPage {
         criarData = null;
         criarAtivo = true;
         criarEmail = null;
-        criarTelefone = null;
         enderecosCriacao = novaListaEnderecos();
     }
 
@@ -451,6 +443,7 @@ public class ListagemClientesPage extends WebPage {
             dto.setEstado(e.getEstado());
             dto.setCep(e.getCep());
             dto.setPais(e.getPais());
+            dto.setTelefone(e.getTelefone());
             dto.setPrincipal(e.getPrincipal());
             return dto;
         }).collect(Collectors.toList());

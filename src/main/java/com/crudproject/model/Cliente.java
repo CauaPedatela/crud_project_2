@@ -48,9 +48,6 @@ public class Cliente {
     @Column(name = "email", nullable = false, length = 150)
     private String email;
 
-    @Column(name = "telefone", length = 20)
-    private String telefone;
-
     @Column(name = "ativo", nullable = false)
     private Boolean ativo;
 
@@ -90,9 +87,6 @@ public class Cliente {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-
-    public String getTelefone() { return telefone; }
-    public void setTelefone(String telefone) { this.telefone = telefone; }
 
     public Boolean getAtivo() { return ativo; }
     public void setAtivo(Boolean ativo) { this.ativo = ativo; }

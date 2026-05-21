@@ -25,7 +25,6 @@ public class ClienteResponseDTO implements Serializable {
     private String rgInscricaoEstadual;
     private LocalDate dataNascimento;
     private String email;
-    private String telefone;
     private Boolean ativo;
     private LocalDateTime dataCadastro;
     private List<EnderecoResponseDTO> enderecos;
@@ -54,9 +53,6 @@ public class ClienteResponseDTO implements Serializable {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-
-    public String getTelefone() { return telefone; }
-    public void setTelefone(String telefone) { this.telefone = telefone; }
 
     public Boolean getAtivo() { return ativo; }
     public void setAtivo(Boolean ativo) { this.ativo = ativo; }
