@@ -119,11 +119,11 @@
       <i class="bi bi-person-plus me-1"></i> Adicionar Cliente
     </button>
     <div class="d-flex flex-wrap gap-2">
-      <a href="/api/relatorios/clientes/pdf" target="_blank" class="btn btn-outline-primary">
-        <i class="bi bi-file-earmark-pdf me-1"></i> Relatório de Todos (PDF)
+      <a wicket:id="linkRelatorioPdf" class="btn btn-outline-primary">
+        <i class="bi bi-file-earmark-pdf me-1"></i> Relatório Filtrado (PDF)
       </a>
-      <a href="/api/relatorios/clientes/excel" target="_blank" class="btn btn-outline-success">
-        <i class="bi bi-file-earmark-excel me-1"></i> Exportar Excel
+      <a wicket:id="linkRelatorioExcel" class="btn btn-outline-success">
+        <i class="bi bi-file-earmark-excel me-1"></i> Exportar Excel Filtrado
       </a>
     </div>
   </div>
@@ -214,7 +214,7 @@
                 <span id="editLabelCpfCnpj">CPF</span>
                 <span class="text-muted small">(não editável)</span>
               </label>
-              <input type="text" class="form-control" id="editCpfCnpj" disabled>
+              <input type="text" class="form-control mask-cpf-cnpj" id="editCpfCnpj" disabled>
             </div>
 
             <div class="col-md-6">
@@ -283,7 +283,7 @@
 
             <div class="col-md-4">
               <label class="form-label" id="lblCriarCpfCnpj">CPF</label>
-              <input type="text" class="form-control" wicket:id="criarCpfCnpj" required>
+              <input type="text" class="form-control mask-cpf-cnpj" wicket:id="criarCpfCnpj" required>
             </div>
 
             <div class="col-md-4">
@@ -342,7 +342,7 @@
               <div class="row g-2">
                 <div class="col-md-3">
                   <label class="form-label small mb-1">CEP</label>
-                  <input type="text" class="form-control form-control-sm" wicket:id="endCep">
+                  <input type="text" class="form-control form-control-sm mask-cep" wicket:id="endCep">
                 </div>
                 <div class="col-md-3">
                   <label class="form-label small mb-1">Tipo</label>
@@ -377,7 +377,9 @@
                 </div>
                 <div class="col-md-2">
                   <label class="form-label small mb-1">UF</label>
-                  <input type="text" class="form-control form-control-sm" wicket:id="endEstado">
+                  <select class="form-select form-select-sm" wicket:id="endEstado">
+                    <option value="">Selecione...</option>
+                  </select>
                 </div>
                 <div class="col-md-3">
                   <label class="form-label small mb-1">País</label>
@@ -385,7 +387,7 @@
                 </div>
                 <div class="col-md-2">
                   <label class="form-label small mb-1">Telefone</label>
-                  <input type="text" class="form-control form-control-sm" wicket:id="endTelefone" placeholder="(opcional)">
+                  <input type="text" class="form-control form-control-sm mask-telefone" wicket:id="endTelefone" placeholder="(opcional)">
                 </div>
               </div>
             </div>
@@ -466,11 +468,69 @@
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-
 <script>
-  $(document).ready(function(){
+  function initMasks() {
+    $('.mask-cep').mask('00000-000');
+
+    var behaviorTelefone = function (val) {
+      return val.replace(/\D/g, '').length === 11 ? '(00) 00000-0000' : '(00) 0000-00009';
+    },
+    opcoesTelefone = {
+      onKeyPress: function(val, e, field, options) {
+          field.mask(behaviorTelefone.apply({}, arguments), options);
+      }
+    };
+    $('.mask-telefone').mask(behaviorTelefone, opcoesTelefone);
+
+    var behaviorCpfCnpj = function (val) {
+      return val.replace(/\D/g, '').length <= 11 ? '000.000.000-009' : '00.000.000/0000-00';
+    },
+    opcoesCpfCnpj = {
+      onKeyPress: function(val, e, field, options) {
+          field.mask(behaviorCpfCnpj.apply({}, arguments), options);
+      }
+    };
+    $('.mask-cpf-cnpj').mask(behaviorCpfCnpj, opcoesCpfCnpj);
+
     $('#criarDataMask').mask('00/00/0000');
+  }
+
+  // NOVA FUNÇÃO: Faz o painel de feedback sumir após 5 segundos
+  function autoHideFeedback() {
+    setTimeout(function() {
+        // O fadeOut('slow') cria um efeito de transição suave em vez de sumir de forma brusca
+        $('.feedbackPanel').fadeOut('slow');
+    }, 5000); // 5000 milissegundos = 5 segundos
+  }
+
+  $(document).ready(function(){
+    initMasks();
+    autoHideFeedback(); // Chama ao carregar a página inteira
   });
+
+  // MÁGICA DO WICKET: Reaplica as máscaras e o cronômetro toda vez que um modal ou tabela atualizar
+  if (typeof Wicket !== 'undefined') {
+    Wicket.Event.subscribe('/ajax/call/complete', function(jqEvent, attributes, jqXHR, errorThrown, textStatus) {
+        initMasks();
+
+        // Garante que se o Wicket renderizou um novo erro/sucesso, ele comece visível
+        $('.feedbackPanel').show();
+
+        autoHideFeedback(); // Dispara o cronômetro para o novo feedback
+    });
+  }
+</script>
+
+  $(document).ready(function(){
+    initMasks();
+  });
+
+  // MÁGICA DO WICKET: Reaplica as máscaras toda vez que o modal ou a tabela atualizarem via AJAX
+  if (typeof Wicket !== 'undefined') {
+    Wicket.Event.subscribe('/ajax/call/complete', function(jqEvent, attributes, jqXHR, errorThrown, textStatus) {
+        initMasks();
+    });
+  }
 </script>
 
 <script>

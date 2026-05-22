@@ -271,7 +271,7 @@
                   <span id="editLabelCpfCnpj">CPF</span>
                   <span class="text-muted small">(não editável)</span>
                 </label>
-                <input type="text" class="form-control" id="editCpfCnpj" disabled>
+                <input type="text" class="form-control mask-cpf-cnpj" id="editCpfCnpj" disabled>
               </div>
 
               <div class="col-md-6">
@@ -380,7 +380,7 @@
 
               <div class="col-md-6">
                 <label class="form-label">Telefone</label>
-                <input type="text" class="form-control" wicket:id="editEndTelefone">
+                <input type="text" class="form-control mask-telefone" wicket:id="editEndTelefone">
               </div>
 
               <div class="col-md-6 d-flex align-items-center pt-4">
@@ -425,7 +425,7 @@
             <div class="row g-2">
               <div class="col-md-3">
                 <label class="form-label small mb-1">CEP</label>
-                <input type="text" class="form-control form-control-sm" wicket:id="addEndCep">
+                <input type="text" class="form-control form-control-sm mask-cep" wicket:id="addEndCep">
               </div>
               <div class="col-md-3">
                 <label class="form-label small mb-1">Tipo</label>
@@ -460,7 +460,9 @@
               </div>
               <div class="col-md-2">
                 <label class="form-label small mb-1">UF</label>
-                <input type="text" class="form-control form-control-sm" wicket:id="addEndEstado">
+                <select class="form-select form-select-sm" wicket:id="addEndEstado">
+                  <option value="">Selecione...</option>
+                </select>
               </div>
               <div class="col-md-3">
                 <label class="form-label small mb-1">País</label>
@@ -468,7 +470,7 @@
               </div>
               <div class="col-md-2">
                 <label class="form-label small mb-1">Telefone</label>
-                <input type="text" class="form-control form-control-sm" wicket:id="addEndTelefone"
+                <input type="text" class="form-control form-control-sm mask-telefone" wicket:id="addEndTelefone" placeholder="(opcional)">
                        placeholder="(opcional)">
               </div>
 
@@ -589,5 +591,58 @@
     }
   </script>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+  <script>
+    function initMasks() {
+      $('.mask-cep').mask('00000-000');
+
+      var behaviorTelefone = function (val) {
+        return val.replace(/\D/g, '').length === 11 ? '(00) 00000-0000' : '(00) 0000-00009';
+      },
+      opcoesTelefone = {
+        onKeyPress: function(val, e, field, options) {
+            field.mask(behaviorTelefone.apply({}, arguments), options);
+        }
+      };
+      $('.mask-telefone').mask(behaviorTelefone, opcoesTelefone);
+
+      var behaviorCpfCnpj = function (val) {
+        return val.replace(/\D/g, '').length <= 11 ? '000.000.000-009' : '00.000.000/0000-00';
+      },
+      opcoesCpfCnpj = {
+        onKeyPress: function(val, e, field, options) {
+            field.mask(behaviorCpfCnpj.apply({}, arguments), options);
+        }
+      };
+      $('.mask-cpf-cnpj').mask(behaviorCpfCnpj, opcoesCpfCnpj);
+
+      $('#criarDataMask').mask('00/00/0000');
+    }
+
+    // NOVA FUNÇÃO: Faz o painel de feedback sumir após 5 segundos
+    function autoHideFeedback() {
+      setTimeout(function() {
+          // O fadeOut('slow') cria um efeito de transição suave em vez de sumir de forma brusca
+          $('.feedbackPanel').fadeOut('slow');
+      }, 5000); // 5000 milissegundos = 5 segundos
+    }
+
+    $(document).ready(function(){
+      initMasks();
+      autoHideFeedback(); // Chama ao carregar a página inteira
+    });
+
+    // MÁGICA DO WICKET: Reaplica as máscaras e o cronômetro toda vez que um modal ou tabela atualizar
+    if (typeof Wicket !== 'undefined') {
+      Wicket.Event.subscribe('/ajax/call/complete', function(jqEvent, attributes, jqXHR, errorThrown, textStatus) {
+          initMasks();
+
+          // Garante que se o Wicket renderizou um novo erro/sucesso, ele comece visível
+          $('.feedbackPanel').show();
+
+          autoHideFeedback(); // Dispara o cronômetro para o novo feedback
+      });
+    }
+  </script>
 </body>
 </html>

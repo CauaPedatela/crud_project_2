@@ -7,9 +7,13 @@ import com.crudproject.dto.endereco.EnderecoResponseDTO;
 import com.crudproject.model.TipoPessoa;
 import com.crudproject.model.TipoEndereco;
 import com.crudproject.service.ClienteService;
+import com.crudproject.service.ReportService;
+import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.feedback.ComponentFeedbackMessageFilter;
+import org.apache.wicket.markup.head.IHeaderResponse;
+import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
@@ -19,12 +23,18 @@ import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.HiddenField;
 import org.apache.wicket.markup.html.form.TextField;
+import org.apache.wicket.markup.html.link.Link;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.PropertyModel;
+import org.apache.wicket.markup.ComponentTag;
+import org.apache.wicket.request.IRequestParameters;
+import org.apache.wicket.request.handler.resource.ResourceStreamRequestHandler;
+import org.apache.wicket.request.resource.ContentDisposition;
 import org.apache.wicket.spring.injection.annot.SpringBean;
+import org.apache.wicket.util.resource.AbstractResourceStreamWriter;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -37,10 +47,21 @@ public class ListagemClientesPage extends WebPage {
     @SpringBean
     private ClienteService clienteService;
 
+    @SpringBean
+    private ReportService reportService;
+
     private FiltroState filtros = new FiltroState();
+
+    private static final List<String> UFS = Arrays.asList(
+            "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO",
+            "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI",
+            "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+    );
 
     private FeedbackPanel feedbackPanel;
     private TabelaClientesPanel tabelaPanel;
+    private Link<Void> linkRelatorioPdf;
+    private Link<Void> linkRelatorioExcel;
     public Long idParaExcluir;
     private Label totalClientesLabel;
     private Label totalAtivosLabel;
@@ -69,12 +90,19 @@ public class ListagemClientesPage extends WebPage {
     private FeedbackPanel       feedbackPanelEditar;
     private WebMarkupContainer  containerEnderecos;
 
+    // Comportamento AJAX que limpará o modal de criação quando ele for fechado
+    private AbstractDefaultAjaxBehavior resetCriacaoBehavior;
+
     public ListagemClientesPage() {
         feedbackPanel = new FeedbackPanel("feedback");
         feedbackPanel.setOutputMarkupId(true);
         add(feedbackPanel);
 
         adicionarContadoresHeader();
+        // Os links de relatório são criados ANTES dos panels: BuscaPanel e
+        // FiltrosPanel recebem referências a eles para re-renderizá-los via AJAX
+        // sempre que um filtro muda — assim a URL do link nunca fica obsoleta.
+        adicionarLinksRelatorio();
         adicionarPanels();
         adicionarFormExcluir();
         adicionarFormEditar();
@@ -110,10 +138,10 @@ public class ListagemClientesPage extends WebPage {
         tabelaPanel = new TabelaClientesPanel("tabelaPanel", filtros);
         tabelaPanel.setOutputMarkupId(true);
 
-        add(new BuscaPanel("buscaPanel", filtros, tabelaPanel));
+        add(new BuscaPanel("buscaPanel", filtros, tabelaPanel, linkRelatorioPdf, linkRelatorioExcel));
         add(tabelaPanel);
 
-        FiltrosPanel filtrosPanel = new FiltrosPanel("filtrosPanel", filtros, tabelaPanel);
+        FiltrosPanel filtrosPanel = new FiltrosPanel("filtrosPanel", filtros, tabelaPanel, linkRelatorioPdf, linkRelatorioExcel);
         filtrosPanel.setRenderBodyOnly(true);
         add(filtrosPanel);
     }
@@ -213,7 +241,7 @@ public class ListagemClientesPage extends WebPage {
                     target.add(feedbackPanel, tabelaPanel, totalAtivosLabel);
                     target.appendJavaScript(
                             "var m = bootstrap.Modal.getInstance(document.getElementById('modalEditarCliente'));" +
-                            "if (m) m.hide();");
+                                    "if (m) m.hide();");
                 } catch (Exception ex) {
                     form.error("Erro ao atualizar: " + ex.getMessage());
                     target.add(feedbackPanelEditar);
@@ -233,6 +261,17 @@ public class ListagemClientesPage extends WebPage {
     private void adicionarFormCriar() {
         final Form<Void> form = new Form<>("formCriarCliente");
         form.setOutputMarkupId(true); // permite target.add(form) para limpar o conteúdo do modal
+
+        // Lógica de Limpeza: escuta o fechamento do modal e reseta o formulário por trás dos panos
+        resetCriacaoBehavior = new AbstractDefaultAjaxBehavior() {
+            @Override
+            protected void respond(AjaxRequestTarget target) {
+                limparCamposCriacao();
+                form.clearInput(); // Apaga a "memória fantasma" do form
+                target.add(form);
+            }
+        };
+        form.add(resetCriacaoBehavior);
 
         // FeedbackPanel local ao modal — filtra apenas mensagens reportadas no form,
         // pra mostrar erros sem fechar o modal. Mensagens de info() seguem aparecendo no FeedbackPanel da página.
@@ -324,7 +363,7 @@ public class ListagemClientesPage extends WebPage {
                 item.add(new TextField<>("endComplemento", new PropertyModel<>(endereco, "complemento")));
                 item.add(new TextField<>("endBairro",      new PropertyModel<>(endereco, "bairro")));
                 item.add(new TextField<>("endCidade",      new PropertyModel<>(endereco, "cidade")));
-                item.add(new TextField<>("endEstado",      new PropertyModel<>(endereco, "estado")));
+                item.add(new DropDownChoice<>("endEstado", new PropertyModel<>(endereco, "estado"), UFS));
                 item.add(new TextField<>("endPais",        new PropertyModel<>(endereco, "pais")));
                 item.add(new TextField<>("endTelefone",    new PropertyModel<>(endereco, "telefone")));
             }
@@ -384,7 +423,7 @@ public class ListagemClientesPage extends WebPage {
                     target.add(form, feedbackPanel, tabelaPanel, totalClientesLabel, totalAtivosLabel);
                     target.appendJavaScript(
                             "var m = bootstrap.Modal.getInstance(document.getElementById('modalCriarCliente'));" +
-                            "if (m) m.hide();");
+                                    "if (m) m.hide();");
 
                 } catch (Exception ex) {
                     // Erro → reporta no form (filtro do feedbackPanelCriar captura) e mantém modal aberto
@@ -403,7 +442,99 @@ public class ListagemClientesPage extends WebPage {
         add(form);
     }
 
-    // Reseta os campos do form de criação (chamado após salvar com sucesso)
+    // Links de download de relatório.
+    private void adicionarLinksRelatorio() {
+        linkRelatorioPdf = new Link<Void>("linkRelatorioPdf") {
+            @Override
+            protected void onComponentTag(ComponentTag tag) {
+                super.onComponentTag(tag);
+                anexarFiltrosNaUrl(tag);
+            }
+            @Override
+            public void onClick() {
+                try {
+                    IRequestParameters p = getRequest().getRequestParameters();
+                    byte[] bytes = reportService.gerarListaClientesPdf(
+                            p.getParameterValue("ftTermo").toString(""),
+                            p.getParameterValue("ftAtivo").toString("todos"),
+                            p.getParameterValue("ftTipo").toString("todos"),
+                            p.getParameterValue("ftIni").toString(""),
+                            p.getParameterValue("ftFim").toString(""));
+                    baixarArquivo(bytes, "application/pdf", "relatorio-clientes.pdf");
+                } catch (Exception e) {
+                    error("Erro ao gerar PDF: " + e.getMessage());
+                }
+            }
+        };
+        linkRelatorioPdf.setOutputMarkupId(true);
+        add(linkRelatorioPdf);
+
+        linkRelatorioExcel = new Link<Void>("linkRelatorioExcel") {
+            @Override
+            protected void onComponentTag(ComponentTag tag) {
+                super.onComponentTag(tag);
+                anexarFiltrosNaUrl(tag);
+            }
+            @Override
+            public void onClick() {
+                try {
+                    IRequestParameters p = getRequest().getRequestParameters();
+                    byte[] bytes = reportService.gerarListaClientesExcel(
+                            p.getParameterValue("ftTermo").toString(""),
+                            p.getParameterValue("ftAtivo").toString("todos"),
+                            p.getParameterValue("ftTipo").toString("todos"),
+                            p.getParameterValue("ftIni").toString(""),
+                            p.getParameterValue("ftFim").toString(""));
+                    baixarArquivo(bytes,
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            "relatorio-clientes.xlsx");
+                } catch (Exception e) {
+                    error("Erro ao gerar Excel: " + e.getMessage());
+                }
+            }
+        };
+        linkRelatorioExcel.setOutputMarkupId(true);
+        add(linkRelatorioExcel);
+    }
+
+    private void anexarFiltrosNaUrl(ComponentTag tag) {
+        String href = tag.getAttribute("href");
+        if (href == null) return;
+        String sep = href.contains("?") ? "&" : "?";
+        tag.put("href", href + sep
+                + "ftTermo=" + enc(filtros.getTermoBusca())
+                + "&ftAtivo=" + enc(filtros.getFiltroAtivo())
+                + "&ftTipo=" + enc(filtros.getFiltroTipo())
+                + "&ftIni=" + enc(filtros.getDataCriacaoInicio())
+                + "&ftFim=" + enc(filtros.getDataCriacaoFim()));
+    }
+
+    private static String enc(String v) {
+        if (v == null) return "";
+        try {
+            return java.net.URLEncoder.encode(v, "UTF-8");
+        } catch (java.io.UnsupportedEncodingException e) {
+            return "";
+        }
+    }
+
+    private void baixarArquivo(final byte[] bytes, final String contentType, String fileName) {
+        AbstractResourceStreamWriter stream = new AbstractResourceStreamWriter() {
+            @Override
+            public void write(java.io.OutputStream output) throws java.io.IOException {
+                output.write(bytes);
+            }
+            @Override
+            public String getContentType() {
+                return contentType;
+            }
+        };
+        ResourceStreamRequestHandler handler =
+                new ResourceStreamRequestHandler(stream, fileName);
+        handler.setContentDisposition(ContentDisposition.ATTACHMENT);
+        getRequestCycle().scheduleRequestHandlerAfterCurrent(handler);
+    }
+
     private void limparCamposCriacao() {
         criarTipoPessoa = TipoPessoa.FISICA;
         criarNome = null;
@@ -415,7 +546,6 @@ public class ListagemClientesPage extends WebPage {
         enderecosCriacao = novaListaEnderecos();
     }
 
-    // Lista inicial: um único endereço vazio, marcado como principal
     private static List<EnderecoDTO> novaListaEnderecos() {
         List<EnderecoDTO> lista = new ArrayList<>();
         EnderecoDTO primeiro = new EnderecoDTO();
@@ -426,9 +556,6 @@ public class ListagemClientesPage extends WebPage {
         return lista;
     }
 
-    // Converte EnderecoResponseDTO → EnderecoDTO preservando IDs.
-    // Necessário no atualizar() para o EnderecoSincronizador entender que são
-    // os mesmos endereços (com ID = update, sem ID = insert, ausente = delete).
     private static List<EnderecoDTO> toEnderecosDTOs(List<EnderecoResponseDTO> lista) {
         if (lista == null) return new ArrayList<>();
         return lista.stream().map(e -> {
@@ -447,5 +574,19 @@ public class ListagemClientesPage extends WebPage {
             dto.setPrincipal(e.getPrincipal());
             return dto;
         }).collect(Collectors.toList());
+    }
+
+    // Método renderHead injeta Javascript no Header da página.
+    // Aqui adicionamos o Listener que dispara o reset silencioso quando o modal fecha.
+    @Override
+    public void renderHead(IHeaderResponse response) {
+        super.renderHead(response);
+        if (resetCriacaoBehavior != null) {
+            response.render(OnDomReadyHeaderItem.forScript(
+                    "document.getElementById('modalCriarCliente').addEventListener('hidden.bs.modal', function() {" +
+                            "  Wicket.Ajax.ajax({u:'" + resetCriacaoBehavior.getCallbackUrl() + "'});" +
+                            "});"
+            ));
+        }
     }
 }

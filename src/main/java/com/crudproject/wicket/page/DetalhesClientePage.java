@@ -2,9 +2,9 @@
  * DetalhesClientePage — exibe os dados de um cliente e seus endereços, com CRUD completo de endereços.
  *
  * Operações de endereço disponíveis:
- *   - Excluir: bloqueado para o endereço principal e para o único endereço restante
- *   - Editar: número, complemento, telefone e status de principal
- *   - Adicionar: formulário completo com todos os campos do endereço
+ * - Excluir: bloqueado para o endereço principal e para o único endereço restante
+ * - Editar: número, complemento, telefone e status de principal
+ * - Adicionar: formulário completo com todos os campos do endereço
  *
  * Todas as mutações passam pelo ClienteService.atualizar(), reutilizando o EnderecoSincronizador.
  * O containerEnderecos (setOutputMarkupId) é atualizado via AJAX após cada operação.
@@ -20,12 +20,15 @@ import com.crudproject.model.TipoPessoa;
 import com.crudproject.service.ClienteService;
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
+import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.behavior.AttributeAppender;
 import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.feedback.ComponentFeedbackMessageFilter;
 import org.apache.wicket.markup.ComponentTag;
+import org.apache.wicket.markup.head.IHeaderResponse;
+import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
@@ -61,6 +64,12 @@ public class DetalhesClientePage extends WebPage {
     private static final DateTimeFormatter FMT_CADASTRO = DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm");
 
     // ── Componentes da página ────────────────────────────────────────────────
+
+    private static final List<String> UFS = Arrays.asList(
+            "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO",
+            "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI",
+            "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+    );
     private Long                                        clienteId;
     private LoadableDetachableModel<ClienteResponseDTO> clienteModel;
     private FeedbackPanel                               feedbackPanel;
@@ -98,6 +107,9 @@ public class DetalhesClientePage extends WebPage {
     private String       addEndPais        = "Brasil";
     private String       addEndTelefone;
     private Boolean      addEndPrincipal   = false;
+
+    // Comportamento AJAX que limpará o modal de adicionar endereço quando ele for fechado
+    private AbstractDefaultAjaxBehavior resetAdicionarEnderecoBehavior;
 
     // ════════════════════════════════════════════════════════════════════════
     // CONSTRUTOR
@@ -291,7 +303,7 @@ public class DetalhesClientePage extends WebPage {
                 Label principalLabel = new Label("endPrincipal", isPrincipal ? "Principal" : "Secundário");
                 principalLabel.add(new AttributeAppender("class", Model.of(
                         isPrincipal ? " text-bg-primary-subtle text-primary-emphasis"
-                                    : " text-bg-secondary-subtle text-secondary-emphasis"), " "));
+                                : " text-bg-secondary-subtle text-secondary-emphasis"), " "));
                 item.add(principalLabel);
 
                 item.add(new Label("endLogradouro",     nvl(end.getLogradouro())));
@@ -397,7 +409,7 @@ public class DetalhesClientePage extends WebPage {
                     target.add(feedbackPanel, cardCliente, btnEditarCliente);
                     target.appendJavaScript(
                             "var m = bootstrap.Modal.getInstance(document.getElementById('modalEditarCliente'));" +
-                            "if (m) m.hide();");
+                                    "if (m) m.hide();");
                 } catch (Exception ex) {
                     form.error("Erro ao atualizar: " + ex.getMessage());
                     target.add(feedbackPanelEditarCliente);
@@ -442,7 +454,7 @@ public class DetalhesClientePage extends WebPage {
                     if (Boolean.TRUE.equals(alvo.getPrincipal())) {
                         throw new RuntimeException(
                                 "Não é possível excluir o endereço principal. " +
-                                "Defina outro endereço como principal antes de excluir este.");
+                                        "Defina outro endereço como principal antes de excluir este.");
                     }
                     if (enderecos.size() <= 1) {
                         throw new RuntimeException("O cliente deve ter pelo menos um endereço.");
@@ -462,7 +474,7 @@ public class DetalhesClientePage extends WebPage {
                 }
                 target.appendJavaScript(
                         "var m = bootstrap.Modal.getInstance(document.getElementById('modalConfirmarExcluirEndereco'));" +
-                        "if (m) m.hide();");
+                                "if (m) m.hide();");
             }
 
             @Override
@@ -545,7 +557,7 @@ public class DetalhesClientePage extends WebPage {
                         if (!temOutroPrincipal && Boolean.TRUE.equals(alvo.getPrincipal())) {
                             throw new RuntimeException(
                                     "Não é possível desmarcar o único endereço principal. " +
-                                    "Defina outro endereço como principal antes.");
+                                            "Defina outro endereço como principal antes.");
                         }
                         alvo.setPrincipal(false);
                     }
@@ -556,7 +568,7 @@ public class DetalhesClientePage extends WebPage {
                     target.add(feedbackPanel, containerEnderecos);
                     target.appendJavaScript(
                             "var m = bootstrap.Modal.getInstance(document.getElementById('modalEditarEndereco'));" +
-                            "if (m) m.hide();");
+                                    "if (m) m.hide();");
                 } catch (Exception ex) {
                     form.error("Erro ao editar endereço: " + ex.getMessage());
                     target.add(feedbackPanelEditarEndereco);
@@ -580,6 +592,17 @@ public class DetalhesClientePage extends WebPage {
         Form<Void> form = new Form<>("formAdicionarEndereco");
         form.setOutputMarkupId(true);
 
+        // Limpa a memória de estado (Raw Input) quando o modal é fechado
+        resetAdicionarEnderecoBehavior = new AbstractDefaultAjaxBehavior() {
+            @Override
+            protected void respond(AjaxRequestTarget target) {
+                limparCamposAdicionarEndereco();
+                form.clearInput();
+                target.add(form);
+            }
+        };
+        form.add(resetAdicionarEnderecoBehavior);
+
         // FeedbackPanel scoped ao form — erros ficam dentro do modal sem fechá-lo
         feedbackPanelEndereco = new FeedbackPanel("feedbackEndereco",
                 new ComponentFeedbackMessageFilter(form));
@@ -602,7 +625,7 @@ public class DetalhesClientePage extends WebPage {
         form.add(new TextField<>("addEndComplemento", new PropertyModel<>(this, "addEndComplemento")));
         form.add(new TextField<>("addEndBairro",      new PropertyModel<>(this, "addEndBairro")));
         form.add(new TextField<>("addEndCidade",      new PropertyModel<>(this, "addEndCidade")));
-        form.add(new TextField<>("addEndEstado",      new PropertyModel<>(this, "addEndEstado")));
+        form.add(new DropDownChoice<>("addEndEstado", new PropertyModel<>(this, "addEndEstado"), UFS));
         form.add(new TextField<>("addEndCep",         new PropertyModel<>(this, "addEndCep")));
         form.add(new TextField<>("addEndPais",        new PropertyModel<>(this, "addEndPais")));
         form.add(new TextField<>("addEndTelefone",    new PropertyModel<>(this, "addEndTelefone")));
@@ -641,7 +664,7 @@ public class DetalhesClientePage extends WebPage {
                     target.add(form, feedbackPanel, containerEnderecos);
                     target.appendJavaScript(
                             "var m = bootstrap.Modal.getInstance(document.getElementById('modalAdicionarEndereco'));" +
-                            "if (m) m.hide();");
+                                    "if (m) m.hide();");
                 } catch (Exception ex) {
                     form.error("Erro ao adicionar endereço: " + ex.getMessage());
                     target.add(feedbackPanelEndereco);
@@ -729,5 +752,21 @@ public class DetalhesClientePage extends WebPage {
 
     private static String safe(String v) {
         return v != null ? v : "";
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // JAVASCRIPT INJECTION (HEADER)
+    // ════════════════════════════════════════════════════════════════════════
+
+    @Override
+    public void renderHead(IHeaderResponse response) {
+        super.renderHead(response);
+        if (resetAdicionarEnderecoBehavior != null) {
+            response.render(OnDomReadyHeaderItem.forScript(
+                    "document.getElementById('modalAdicionarEndereco').addEventListener('hidden.bs.modal', function() {" +
+                            "  Wicket.Ajax.ajax({u:'" + resetAdicionarEnderecoBehavior.getCallbackUrl() + "'});" +
+                            "});"
+            ));
+        }
     }
 }

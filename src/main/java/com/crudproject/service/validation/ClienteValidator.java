@@ -61,7 +61,7 @@ public class ClienteValidator {
             }
         }
 
-        // Validação de sanidade do RG/IE — tamanho e caracteres permitidos
+        // Validação de sanidade do RG/IE — tamanho, caracteres permitidos e presença de números
         String rgIe = dto.getRgInscricaoEstadual();
         if (rgIe != null && !rgIe.isBlank()) {
             String nomeCampo = dto.getTipoPessoa() == TipoPessoa.JURIDICA ? "Inscrição Estadual" : "RG";
@@ -71,20 +71,20 @@ public class ClienteValidator {
             if (!rgIe.matches("[a-zA-Z0-9.\\-/ ]+")) {
                 throw new RuntimeException(nomeCampo + " contém caracteres inválidos. São permitidos apenas letras, números, pontos, traços, barras e espaços.");
             }
+            // Não permite strings compostas exclusivamente por letras (ex: "ASDF")
+            if (!rgIe.matches(".*\\d.*")) {
+                throw new RuntimeException("Formato inválido. O " + nomeCampo + " não pode ser composto apenas por letras.");
+            }
         }
     }
 
     public void validarDocumento(String cpfCnpjLimpo, TipoPessoa tipoPessoa) {
-        // Como o Service já chamou o DocumentoUtil.limparFormatacao,
-        // a variável cpfCnpjLimpo aqui só contém os números puros.
         if (cpfCnpjLimpo == null || cpfCnpjLimpo.isBlank()) return;
 
         try {
             if (tipoPessoa == TipoPessoa.FISICA) {
-                // O Stella valida tanto o tamanho (11) quanto a matemática
                 new CPFValidator().assertValid(cpfCnpjLimpo);
             } else {
-                // O Stella valida tamanho (14) e matemática
                 new CNPJValidator().assertValid(cpfCnpjLimpo);
             }
         } catch (InvalidStateException e) {
@@ -111,9 +111,17 @@ public class ClienteValidator {
             if (e.getLogradouro() == null || e.getLogradouro().isBlank()) {
                 throw new RuntimeException("Logradouro é obrigatório.");
             }
+
             if (e.getNumero() == null || e.getNumero().isBlank()) {
                 throw new RuntimeException("Número do endereço é obrigatório. Use 'SN' para endereços sem número.");
             }
+
+            // Validação de sanidade do Número: Deve conter dígito OU ser exatamente SN (ou S/N)
+            String numeroLimpo = e.getNumero().trim().toUpperCase();
+            if (!numeroLimpo.matches(".*\\d.*") && !numeroLimpo.equals("SN") && !numeroLimpo.equals("S/N")) {
+                throw new RuntimeException("Número do endereço inválido. Digite o número ou 'SN' se não houver.");
+            }
+
             if (e.getCep() == null || e.getCep().isBlank()) {
                 throw new RuntimeException("CEP é obrigatório.");
             }
