@@ -1,6 +1,7 @@
 package com.crudproject.service.reports;
 
 import com.crudproject.dto.cliente.ClienteResponseDTO;
+import com.crudproject.service.validation.MascaraUtil;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -44,7 +45,7 @@ public final class ClientesListaExcelBuilder {
                 ExcelEstilos.celula(row, 0, c.getId() != null ? String.valueOf(c.getId()) : "", st);
                 ExcelEstilos.celula(row, 1, ExcelEstilos.nvl(c.getNome()),    st);
                 ExcelEstilos.celula(row, 2, ExcelEstilos.nvl(c.getEmail()),   st);
-                ExcelEstilos.celula(row, 3, ExcelEstilos.nvl(c.getCpfCnpj()), st);
+                ExcelEstilos.celula(row, 3, ExcelEstilos.nvl(MascaraUtil.formatarCpfCnpj(c.getCpfCnpj())), st);
                 ExcelEstilos.celula(row, 4,
                         c.getTipoPessoa() != null ? c.getTipoPessoa().name() : "", st);
                 ExcelEstilos.celula(row, 5,

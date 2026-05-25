@@ -2,6 +2,7 @@ package com.crudproject.service;
 
 import com.crudproject.dto.cliente.ClienteResponseDTO;
 import com.crudproject.service.reports.ClienteDetalhesExcelBuilder;
+import com.crudproject.service.validation.MascaraUtil;
 import com.crudproject.service.reports.ClientesListaExcelBuilder;
 import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperExportManager;
@@ -63,9 +64,12 @@ public class ReportService {
         List<Map<String, ?>> linhas = new ArrayList<>();
         for (ClienteResponseDTO c : clientes) {
             Map<String, Object> linha = new HashMap<>();
-            linha.put("nome", c.getNome());
-            linha.put("cpf_cnpj", c.getCpfCnpj());
+            linha.put("id",         c.getId() != null ? String.valueOf(c.getId()) : "");
+            linha.put("nome",       c.getNome() != null ? c.getNome() : "");
+            linha.put("email",      c.getEmail() != null ? c.getEmail() : "");
+            linha.put("cpf_cnpj",   MascaraUtil.formatarCpfCnpj(c.getCpfCnpj()));
             linha.put("tipo_pessoa", c.getTipoPessoa() != null ? c.getTipoPessoa().name() : "");
+            linha.put("ativo",      Boolean.TRUE.equals(c.getAtivo()) ? "Sim" : "Não");
             linhas.add(linha);
         }
 

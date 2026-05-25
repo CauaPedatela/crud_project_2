@@ -244,7 +244,9 @@ public class DetalhesClientePage extends WebPage {
             }
         }));
         cardCliente.add(new Label("valorDocumento", new AbstractReadOnlyModel<String>() {
-            @Override public String getObject() { return nvl(clienteModel.getObject().getCpfCnpj()); }
+            @Override public String getObject() {
+                return nvl(clienteModel.getObject().getCpfCnpj());
+            }
         }));
         cardCliente.add(new Label("labelIdentificacao", new AbstractReadOnlyModel<String>() {
             @Override public String getObject() {
@@ -302,7 +304,7 @@ public class DetalhesClientePage extends WebPage {
 
                 Label principalLabel = new Label("endPrincipal", isPrincipal ? "Principal" : "Secundário");
                 principalLabel.add(new AttributeAppender("class", Model.of(
-                        isPrincipal ? " text-bg-primary-subtle text-primary-emphasis"
+                        isPrincipal ? " bg-primary text-white"
                                 : " text-bg-secondary-subtle text-secondary-emphasis"), " "));
                 item.add(principalLabel);
 

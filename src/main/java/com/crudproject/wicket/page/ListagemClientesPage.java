@@ -6,11 +6,15 @@ import com.crudproject.dto.endereco.EnderecoDTO;
 import com.crudproject.dto.endereco.EnderecoResponseDTO;
 import com.crudproject.model.TipoPessoa;
 import com.crudproject.model.TipoEndereco;
+import com.crudproject.service.ClienteImportacaoService;
 import com.crudproject.service.ClienteService;
+import com.crudproject.service.ImportacaoResultado;
 import com.crudproject.service.ReportService;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
+import org.apache.wicket.markup.html.form.upload.FileUpload;
+import org.apache.wicket.markup.html.form.upload.FileUploadField;
 import org.apache.wicket.feedback.ComponentFeedbackMessageFilter;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
@@ -31,6 +35,7 @@ import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.request.IRequestParameters;
+import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.request.handler.resource.ResourceStreamRequestHandler;
 import org.apache.wicket.request.resource.ContentDisposition;
 import org.apache.wicket.spring.injection.annot.SpringBean;
@@ -49,6 +54,9 @@ public class ListagemClientesPage extends WebPage {
 
     @SpringBean
     private ReportService reportService;
+
+    @SpringBean
+    private ClienteImportacaoService importacaoService;
 
     private FiltroState filtros = new FiltroState();
 
@@ -93,6 +101,12 @@ public class ListagemClientesPage extends WebPage {
     // Comportamento AJAX que limpará o modal de criação quando ele for fechado
     private AbstractDefaultAjaxBehavior resetCriacaoBehavior;
 
+    // Campos do modal de importação via Excel
+    private ImportacaoResultado resultadoImportacao;
+    private FileUploadField     arquivoExcel;
+    private FeedbackPanel       feedbackImportar;
+    private WebMarkupContainer  painelResultado;
+
     public ListagemClientesPage() {
         feedbackPanel = new FeedbackPanel("feedback");
         feedbackPanel.setOutputMarkupId(true);
@@ -107,6 +121,7 @@ public class ListagemClientesPage extends WebPage {
         adicionarFormExcluir();
         adicionarFormEditar();
         adicionarFormCriar();
+        adicionarFormImportar();
     }
 
     // Contadores do topo direito — sempre sobre o total geral, ignorando filtros.
@@ -442,24 +457,149 @@ public class ListagemClientesPage extends WebPage {
         add(form);
     }
 
+    // Form de importação em lote via planilha Excel.
+    // O form fica dentro do modal (ver HTML) — o painelResultado é atualizado via AJAX
+    // sem fechar o modal, mostrando contagem de sucessos e a lista de erros por linha.
+    private void adicionarFormImportar() {
+        final Form<Void> form = new Form<>("formImportar");
+        form.setMultiPart(true);
+        form.setOutputMarkupId(true);
+
+        feedbackImportar = new FeedbackPanel("feedbackImportar",
+                new ComponentFeedbackMessageFilter(form));
+        feedbackImportar.setOutputMarkupId(true);
+        form.add(feedbackImportar);
+
+        arquivoExcel = new FileUploadField("arquivoExcel");
+        form.add(arquivoExcel);
+
+        // Link de download do modelo — target="_blank" para não fechar o modal
+        form.add(new Link<Void>("linkDownloadModelo") {
+            @Override
+            protected void onComponentTag(ComponentTag tag) {
+                super.onComponentTag(tag);
+                tag.put("target", "_blank");
+            }
+            @Override
+            public void onClick() {
+                try {
+                    byte[] bytes = importacaoService.gerarPlanilhaModelo();
+                    baixarArquivo(bytes,
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            "modelo-importacao-clientes.xlsx");
+                } catch (Exception e) {
+                    error("Erro ao gerar planilha modelo: " + e.getMessage());
+                }
+            }
+        });
+
+        // Painel de resultados: oculto até a primeira importação ser processada
+        painelResultado = new WebMarkupContainer("painelResultado");
+        painelResultado.setOutputMarkupId(true);
+        painelResultado.setOutputMarkupPlaceholderTag(true);
+        painelResultado.setVisible(false);
+
+        painelResultado.add(new Label("resultadoSucessos", new AbstractReadOnlyModel<String>() {
+            @Override public String getObject() {
+                return resultadoImportacao != null
+                        ? String.valueOf(resultadoImportacao.getSucessos()) : "0";
+            }
+        }));
+        painelResultado.add(new Label("resultadoErros", new AbstractReadOnlyModel<String>() {
+            @Override public String getObject() {
+                return resultadoImportacao != null
+                        ? String.valueOf(resultadoImportacao.getErros()) : "0";
+            }
+        }));
+
+        // Container da lista de erros: visível somente quando houver ao menos um erro
+        WebMarkupContainer containerListaErros = new WebMarkupContainer("containerListaErros") {
+            @Override public boolean isVisible() {
+                return resultadoImportacao != null && resultadoImportacao.temErros();
+            }
+        };
+        containerListaErros.setOutputMarkupId(true);
+        containerListaErros.setOutputMarkupPlaceholderTag(true);
+
+        containerListaErros.add(new ListView<String>("listaErros",
+                new AbstractReadOnlyModel<List<String>>() {
+                    @Override public List<String> getObject() {
+                        if (resultadoImportacao == null) return new ArrayList<>();
+                        return resultadoImportacao.getMensagensErro();
+                    }
+                }) {
+            @Override
+            protected void populateItem(ListItem<String> item) {
+                item.add(new Label("mensagemErro", item.getModel()));
+            }
+        });
+
+        painelResultado.add(containerListaErros);
+        form.add(painelResultado);
+
+        form.add(new AjaxButton("btnImportar", form) {
+            @Override
+            protected void onSubmit(AjaxRequestTarget target, Form<?> formClicked) {
+                FileUpload upload = arquivoExcel.getFileUpload();
+                if (upload == null || upload.getSize() == 0) {
+                    form.error("Selecione um arquivo .xlsx para importar.");
+                    target.add(feedbackImportar);
+                    return;
+                }
+                try {
+                    resultadoImportacao = importacaoService.importar(upload.getInputStream());
+                    painelResultado.setVisible(true);
+                    target.add(painelResultado, feedbackImportar,
+                            tabelaPanel, totalClientesLabel, totalAtivosLabel);
+                    if (resultadoImportacao.getSucessos() > 0) {
+                        info(resultadoImportacao.getSucessos() + " cliente(s) importado(s) com sucesso.");
+                        target.add(feedbackPanel);
+                    }
+                } catch (Exception e) {
+                    form.error("Erro ao processar o arquivo: " + e.getMessage());
+                    target.add(feedbackImportar);
+                }
+            }
+
+            @Override
+            protected void onError(AjaxRequestTarget target, Form<?> formClicked) {
+                target.add(feedbackImportar);
+            }
+        });
+
+        add(form);
+    }
+
     // Links de download de relatório.
+    // onComponentTag() codifica o FiltroState atual no href sempre que o link é
+    // re-renderizado (inclusive via target.add após aplicar filtros). onClick() lê
+    // os valores direto dos query params da requisição — assim os filtros chegam
+    // corretamente independente de qual versão de página o Wicket carregar da sessão.
     private void adicionarLinksRelatorio() {
         linkRelatorioPdf = new Link<Void>("linkRelatorioPdf") {
             @Override
             protected void onComponentTag(ComponentTag tag) {
                 super.onComponentTag(tag);
-                anexarFiltrosNaUrl(tag);
+                String href = tag.getAttribute("href");
+                if (href != null) {
+                    tag.put("href", href
+                            + "&termo=" + enc(filtros.getTermoBusca())
+                            + "&ativo=" + enc(filtros.getFiltroAtivo())
+                            + "&tipo="  + enc(filtros.getFiltroTipo())
+                            + "&de="    + enc(filtros.getDataCriacaoInicio())
+                            + "&ate="   + enc(filtros.getDataCriacaoFim()));
+                }
             }
             @Override
             public void onClick() {
+                IRequestParameters p = RequestCycle.get().getRequest().getQueryParameters();
                 try {
-                    IRequestParameters p = getRequest().getRequestParameters();
                     byte[] bytes = reportService.gerarListaClientesPdf(
-                            p.getParameterValue("ftTermo").toString(""),
-                            p.getParameterValue("ftAtivo").toString("todos"),
-                            p.getParameterValue("ftTipo").toString("todos"),
-                            p.getParameterValue("ftIni").toString(""),
-                            p.getParameterValue("ftFim").toString(""));
+                            p.getParameterValue("termo").toString(""),
+                            p.getParameterValue("ativo").toString(""),
+                            p.getParameterValue("tipo").toString(""),
+                            p.getParameterValue("de").toString(""),
+                            p.getParameterValue("ate").toString(""));
                     baixarArquivo(bytes, "application/pdf", "relatorio-clientes.pdf");
                 } catch (Exception e) {
                     error("Erro ao gerar PDF: " + e.getMessage());
@@ -473,18 +613,26 @@ public class ListagemClientesPage extends WebPage {
             @Override
             protected void onComponentTag(ComponentTag tag) {
                 super.onComponentTag(tag);
-                anexarFiltrosNaUrl(tag);
+                String href = tag.getAttribute("href");
+                if (href != null) {
+                    tag.put("href", href
+                            + "&termo=" + enc(filtros.getTermoBusca())
+                            + "&ativo=" + enc(filtros.getFiltroAtivo())
+                            + "&tipo="  + enc(filtros.getFiltroTipo())
+                            + "&de="    + enc(filtros.getDataCriacaoInicio())
+                            + "&ate="   + enc(filtros.getDataCriacaoFim()));
+                }
             }
             @Override
             public void onClick() {
+                IRequestParameters p = RequestCycle.get().getRequest().getQueryParameters();
                 try {
-                    IRequestParameters p = getRequest().getRequestParameters();
                     byte[] bytes = reportService.gerarListaClientesExcel(
-                            p.getParameterValue("ftTermo").toString(""),
-                            p.getParameterValue("ftAtivo").toString("todos"),
-                            p.getParameterValue("ftTipo").toString("todos"),
-                            p.getParameterValue("ftIni").toString(""),
-                            p.getParameterValue("ftFim").toString(""));
+                            p.getParameterValue("termo").toString(""),
+                            p.getParameterValue("ativo").toString(""),
+                            p.getParameterValue("tipo").toString(""),
+                            p.getParameterValue("de").toString(""),
+                            p.getParameterValue("ate").toString(""));
                     baixarArquivo(bytes,
                             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                             "relatorio-clientes.xlsx");
@@ -497,24 +645,14 @@ public class ListagemClientesPage extends WebPage {
         add(linkRelatorioExcel);
     }
 
-    private void anexarFiltrosNaUrl(ComponentTag tag) {
-        String href = tag.getAttribute("href");
-        if (href == null) return;
-        String sep = href.contains("?") ? "&" : "?";
-        tag.put("href", href + sep
-                + "ftTermo=" + enc(filtros.getTermoBusca())
-                + "&ftAtivo=" + enc(filtros.getFiltroAtivo())
-                + "&ftTipo=" + enc(filtros.getFiltroTipo())
-                + "&ftIni=" + enc(filtros.getDataCriacaoInicio())
-                + "&ftFim=" + enc(filtros.getDataCriacaoFim()));
-    }
-
+    // URL-encoda um valor de filtro para uso no href. Null e vazio viram "".
+    // O DAO trata "" igual a "todos" (nenhum predicado aplicado).
     private static String enc(String v) {
-        if (v == null) return "";
+        if (v == null || v.isEmpty()) return "";
         try {
             return java.net.URLEncoder.encode(v, "UTF-8");
         } catch (java.io.UnsupportedEncodingException e) {
-            return "";
+            return v;
         }
     }
 

@@ -93,7 +93,7 @@
             <textField>
                 <reportElement x="150" y="120" width="405" height="20" uuid="11111111-1111-1111-1111-111111111116"/>
                 <textElement><font size="12"/></textElement>
-                <textFieldExpression><![CDATA[$F{cpf_cnpj}]]></textFieldExpression>
+                <textFieldExpression><![CDATA[com.crudproject.service.validation.MascaraUtil.formatarCpfCnpj($F{cpf_cnpj})]]></textFieldExpression>
             </textField>
 
             <staticText>
@@ -181,8 +181,8 @@
             <textField textAdjust="StretchHeight" isBlankWhenNull="true"><reportElement x="240" y="0" width="55" height="20" uuid="33333333-3333-3333-3333-333333333306"/><textElement textAlignment="Center" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{cidade}]]></textFieldExpression></textField>
             <textField textAdjust="StretchHeight" isBlankWhenNull="true"><reportElement x="295" y="0" width="35" height="20" uuid="33333333-3333-3333-3333-333333333307"/><textElement textAlignment="Center" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{estado}]]></textFieldExpression></textField>
             <textField textAdjust="StretchHeight" isBlankWhenNull="true"><reportElement x="330" y="0" width="35" height="20" uuid="33333333-3333-3333-3333-333333333308"/><textElement textAlignment="Center" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{pais}]]></textFieldExpression></textField>
-            <textField textAdjust="StretchHeight" isBlankWhenNull="true"><reportElement x="365" y="0" width="45" height="20" uuid="33333333-3333-3333-3333-333333333309"/><textElement textAlignment="Center" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{cep}]]></textFieldExpression></textField>
-            <textField textAdjust="StretchHeight" isBlankWhenNull="true"><reportElement x="410" y="0" width="60" height="20" uuid="33333333-3333-3333-3333-333333333312"/><textElement textAlignment="Center" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{telefone}]]></textFieldExpression></textField>
+            <textField textAdjust="StretchHeight" isBlankWhenNull="true"><reportElement x="365" y="0" width="45" height="20" uuid="33333333-3333-3333-3333-333333333309"/><textElement textAlignment="Center" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[com.crudproject.service.validation.MascaraUtil.formatarCep($F{cep})]]></textFieldExpression></textField>
+            <textField textAdjust="StretchHeight" isBlankWhenNull="true"><reportElement x="410" y="0" width="60" height="20" uuid="33333333-3333-3333-3333-333333333312"/><textElement textAlignment="Center" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[com.crudproject.service.validation.MascaraUtil.formatarTelefone($F{telefone})]]></textFieldExpression></textField>
             <textField textAdjust="StretchHeight" isBlankWhenNull="true"><reportElement x="470" y="0" width="45" height="20" uuid="33333333-3333-3333-3333-333333333310"/><textElement textAlignment="Center" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[($F{principal} != null && $F{principal}) ? "Sim" : "Não"]]></textFieldExpression></textField>
             <textField textAdjust="StretchHeight" isBlankWhenNull="true"><reportElement x="515" y="0" width="40" height="20" uuid="33333333-3333-3333-3333-333333333311"/><textElement textAlignment="Center" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{tipo}]]></textFieldExpression></textField>
         </band>

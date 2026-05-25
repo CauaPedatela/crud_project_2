@@ -5,21 +5,12 @@
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="DataAdapter.jrdax"/>
 	<!-- Sem queryString: o relatório é preenchido por um JRMapCollectionDataSource
 	     montado em ReportService a partir da lista de clientes (igual ao Excel). -->
-	<field name="cpf_cnpj" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="cpf_cnpj"/>
-		<property name="com.jaspersoft.studio.field.label" value="cpf_cnpj"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="tb_cliente"/>
-	</field>
-	<field name="nome" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="nome"/>
-		<property name="com.jaspersoft.studio.field.label" value="nome"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="tb_cliente"/>
-	</field>
-	<field name="tipo_pessoa" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="tipo_pessoa"/>
-		<property name="com.jaspersoft.studio.field.label" value="tipo_pessoa"/>
-		<property name="com.jaspersoft.studio.field.tree.path" value="tb_cliente"/>
-	</field>
+	<field name="id"         class="java.lang.String"/>
+	<field name="nome"       class="java.lang.String"/>
+	<field name="email"      class="java.lang.String"/>
+	<field name="cpf_cnpj"   class="java.lang.String"/>
+	<field name="tipo_pessoa" class="java.lang.String"/>
+	<field name="ativo"      class="java.lang.String"/>
 	<background>
 		<band/>
 	</background>
@@ -53,65 +44,71 @@
 				<reportElement x="-20" y="20" width="595" height="1" forecolor="#666666" uuid="4a1ac1ce-96f0-4cac-bc27-16a1b05e6730"/>
 			</line>
 			<staticText>
-				<reportElement mode="Opaque" x="0" y="0" width="185" height="20" forecolor="#006699" backcolor="#E6E6E6" uuid="4bbdb5da-2996-46d0-ba72-2dc9c90892ac">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="80fb2f15-e46a-47cd-9bf3-f9503bb8be28"/>
-				</reportElement>
-				<textElement textAlignment="Center">
-					<font size="14" isBold="true"/>
-				</textElement>
-				<text><![CDATA[nome]]></text>
+				<reportElement mode="Opaque" x="0" y="0" width="25" height="20" forecolor="#006699" backcolor="#E6E6E6" uuid="a1b1c1d1-e1f1-4a1b-8a1b-000000000001"/>
+				<textElement textAlignment="Center"><font size="11" isBold="true"/></textElement>
+				<text><![CDATA[ID]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Opaque" x="185" y="0" width="185" height="20" forecolor="#006699" backcolor="#E6E6E6" uuid="03d40f66-03b1-4031-8c15-d13b43c82f19">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="6ec252c2-0864-4580-825a-023730bbb48b"/>
-				</reportElement>
-				<textElement textAlignment="Center">
-					<font size="14" isBold="true"/>
-				</textElement>
-				<text><![CDATA[cpf_cnpj]]></text>
+				<reportElement mode="Opaque" x="25" y="0" width="125" height="20" forecolor="#006699" backcolor="#E6E6E6" uuid="a1b1c1d1-e1f1-4a1b-8a1b-000000000002"/>
+				<textElement textAlignment="Center"><font size="11" isBold="true"/></textElement>
+				<text><![CDATA[Nome / Razão Social]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Opaque" x="370" y="0" width="182" height="20" forecolor="#006699" backcolor="#E6E6E6" uuid="3b8050c4-ce83-4c01-9ca4-01ea015261b7">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="95ec8233-955e-4e73-b1c4-f996dc18310d"/>
-				</reportElement>
-				<textElement textAlignment="Center">
-					<font size="14" isBold="true"/>
-				</textElement>
-				<text><![CDATA[tipo_pessoa]]></text>
+				<reportElement mode="Opaque" x="150" y="0" width="145" height="20" forecolor="#006699" backcolor="#E6E6E6" uuid="a1b1c1d1-e1f1-4a1b-8a1b-000000000003"/>
+				<textElement textAlignment="Center"><font size="11" isBold="true"/></textElement>
+				<text><![CDATA[E-mail]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="295" y="0" width="110" height="20" forecolor="#006699" backcolor="#E6E6E6" uuid="a1b1c1d1-e1f1-4a1b-8a1b-000000000004"/>
+				<textElement textAlignment="Center"><font size="11" isBold="true"/></textElement>
+				<text><![CDATA[CPF / CNPJ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="405" y="0" width="60" height="20" forecolor="#006699" backcolor="#E6E6E6" uuid="a1b1c1d1-e1f1-4a1b-8a1b-000000000005"/>
+				<textElement textAlignment="Center"><font size="11" isBold="true"/></textElement>
+				<text><![CDATA[Tipo]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="465" y="0" width="45" height="20" forecolor="#006699" backcolor="#E6E6E6" uuid="a1b1c1d1-e1f1-4a1b-8a1b-000000000006"/>
+				<textElement textAlignment="Center"><font size="11" isBold="true"/></textElement>
+				<text><![CDATA[Ativo]]></text>
 			</staticText>
 		</band>
 	</columnHeader>
 	<detail>
 		<band height="20">
 			<line>
-				<reportElement positionType="FixRelativeToBottom" x="0" y="19" width="555" height="1" uuid="93345812-c2a7-4d55-ad52-a161a4f935e7"/>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="19" width="510" height="1" uuid="93345812-c2a7-4d55-ad52-a161a4f935e7"/>
 			</line>
-			<textField textAdjust="StretchHeight">
-				<reportElement x="0" y="-1" width="185" height="20" uuid="9acb58e6-c8a6-495a-b57d-6da947f32989">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="80fb2f15-e46a-47cd-9bf3-f9503bb8be28"/>
-				</reportElement>
-				<textElement>
-					<font size="14"/>
-				</textElement>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="25" height="20" uuid="b2c2d2e2-f2a2-4b2c-9b2c-000000000001"/>
+				<textElement textAlignment="Center"><font size="11"/></textElement>
+				<textFieldExpression><![CDATA[$F{id}]]></textFieldExpression>
+			</textField>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="25" y="0" width="125" height="20" uuid="b2c2d2e2-f2a2-4b2c-9b2c-000000000002"/>
+				<textElement><font size="11"/></textElement>
 				<textFieldExpression><![CDATA[$F{nome}]]></textFieldExpression>
 			</textField>
-			<textField textAdjust="StretchHeight">
-				<reportElement x="185" y="0" width="185" height="20" uuid="d0299081-6289-46f6-8fe5-be6db319e577">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="6ec252c2-0864-4580-825a-023730bbb48b"/>
-				</reportElement>
-				<textElement>
-					<font size="14"/>
-				</textElement>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="150" y="0" width="145" height="20" uuid="b2c2d2e2-f2a2-4b2c-9b2c-000000000003"/>
+				<textElement><font size="11"/></textElement>
+				<textFieldExpression><![CDATA[$F{email}]]></textFieldExpression>
+			</textField>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="295" y="0" width="110" height="20" uuid="b2c2d2e2-f2a2-4b2c-9b2c-000000000004"/>
+				<textElement><font size="11"/></textElement>
 				<textFieldExpression><![CDATA[$F{cpf_cnpj}]]></textFieldExpression>
 			</textField>
-			<textField textAdjust="StretchHeight">
-				<reportElement x="370" y="0" width="182" height="20" uuid="f881c2d1-c75b-4ff2-b842-ef0a612593a5">
-					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="95ec8233-955e-4e73-b1c4-f996dc18310d"/>
-				</reportElement>
-				<textElement>
-					<font size="14"/>
-				</textElement>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="405" y="0" width="60" height="20" uuid="b2c2d2e2-f2a2-4b2c-9b2c-000000000005"/>
+				<textElement textAlignment="Center"><font size="11"/></textElement>
 				<textFieldExpression><![CDATA[$F{tipo_pessoa}]]></textFieldExpression>
+			</textField>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="465" y="0" width="45" height="20" uuid="b2c2d2e2-f2a2-4b2c-9b2c-000000000006"/>
+				<textElement textAlignment="Center"><font size="11"/></textElement>
+				<textFieldExpression><![CDATA[$F{ativo}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>

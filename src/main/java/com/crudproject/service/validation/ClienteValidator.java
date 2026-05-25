@@ -116,10 +116,11 @@ public class ClienteValidator {
                 throw new RuntimeException("Número do endereço é obrigatório. Use 'SN' para endereços sem número.");
             }
 
-            // Validação de sanidade do Número: Deve conter dígito OU ser exatamente SN (ou S/N)
+            // Número aceita apenas dígitos (ex: "123") ou exatamente "SN" / "S/N".
+            // Rejeita qualquer mistura de letras e números (ex: "12A", "12dasdasd").
             String numeroLimpo = e.getNumero().trim().toUpperCase();
-            if (!numeroLimpo.matches(".*\\d.*") && !numeroLimpo.equals("SN") && !numeroLimpo.equals("S/N")) {
-                throw new RuntimeException("Número do endereço inválido. Digite o número ou 'SN' se não houver.");
+            if (!numeroLimpo.matches("\\d+") && !numeroLimpo.equals("SN") && !numeroLimpo.equals("S/N")) {
+                throw new RuntimeException("Número do endereço inválido. Use apenas números (ex: 123) ou 'SN' para sem número.");
             }
 
             if (e.getCep() == null || e.getCep().isBlank()) {

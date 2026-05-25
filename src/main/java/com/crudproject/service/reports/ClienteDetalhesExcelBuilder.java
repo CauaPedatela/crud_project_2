@@ -2,6 +2,7 @@ package com.crudproject.service.reports;
 
 import com.crudproject.dto.cliente.ClienteResponseDTO;
 import com.crudproject.dto.endereco.EnderecoResponseDTO;
+import com.crudproject.service.validation.MascaraUtil;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -42,7 +43,7 @@ public final class ClienteDetalhesExcelBuilder {
             rowNum = secao(sheet, rowNum, "DADOS DO CLIENTE", secaoStyle, 1);
             rowNum = dado(sheet, rowNum, labelStyle, "Nome / Razão Social",     ExcelEstilos.nvl(c.getNome()));
             rowNum = dado(sheet, rowNum, labelStyle, "E-mail",                  ExcelEstilos.nvl(c.getEmail()));
-            rowNum = dado(sheet, rowNum, labelStyle, "CPF / CNPJ",              ExcelEstilos.nvl(c.getCpfCnpj()));
+            rowNum = dado(sheet, rowNum, labelStyle, "CPF / CNPJ",              ExcelEstilos.nvl(MascaraUtil.formatarCpfCnpj(c.getCpfCnpj())));
             rowNum = dado(sheet, rowNum, labelStyle, "RG / Inscrição Estadual", ExcelEstilos.nvl(c.getRgInscricaoEstadual()));
             rowNum = dado(sheet, rowNum, labelStyle, "Tipo de Pessoa",
                     c.getTipoPessoa() != null ? c.getTipoPessoa().name() : "");
@@ -76,8 +77,8 @@ public final class ClienteDetalhesExcelBuilder {
                     ExcelEstilos.celula(row, 4,  ExcelEstilos.nvl(e.getBairro()),      st);
                     ExcelEstilos.celula(row, 5,  ExcelEstilos.nvl(e.getCidade()),      st);
                     ExcelEstilos.celula(row, 6,  ExcelEstilos.nvl(e.getEstado()),      st);
-                    ExcelEstilos.celula(row, 7,  ExcelEstilos.nvl(e.getCep()),         st);
-                    ExcelEstilos.celula(row, 8,  ExcelEstilos.nvl(e.getTelefone()),    st);
+                    ExcelEstilos.celula(row, 7,  ExcelEstilos.nvl(MascaraUtil.formatarCep(e.getCep())),       st);
+                    ExcelEstilos.celula(row, 8,  ExcelEstilos.nvl(MascaraUtil.formatarTelefone(e.getTelefone())), st);
                     ExcelEstilos.celula(row, 9,
                             Boolean.TRUE.equals(e.getPrincipal()) ? "Sim" : "Não", st);
                     ExcelEstilos.celula(row, 10,

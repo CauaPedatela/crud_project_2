@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(python -c ' *)",
-      "PowerShell(Add-Type -AssemblyName System.IO; $path = \"C:\\\\Users\\\\Unika Dev 2\\\\Downloads\\\\Desafio Estágio \\(2\\) \\(1\\).pdf\"; [System.IO.File]::Exists\\($path\\))"
+      "PowerShell(Add-Type -AssemblyName System.IO; $path = \"C:\\\\Users\\\\Unika Dev 2\\\\Downloads\\\\Desafio Estágio \\(2\\) \\(1\\).pdf\"; [System.IO.File]::Exists\\($path\\))",
+      "Bash(java -version)",
+      "Bash(mvn -version)",
+      "Bash(mysql --version)",
+      "Bash(mvn compile *)",
+      "PowerShell($mvn = Get-Command mvn -ErrorAction SilentlyContinue; if \\($mvn\\) { $mvn.Source } else { \"not found\" })",
+      "PowerShell($env:PATH -split \";\" | Where-Object { $_ -ne \"\" } | Select-Object -First 20)"
     ]
   }
 }
