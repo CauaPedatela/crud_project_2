@@ -8,7 +8,10 @@
       "Bash(mysql --version)",
       "Bash(mvn compile *)",
       "PowerShell($mvn = Get-Command mvn -ErrorAction SilentlyContinue; if \\($mvn\\) { $mvn.Source } else { \"not found\" })",
-      "PowerShell($env:PATH -split \";\" | Where-Object { $_ -ne \"\" } | Select-Object -First 20)"
+      "PowerShell($env:PATH -split \";\" | Where-Object { $_ -ne \"\" } | Select-Object -First 20)",
+      "Bash(dir \"C:\\\\Users\\\\UnikaDev\\\\IdeaProjects\\\\crud_project_2\\\\src\")",
+      "Bash(cp \"C:/Users/UnikaDev/Downloads/Desafio Estágio \\(2\\).pdf\" \"C:/Users/UnikaDev/IdeaProjects/crud_project_2/.tmp_desafio.pdf\")",
+      "Bash(cp \"C:/Users/UnikaDev/Downloads/\"Desafio*Est*gio*\"\\(2\\).pdf\" \"C:/Users/UnikaDev/IdeaProjects/crud_project_2/.tmp_desafio.pdf\" && ls -la \"C:/Users/UnikaDev/IdeaProjects/crud_project_2/.tmp_desafio.pdf\")"
     ]
   }
 }

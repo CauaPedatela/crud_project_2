@@ -8,6 +8,81 @@ Desafio de estágio: sistema CRUD de Clientes (Pessoa Física e Jurídica) com s
 
 ---
 
+## ⚠️ Regras Invioláveis (escopo do desafio)
+
+Estas regras valem para QUALQUER conversa, mesmo após `/clear`:
+
+1. **Stack congelada.** Não introduzir libs, frameworks ou padrões fora dos listados em "Stack e Versões". Se achar que falta algo, **pergunte primeiro**.
+2. **Sem refatorações amplas espontâneas.** Limpeza, renomeação em massa, extração de abstrações novas, troca de bibliotecas — só com pedido explícito do usuário.
+3. **REST Controllers são intocáveis.** Eles existem em paralelo ao Wicket e serão o ponto de integração da fase Angular futura. **NUNCA remova endpoints**, mesmo que pareçam não usados.
+4. **Schema do banco é congelado.** Não altere `@Entity`, `@Column`, `@OneToMany`, `nullable`, `unique`, tipos de colunas ou nomes de tabelas sem confirmação. Hibernate gera DDL automaticamente — qualquer mudança altera o banco real.
+5. **CPF/CNPJ e TipoPessoa são IMUTÁVEIS após cadastro.** Não permitir edição em nenhum lugar do código.
+6. **Endereço principal: exatamente UM por cliente.** Regra forte do validator — nunca relaxar.
+7. **DTOs DEVEM `implements Serializable`.** Wicket serializa modelos entre requisições — remover quebra a sessão.
+8. **Pipeline de salvar/atualizar:** `normalizarDados()` → `ClienteValidator` → persistência. **Não inverter a ordem** (Caelum Stella falha se o CPF chegar formatado).
+
+---
+
+## 🤝 Comportamento Esperado do Assistente
+
+1. **Mais de 1 arquivo a tocar → entrar em plan mode automaticamente** (`ExitPlanMode` só após aprovação).
+2. **Antes de criar abstração nova** (helper, util, classe genérica): perguntar se vale a complexidade. Triplicar 3 linhas é melhor que abstrair cedo.
+3. **Antes de tocar em arquivo fora do diretório da tarefa atual:** confirmar com o usuário.
+4. **Código "esquisito" ≠ código errado.** Investigar a intenção antes de "limpar" — pode ser workaround intencional documentado em outro lugar.
+5. **Cada subdiretório tem seu próprio `CLAUDE.md`** com regras específicas. Leia-o antes de editar arquivos lá dentro.
+6. **Em caso de dúvida sobre escopo:** pergunte antes, não depois.
+
+---
+
+## 📝 Estilo de Comentários
+
+O usuário é iniciante e usa os comentários para aprender. Seguir o PDF (seção 5.1) à risca:
+
+- **Comentar liberalmente em pt-BR.** 1-2 linhas curtas explicando o "porquê" de cada bloco lógico.
+- **Em código novo escrito pelo Claude: sempre comentar.** Tanto o "o quê" quanto o "porquê", de forma didática.
+- **Não remover comentários existentes** ao refatorar — exceto se o comentário ficou objetivamente errado.
+- **JavaDoc curto** em métodos públicos do Service e do Controller.
+- **Nomes significativos** em pt-BR para variáveis, métodos e classes (já é a convenção do projeto).
+
+---
+
+## 📋 Requisitos Formais do Desafio (PDF)
+
+Checklist sintetizado das seções 4-8 do PDF "Desafio Estágio":
+
+| Seção | Requisito | Status |
+|---|---|---|
+| 4.1 | Modelo `Cliente` (PF/PJ unificado) com `Endereco` 1:N | ✅ |
+| 5.1 | Validações no **serviço**, não no controller | ✅ |
+| 5.1 | Comentar em pt-BR, métodos com objetivo único | ✅ |
+| 6.1 | Wicket + Angular | ⏳ Wicket pronto / Angular futuro |
+| 6.1 | Validações de campos obrigatórios | ✅ |
+| 6.1 | Visibilidade de campos por ação do usuário (PF↔PJ) | ✅ |
+| 6.1 | jQuery para máscaras | ✅ data / ⏳ CPF, CEP, telefone |
+| 6.3 | CRUD numa mesma página + Modal Windows | ✅ |
+| 6.3 | Paginação | ✅ |
+| 7 | `FeedbackPanel` no Wicket | ✅ |
+| 7 | Confirmação para ações irreversíveis (excluir) | ✅ |
+| 7 | Relatórios PDF (Jasper) e Excel (POI) | ✅ |
+| 7 | Importação por planilha Excel | ✅ |
+| 7 | Evitar CPF/CNPJ duplicado | ✅ |
+| 7 | Impedir alteração de dados sensíveis | ✅ (CPF/CNPJ/TipoPessoa) |
+| 7 | **Testes JUnit em TODOS os CRUDs** | ⏳ **Pendente** (`src/test/` não existe) |
+| 7 | **Mensagens flutuantes com auto-dismiss** | ⏳ **Pendente** |
+| 8.1 | Componentes Wicket exigidos: `Panel`, `TextField`, `NumberTextField`, `RadioGroup`, `CheckBox`, `ListView`, Link, Submit, `AjaxRequestTarget` | ✅ |
+| 8.2 | Botão de relatório por linha + botão de todos | ✅ |
+| 8.3 | Exportação Excel (linha + todos) | ✅ |
+| 8.3 | Importação Excel | ✅ |
+| 8.4 | Hibernate 5 (via Spring Boot 2.7) | ✅ |
+| 8.4 | Classes separadas Serviço e DAO | ✅ |
+| 8.4 | OneToMany / ManyToOne | ✅ |
+| 8.4 | **Search (`com.googlecode.genericdao.search`)** | ⏳ **Pendente** (hoje usa Specification API, é diferente) |
+| 8.4 | **HQL puro** (pelo menos uma consulta) | ⏳ **Pendente** |
+| 8.4 | **SQL nativo** (pelo menos uma consulta) | ⏳ **Pendente** |
+| 8.5 | Tela com filtros + paginação + Modal de inclusão | ✅ |
+
+---
+
 ## Stack e Versões
 | Tecnologia | Versão |
 |---|---|
@@ -229,8 +304,9 @@ O Controller REST existe em paralelo e ficará disponível para a futura migraç
 
 ### Pendente Backend ⏳
 - Endpoint `POST /api/clientes/importar` (upload Excel)
-- Testes JUnit dos CRUDs
-- Pelo menos uma consulta HQL pura e uma SQL nativa (requisito explícito do desafio em 8.4)
+- **Testes JUnit dos CRUDs** (requisito explícito 7 — `src/test/` ainda não existe)
+- **Consultas via Search `com.googlecode.genericdao.search`** (requisito explícito 8.4 — hoje usa Specification API, é diferente)
+- **Pelo menos uma consulta HQL pura e uma SQL nativa** (requisito explícito 8.4)
 
 ### Fase futura — Angular ⏳
 - Replicar tudo em Angular 14 + Angular Material, consumindo os REST Controllers
