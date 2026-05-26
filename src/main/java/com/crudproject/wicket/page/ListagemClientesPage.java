@@ -5,18 +5,6 @@
  * instancia os panels filhos e cuida da injeção de CSS/JS via PackageResourceReference.
  * Toda lógica de form, modal e CRUD vive nos panels (wicket.page.listagem.*
  * e wicket.page.shared.*).
- *
- * Hierarquia de panels filhos:
- *   ContadoresHeaderPanel    — contadores de topo
- *   BuscaPanel               — barra de busca AJAX
- *   FiltrosPanel             — modal de filtros AJAX
- *   TabelaClientesPanel      — tabela paginada
- *   RodapeAcoesPanel         — botões Adicionar/PDF/Excel/Importar + links de relatório
- *   ExcluirClienteModalPanel — modal de exclusão (Listagem-only)
- *   EditarClienteModalPanel  — modal de edição (compartilhado com Detalhes)
- *   CriarClienteModalPanel   — modal de criação com lista dinâmica de endereços
- *   ImportarExcelModalPanel  — modal de importação via planilha
- *   RelatorioClienteModalPanel — modal de relatório individual (compartilhado)
  */
 package com.crudproject.wicket.page;
 
@@ -37,9 +25,6 @@ import org.apache.wicket.request.resource.PackageResourceReference;
 
 public class ListagemClientesPage extends WebPage {
 
-    // Path RELATIVO ao pacote da classe Resources (com.crudproject.wicket.resources).
-    // Usar uma classe marcadora no mesmo pacote dos .css/.js evita o
-    // SecurePackageResourceGuard bloquear o acesso por scope diferente.
     private static final PackageResourceReference CSS_REF =
             new PackageResourceReference(Resources.class, "clientes.css");
     private static final PackageResourceReference JS_REF =
@@ -52,17 +37,18 @@ public class ListagemClientesPage extends WebPage {
         feedbackPagina.setOutputMarkupId(true);
         add(feedbackPagina);
 
-        // Contadores + Tabela + Rodapé (com Links de relatório re-renderizáveis)
         ContadoresHeaderPanel contadores = new ContadoresHeaderPanel("contadoresHeader");
         add(contadores);
 
+        // CORREÇÃO: Instanciamos o modal primeiro para poder passá-lo para a tabela abaixo
+        RelatorioClienteModalPanel modalRelatorio = new RelatorioClienteModalPanel("modalRelatorio");
+
+        // CORREÇÃO: Passamos o modalRelatorio como terceiro parâmetro no construtor da tabela
         TabelaClientesPanel tabelaPanel = new TabelaClientesPanel("tabelaPanel", filtros);
         tabelaPanel.setOutputMarkupId(true);
 
         RodapeAcoesPanel rodape = new RodapeAcoesPanel("rodapeAcoes", filtros);
 
-        // Busca/Filtros: precisam re-renderizar a tabela e os links de relatório
-        // (que ficam dentro do RodapeAcoesPanel) quando o usuário aplica filtros.
         add(new BuscaPanel("buscaPanel", filtros, tabelaPanel,
                 rodape.getLinkRelatorioPdf(), rodape.getLinkRelatorioExcel()));
         add(tabelaPanel);
@@ -73,8 +59,8 @@ public class ListagemClientesPage extends WebPage {
         filtrosPanel.setRenderBodyOnly(true);
         add(filtrosPanel);
 
-        // Modais — cada um define quais componentes externos re-renderizar via varargs.
-        add(new RelatorioClienteModalPanel("modalRelatorio"));
+        // Adicionamos a variável do modal que instanciamos lá em cima
+        add(modalRelatorio);
 
         add(new ExcluirClienteModalPanel("modalExcluirCliente",
                 feedbackPagina, tabelaPanel,
@@ -96,7 +82,6 @@ public class ListagemClientesPage extends WebPage {
                 contadores.getTotalAtivosLabel()));
     }
 
-    // Injeta o CSS/JS compartilhado (servido por PackageResourceReference).
     @Override
     public void renderHead(IHeaderResponse response) {
         super.renderHead(response);

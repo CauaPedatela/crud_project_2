@@ -8,10 +8,7 @@
    pós-AJAX do Wicket.
    ============================================================ */
 
-/* ───────────────── Comportamentos de máscara ─────────────────
-   Declarados em escopo global pra serem reutilizados nos handlers
-   de abertura de modal (re-aplicar máscara em valores preenchidos
-   programaticamente via .value = ...). */
+/* ───────────────── Comportamentos de máscara ───────────────── */
 var maskTelefoneBehavior = function (val) {
   return val.replace(/\D/g, '').length === 11 ? '(00) 00000-0000' : '(00) 0000-00009';
 };
@@ -62,60 +59,72 @@ function aplicarMascarasExibicao() {
   });
 }
 
-/* ───────────────── Integração ViaCEP ─────────────────
-   Ao sair do campo CEP com 8 dígitos, busca o endereço e
-   preenche os campos do mesmo bloco via classes .viacep-*. */
+/* ───────────────── Integração ViaCEP ───────────────── */
 function buscarCepNoBloco(input) {
   var cep = input.value.replace(/\D/g, '');
   if (cep.length !== 8) return;
-  var bloco = input.closest('.border.rounded') || input.closest('.modal-body');
+
+  // A trava cirúrgica: garante que preenchemos apenas o endereço atual
+  var bloco = input.closest('.bloco-endereco');
   if (!bloco) return;
+
   fetch('https://viacep.com.br/ws/' + cep + '/json/')
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (data.erro) return;
+      if (data.erro) {
+        // Aviso amigável no console para não acharmos que o código quebrou!
+        console.warn("ViaCEP: O CEP " + cep + " não foi encontrado na base dos Correios.");
+        return;
+      }
+
       var set = function(cls, val) {
         var el = bloco.querySelector('.' + cls);
         if (el && val) el.value = val;
       };
+
       set('viacep-logradouro', data.logradouro);
       set('viacep-bairro',     data.bairro);
       set('viacep-cidade',     data.localidade);
-      // O Wicket usa índice como value da <option>, não o texto da UF.
-      // Itera as options e seleciona pelo texto (ex: "SP").
+
+      // O Wicket pode usar o texto ou o value numérico nas options de Estado
       if (data.uf) {
         var sel = bloco.querySelector('.viacep-estado');
         if (sel) {
           for (var i = 0; i < sel.options.length; i++) {
-            if (sel.options[i].text === data.uf) { sel.selectedIndex = i; break; }
+            if (sel.options[i].text === data.uf || sel.options[i].value === data.uf) {
+                sel.selectedIndex = i;
+                break;
+            }
           }
         }
       }
     })
-    .catch(function() {});
+    .catch(function(e) {
+        console.error("Erro ao consultar o ViaCEP: ", e);
+    });
 }
 
 /* ───────────────── Abridores de modal com data-* ───────────────── */
 
-// Abre o modal de relatório individual e ajusta os links de PDF/Excel.
-function abrirModalRelatorio(id) {
+// Abre o modal de relatório individual.
+// As rotas de API REST foram removidas daqui! Agora é o Java/Wicket
+// que processa o download internamente via Stream.
+// Abre o modal de relatório individual passando o ID na abertura
+function abrirModalRelatorio(btn) {
   var modalEl = document.getElementById('modalRelatorioLista');
   if (!modalEl) {
      console.error("ERRO: ID 'modalRelatorioLista' não encontrado no DOM.");
      return;
   }
 
-  var linkPdf = document.getElementById('linkRelatorioPdfLista');
-  if (linkPdf) linkPdf.href = '/api/relatorios/cliente/detalhes/pdf?id=' + id;
-
-  var linkExcel = document.getElementById('linkRelatorioExcelLista');
-  if (linkExcel) linkExcel.href = '/api/relatorios/cliente/detalhes/excel?id=' + id;
+  var id = btn.getAttribute('data-id');
+  if (document.getElementById('reportClienteId')) {
+     document.getElementById('reportClienteId').value = id;
+  }
 
   new bootstrap.Modal(modalEl).show();
 }
 
-// Abre o modal de confirmação de exclusão de cliente.
-// Nota: O Wicket passa apenas o ID diretamente para esta função.
 function abrirModalExclusao(id) {
   var modalEl = document.getElementById('modalConfirmarExclusao');
   if (!modalEl) {
@@ -129,7 +138,6 @@ function abrirModalExclusao(id) {
   new bootstrap.Modal(modalEl).show();
 }
 
-// Troca os rótulos PF/PJ no modal de criação.
 function alternarLabelsCriacao(selectElement) {
   var isPJ = selectElement.value === 'JURIDICA';
   if (document.getElementById('lblCriarNome')) document.getElementById('lblCriarNome').textContent = isPJ ? 'Razão Social' : 'Nome completo';
@@ -138,7 +146,6 @@ function alternarLabelsCriacao(selectElement) {
   if (document.getElementById('lblCriarData')) document.getElementById('lblCriarData').textContent = isPJ ? 'Data de Fundação' : 'Data de Nascimento';
 }
 
-// Pré-preenche o modal de edição de cliente com os data-* do botão clicado.
 function abrirModalEdicao(btn) {
   var modalEl = document.getElementById('modalEditarCliente');
   if (!modalEl) {
@@ -148,7 +155,6 @@ function abrirModalEdicao(btn) {
 
   var isPJ = btn.dataset.tipo === 'JURIDICA';
 
-  // Preenche valores apenas se os elementos existirem na tela
   if (document.getElementById('editNome')) document.getElementById('editNome').value = btn.dataset.nome || '';
   if (document.getElementById('editCpfCnpj')) document.getElementById('editCpfCnpj').value = formatarCpfCnpj(btn.dataset.cpfCnpj || '');
 
@@ -164,7 +170,6 @@ function abrirModalEdicao(btn) {
   new bootstrap.Modal(modalEl).show();
 }
 
-// Abre o modal de confirmação de exclusão de endereço.
 function abrirModalExcluirEndereco(btn) {
   if (document.getElementById('idEnderecoParaExcluir')) document.getElementById('idEnderecoParaExcluir').value = btn.dataset.id;
   if (document.getElementById('txtEnderecoParaExcluir')) document.getElementById('txtEnderecoParaExcluir').textContent = btn.dataset.logradouro || '';
@@ -173,7 +178,6 @@ function abrirModalExcluirEndereco(btn) {
   if (modalEl) new bootstrap.Modal(modalEl).show();
 }
 
-// Pré-preenche o modal de edição de endereço com os data-* do botão clicado.
 function abrirModalEditarEndereco(btn) {
   if (document.getElementById('editEnderecoId')) document.getElementById('editEnderecoId').value = btn.dataset.id;
   if (document.getElementById('editEndNumero')) document.getElementById('editEndNumero').value = btn.dataset.numero || '';
@@ -181,7 +185,6 @@ function abrirModalEditarEndereco(btn) {
   if (document.getElementById('editEndPrincipal')) document.getElementById('editEndPrincipal').checked = btn.dataset.principal === 'true';
   if (document.getElementById('editEndLogradouroDisplay')) document.getElementById('editEndLogradouroDisplay').value = btn.dataset.logradouro || '';
 
-  // Re-aplica máscara sobre o valor existente (formata em vez de só aguardar nova digitação).
   if (document.getElementById('editEndTelefone')) {
     $('#editEndTelefone').val(btn.dataset.telefone || '').mask(maskTelefoneBehavior, maskTelefoneOpcoes);
   }
@@ -190,7 +193,6 @@ function abrirModalEditarEndereco(btn) {
   if (modalEl) new bootstrap.Modal(modalEl).show();
 }
 
-// Abre o modal de aviso explicando por que o endereço não pode ser excluído.
 function mostrarAvisoNaoPodeDeletar(btn) {
   if (document.getElementById('txtAvisoEnderecoNaoPodeDeletar')) {
     document.getElementById('txtAvisoEnderecoNaoPodeDeletar').textContent = btn.dataset.motivo || 'Não é possível excluir este endereço.';
@@ -199,9 +201,7 @@ function mostrarAvisoNaoPodeDeletar(btn) {
   if (modalEl) new bootstrap.Modal(modalEl).show();
 }
 
-/* ───────────────── Utilitários de UI ─────────────────
-   S/N usa readonly em vez de disabled para que o valor chegue
-   ao servidor no submit. */
+/* ───────────────── Utilitários de UI ───────────────── */
 function toggleSemNumero(btn) {
   var input = btn.closest('.input-group').querySelector('input');
   if (!input) return;
@@ -228,8 +228,6 @@ function initMasks() {
   aplicarMascarasExibicao();
 }
 
-// Faz o FeedbackPanel sumir após 5s e apaga os <li> internos
-// pra evitar "fantasmas" em renderizações futuras do Wicket.
 function autoHideFeedback() {
   setTimeout(function() {
     $('.feedbackPanel').fadeOut('slow', function() {
@@ -239,28 +237,20 @@ function autoHideFeedback() {
   }, 5000);
 }
 
-/* Aguarda até que uma dependência exista no window (jQuery, Bootstrap, Wicket).
-   Necessário porque o clientes.js é injetado no <head> via PackageResourceReference,
-   ANTES das tags <script> do final do <body> (jQuery Mask, Bootstrap CDN) e antes
-   da bundle do Wicket-Ajax. Polling barato com fallback no DOMContentLoaded. */
 function waitFor(check, callback, maxTentativas) {
   var t = 0, limite = maxTentativas || 200;
   (function tick() {
     if (check()) { callback(); return; }
-    if (t++ > limite) return;          // desiste em silêncio após ~10s
+    if (t++ > limite) return;
     setTimeout(tick, 50);
   })();
 }
 
-// Init inicial: depende de jQuery + jQuery.mask + Bootstrap estarem prontos.
 waitFor(
   function () { return window.jQuery && jQuery.fn && jQuery.fn.mask && window.bootstrap; },
   function () { initMasks(); autoHideFeedback(); }
 );
 
-/* ───────────────── Integração com AJAX do Wicket ─────────────────
-   Após cada resposta AJAX, reaplica as máscaras nos novos elementos
-   e reinicia o cronômetro do autoHideFeedback. */
 waitFor(
   function () { return typeof Wicket !== 'undefined' && Wicket.Event && Wicket.Event.subscribe; },
   function () {

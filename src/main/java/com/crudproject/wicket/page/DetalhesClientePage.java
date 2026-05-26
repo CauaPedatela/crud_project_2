@@ -6,15 +6,6 @@
  * via LoadableDetachableModel, instancia os panels filhos e configura os
  * BookmarkablePageLink de navegação. Toda lógica de form vive nos panels
  * (wicket.page.detalhes.* e wicket.page.shared.*).
- *
- * Hierarquia de panels filhos:
- *   CardClientePanel              — card de dados do cliente
- *   EnderecosListaPanel           — lista de endereços com botões editar/excluir
- *   EditarClienteModalPanel       — modal de edição (compartilhado com Listagem)
- *   ExcluirEnderecoModalPanel     — modal de confirmação de exclusão
- *   EditarEnderecoModalPanel      — modal de edição de endereço
- *   AdicionarEnderecoModalPanel   — modal de criação de endereço (com ViaCEP)
- *   RelatorioClienteModalPanel    — modal de relatório individual (compartilhado)
  */
 package com.crudproject.wicket.page;
 
@@ -45,8 +36,6 @@ import org.apache.wicket.spring.injection.annot.SpringBean;
 
 public class DetalhesClientePage extends WebPage {
 
-    // Path RELATIVO à classe marcadora Resources, no mesmo pacote dos .css/.js.
-    // Evita problemas de scope com o SecurePackageResourceGuard do Wicket.
     private static final PackageResourceReference CSS_REF =
             new PackageResourceReference(Resources.class, "clientes.css");
     private static final PackageResourceReference JS_REF =
@@ -94,25 +83,24 @@ public class DetalhesClientePage extends WebPage {
         });
         add(btnEditarCliente);
 
-        // Botão "Relatório" do topo — usa o modal compartilhado (RelatorioClienteModalPanel),
-        // disparando abrirModalRelatorio(id) que preenche os hrefs e abre o modal.
+        // Botão "Relatório" do topo — passa o ID via data-id para o JS interceptar
         WebMarkupContainer btnRelatorio = new WebMarkupContainer("btnRelatorio");
         btnRelatorio.add(new Behavior() {
             @Override
             public void onComponentTag(Component component, ComponentTag tag) {
-                tag.put("onclick", "abrirModalRelatorio(" + clienteId + ")");
+                tag.put("onclick", "abrirModalRelatorio(this)");
+                tag.put("data-id", String.valueOf(clienteId));
             }
         });
         add(btnRelatorio);
 
-        // Panels visuais + modais. O cardCliente e a listaEnderecos são re-renderizados
-        // pelos modais via varargs (constructor injection — mesmo padrão dos BuscaPanel/FiltrosPanel).
         CardClientePanel cardCliente = new CardClientePanel("cardCliente", clienteModel);
         add(cardCliente);
 
         EnderecosListaPanel enderecosLista = new EnderecosListaPanel("enderecosLista", clienteModel);
         add(enderecosLista);
 
+        // O modal agora é independente e se auto-popula com a ajuda do JS!
         add(new RelatorioClienteModalPanel("modalRelatorio"));
 
         add(new EditarClienteModalPanel("modalEditarCliente",

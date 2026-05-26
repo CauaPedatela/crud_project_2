@@ -1,13 +1,9 @@
 /*
  * RodapeAcoesPanel — barra inferior da Listagem com os botões de ação:
- *   - "Adicionar Cliente" e "Importar via Excel": só abrem os modais Bootstrap
- *     via data-bs-toggle (sem submit Wicket; o trabalho fica nos panels dos modais)
- *   - "Relatório (PDF)" e "Exportar Excel": Links Wicket que codificam o
- *     FiltroState atual na URL e disparam o download
- *
- * Os 2 Links de relatório são expostos via getters para que BuscaPanel e
- * FiltrosPanel possam re-renderizá-los via target.add(...) sempre que os
- * filtros mudarem, mantendo o href sincronizado com o estado atual.
+ * - "Adicionar Cliente" e "Importar via Excel": só abrem os modais Bootstrap
+ * via data-bs-toggle (sem submit Wicket; o trabalho fica nos panels dos modais)
+ * - "Relatório (PDF)" e "Exportar Excel": Links Wicket que codificam o
+ * FiltroState atual na URL e disparam o download
  */
 package com.crudproject.wicket.page.listagem;
 
@@ -22,6 +18,7 @@ import org.apache.wicket.request.handler.resource.ResourceStreamRequestHandler;
 import org.apache.wicket.request.resource.ContentDisposition;
 import org.apache.wicket.spring.injection.annot.SpringBean;
 import org.apache.wicket.util.resource.AbstractResourceStreamWriter;
+import org.apache.wicket.util.time.Duration; // IMPORT NOVO
 
 public class RodapeAcoesPanel extends Panel {
 
@@ -42,6 +39,8 @@ public class RodapeAcoesPanel extends Panel {
                 if (href != null) {
                     tag.put("href", href + querystring(filtros));
                 }
+                // MÁGICA 1: Injeta um timestamp no momento do clique, burlando o cache do navegador!
+                tag.put("onclick", "this.href = this.href + '&_cb=' + new Date().getTime();");
             }
             @Override
             public void onClick() {
@@ -70,6 +69,8 @@ public class RodapeAcoesPanel extends Panel {
                 if (href != null) {
                     tag.put("href", href + querystring(filtros));
                 }
+                // MÁGICA 1: Injeta o timestamp aqui também
+                tag.put("onclick", "this.href = this.href + '&_cb=' + new Date().getTime();");
             }
             @Override
             public void onClick() {
@@ -96,14 +97,12 @@ public class RodapeAcoesPanel extends Panel {
     public Link<Void> getLinkRelatorioPdf()   { return linkRelatorioPdf; }
     public Link<Void> getLinkRelatorioExcel() { return linkRelatorioExcel; }
 
-    // Codifica o FiltroState como querystring (sempre prefixada com '&', pois
-    // o href base do Link já termina em algo do tipo "?id=...").
     private static String querystring(FiltroState f) {
         return "&termo=" + enc(f.getTermoBusca())
-             + "&ativo=" + enc(f.getFiltroAtivo())
-             + "&tipo="  + enc(f.getFiltroTipo())
-             + "&de="    + enc(f.getDataCriacaoInicio())
-             + "&ate="   + enc(f.getDataCriacaoFim());
+                + "&ativo=" + enc(f.getFiltroAtivo())
+                + "&tipo="  + enc(f.getFiltroTipo())
+                + "&de="    + enc(f.getDataCriacaoInicio())
+                + "&ate="   + enc(f.getDataCriacaoFim());
     }
 
     private static String enc(String v) {
@@ -129,6 +128,10 @@ public class RodapeAcoesPanel extends Panel {
         ResourceStreamRequestHandler handler =
                 new ResourceStreamRequestHandler(stream, fileName);
         handler.setContentDisposition(ContentDisposition.ATTACHMENT);
+
+        // MÁGICA 2: Diz explicitamente para o navegador NUNCA fazer cache deste arquivo
+        handler.setCacheDuration(Duration.NONE);
+
         getRequestCycle().scheduleRequestHandlerAfterCurrent(handler);
     }
 }

@@ -1,33 +1,36 @@
 <html xmlns:wicket="http://wicket.apache.org/dtds.data/wicket-xhtml1.4-strict.dtd">
 <body>
 <wicket:panel>
-  <div class="modal fade" id="modalRelatorioLista" tabindex="-1"
-       aria-labelledby="modalRelatorioListaLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="modalRelatorioListaLabel">
-            <i class="bi bi-file-earmark-text me-2"></i>Emitir Relatório
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-        </div>
-        <div class="modal-body">
-          <p class="text-muted small mb-3">Selecione o formato para o cliente selecionado:</p>
-          <div class="d-grid gap-2">
-            <a id="linkRelatorioPdfLista" href="#" class="btn btn-danger fw-semibold" target="_blank">
-              <i class="bi bi-file-earmark-pdf-fill me-2"></i>Gerar PDF
-            </a>
-            <a id="linkRelatorioExcelLista" href="#" class="btn btn-success fw-semibold" target="_blank">
-              <i class="bi bi-file-earmark-excel-fill me-2"></i>Exportar Excel
-            </a>
+  <form wicket:id="formRelatorio" target="_blank">
+    <input type="hidden" wicket:id="hiddenClienteId"/>
+    <div class="modal fade" id="modalRelatorioLista" tabindex="-1"
+         aria-labelledby="modalRelatorioListaLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalRelatorioListaLabel">
+              <i class="bi bi-file-earmark-text me-2"></i>Emitir Relatório
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
           </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Fechar</button>
+          <div class="modal-body">
+            <p class="text-muted small mb-3">Selecione o formato para o cliente selecionado:</p>
+            <div class="d-grid gap-2">
+              <button type="submit" wicket:id="btnPdf" class="btn btn-danger fw-semibold">
+                <i class="bi bi-file-earmark-pdf-fill me-2"></i>Gerar PDF
+              </button>
+              <button type="submit" wicket:id="btnExcel" class="btn btn-success fw-semibold">
+                <i class="bi bi-file-earmark-excel-fill me-2"></i>Exportar Excel
+              </button>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Fechar</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </form>
 </wicket:panel>
 </body>
 </html>
