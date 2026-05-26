@@ -1,0 +1,77 @@
+<html xmlns:wicket="http://wicket.apache.org/dtds.data/wicket-xhtml1.4-strict.dtd">
+<body>
+<wicket:panel>
+  <!-- O <div class="modal"> envolve o <form> para que target.add(form)
+       atualize o resultado sem fechar o modal. -->
+  <div class="modal fade" id="modalImportarExcel" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+
+        <div class="modal-header bg-light">
+          <h5 class="modal-title">
+            <i class="bi bi-file-earmark-arrow-up-fill me-2 text-primary"></i>Importar Clientes via Excel
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+
+        <form wicket:id="formImportar">
+          <div class="modal-body">
+
+            <div wicket:id="feedbackImportar"></div>
+
+            <div class="alert alert-info d-flex gap-2 mb-3">
+              <i class="bi bi-info-circle-fill flex-shrink-0 mt-1"></i>
+              <div>
+                Baixe a planilha modelo, preencha cada linha com os dados de um cliente
+                (incluindo um endereço) e importe o arquivo. Clientes com erro são indicados
+                abaixo — os demais são salvos normalmente.
+              </div>
+            </div>
+
+            <a wicket:id="linkDownloadModelo" class="btn btn-outline-success mb-4" target="_blank">
+              <i class="bi bi-file-earmark-arrow-down me-1"></i>Baixar Planilha Modelo
+            </a>
+
+            <hr class="my-3">
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Selecione o arquivo .xlsx:</label>
+              <input type="file" class="form-control" wicket:id="arquivoExcel" accept=".xlsx,.xls">
+              <div class="form-text">Apenas arquivos Excel (.xlsx). Cada linha = 1 cliente com 1 endereço.</div>
+            </div>
+
+            <div wicket:id="painelResultado" class="mt-4 p-3 border rounded bg-light">
+              <h6 class="fw-bold text-uppercase text-muted small mb-3">
+                <i class="bi bi-clipboard-check me-1"></i>Resultado da Importação
+              </h6>
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="badge bg-success fs-6 px-3 py-2">
+                  <span wicket:id="resultadoSucessos">0</span> importados com sucesso
+                </span>
+                <span class="badge bg-danger fs-6 px-3 py-2">
+                  <span wicket:id="resultadoErros">0</span> com erro
+                </span>
+              </div>
+              <ul class="list-group list-group-flush" wicket:id="containerListaErros">
+                <li class="list-group-item list-group-item-danger small py-2" wicket:id="listaErros">
+                  <i class="bi bi-x-circle me-1"></i>
+                  <span wicket:id="mensagemErro">mensagem de erro</span>
+                </li>
+              </ul>
+            </div>
+
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+            <button type="submit" wicket:id="btnImportar" class="btn btn-primary fw-semibold px-4">
+              <i class="bi bi-upload me-2"></i>Importar Clientes
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</wicket:panel>
+</body>
+</html>

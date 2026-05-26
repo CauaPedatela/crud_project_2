@@ -1,0 +1,95 @@
+<html xmlns:wicket="http://wicket.apache.org/dtds.data/wicket-xhtml1.4-strict.dtd">
+<body>
+<wicket:panel>
+  <!-- O <div class="modal"> envolve o <form> para que target.add(form)
+       só substitua o conteúdo interno sem destruir o modal Bootstrap. -->
+  <div class="modal fade" id="modalAdicionarEndereco" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-plus-circle-fill me-2 text-primary"></i>Adicionar Endereço</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+
+        <form wicket:id="formAdicionarEndereco">
+          <div class="modal-body">
+
+            <div wicket:id="feedbackEndereco"></div>
+
+            <div class="row g-2">
+              <div class="col-md-3">
+                <label class="form-label small mb-1">CEP</label>
+                <input type="text" class="form-control form-control-sm mask-cep" wicket:id="addEndCep"
+                     onblur="buscarCepNoBloco(this)">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small mb-1">Tipo</label>
+                <select class="form-select form-select-sm" wicket:id="addEndTipo"></select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Logradouro</label>
+                <input type="text" class="form-control form-control-sm viacep-logradouro" wicket:id="addEndLogradouro">
+              </div>
+
+              <div class="col-md-2">
+                <label class="form-label small mb-1">Número <span class="text-danger">*</span></label>
+                <div class="input-group input-group-sm">
+                  <input type="text" class="form-control form-control-sm" wicket:id="addEndNumero">
+                  <button type="button" class="btn btn-outline-secondary" title="Sem número"
+                          onclick="toggleSemNumero(this)">S/N</button>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small mb-1">Complemento</label>
+                <input type="text" class="form-control form-control-sm" wicket:id="addEndComplemento"
+                       placeholder="(opcional)">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Bairro</label>
+                <input type="text" class="form-control form-control-sm viacep-bairro" wicket:id="addEndBairro">
+              </div>
+
+              <div class="col-md-5">
+                <label class="form-label small mb-1">Cidade</label>
+                <input type="text" class="form-control form-control-sm viacep-cidade" wicket:id="addEndCidade">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">UF</label>
+                <select class="form-select form-select-sm viacep-estado" wicket:id="addEndEstado">
+                  <option value="">Selecione...</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small mb-1">País</label>
+                <input type="text" class="form-control form-control-sm" wicket:id="addEndPais">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">Telefone</label>
+                <input type="text" class="form-control form-control-sm mask-telefone" wicket:id="addEndTelefone"
+                       placeholder="(opcional)">
+              </div>
+
+              <div class="col-12 mt-2">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" wicket:id="addEndPrincipal">
+                  <label class="form-check-label">Definir como endereço principal</label>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" wicket:id="btnSalvarAdicionarEndereco" class="btn btn-primary fw-semibold px-4">
+              <i class="bi bi-check-circle-fill me-2"></i>Adicionar Endereço
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</wicket:panel>
+</body>
+</html>

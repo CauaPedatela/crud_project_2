@@ -1,0 +1,69 @@
+<html xmlns:wicket="http://wicket.apache.org/dtds.data/wicket-xhtml1.4-strict.dtd">
+<body>
+<wicket:panel>
+  <!-- Editáveis: número, complemento, telefone, principal.
+       O logradouro é exibido como referência (não editável). -->
+  <form wicket:id="formEditarEndereco">
+    <input type="hidden" wicket:id="hiddenEditarEnderecoId"/>
+    <div class="modal fade" id="modalEditarEndereco" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>Editar Endereço</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body">
+            <div wicket:id="feedbackEditarEndereco"></div>
+            <p class="text-muted small mb-3">
+              Número, complemento, telefone e status de principal podem ser editados.
+            </p>
+            <div class="row g-3">
+
+              <div class="col-12">
+                <label class="form-label">
+                  Logradouro <span class="text-muted small">(não editável)</span>
+                </label>
+                <input type="text" class="form-control" id="editEndLogradouroDisplay" disabled>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Número <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <input type="text" class="form-control" wicket:id="editEndNumero">
+                  <button type="button" class="btn btn-outline-secondary" title="Sem número"
+                          onclick="toggleSemNumero(this)">S/N</button>
+                </div>
+              </div>
+
+              <div class="col-md-8">
+                <label class="form-label">Complemento</label>
+                <input type="text" class="form-control" wicket:id="editEndComplemento">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Telefone</label>
+                <input type="text" class="form-control mask-telefone" wicket:id="editEndTelefone">
+              </div>
+
+              <div class="col-md-6 d-flex align-items-center pt-4">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" wicket:id="editEndPrincipal">
+                  <label class="form-check-label">Endereço principal</label>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" wicket:id="btnSalvarEditarEndereco" class="btn btn-primary fw-semibold">
+              <i class="bi bi-check2 me-1"></i>Salvar Alterações
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</wicket:panel>
+</body>
+</html>

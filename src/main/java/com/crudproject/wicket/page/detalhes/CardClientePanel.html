@@ -1,0 +1,47 @@
+<html xmlns:wicket="http://wicket.apache.org/dtds.data/wicket-xhtml1.4-strict.dtd">
+<body>
+<wicket:panel>
+  <div class="page-card p-4 mb-3">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <div class="avatar" wicket:id="avatarIniciais">AB</div>
+      <div class="flex-grow-1">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <h3 class="h5 mb-0" wicket:id="nomeCliente">Nome</h3>
+          <span class="badge" wicket:id="badgeTipo">PF</span>
+          <span class="badge" wicket:id="badgeAtivo">Ativo</span>
+        </div>
+        <div class="text-muted small" wicket:id="infoCliente">Cliente #1</div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-sm-6 col-lg-4">
+        <div class="field-label" wicket:id="labelNome">Nome</div>
+        <div class="field-value" wicket:id="valorNome">—</div>
+      </div>
+      <div class="col-sm-6 col-lg-4">
+        <div class="field-label">E-mail</div>
+        <div class="field-value" wicket:id="valorEmail">—</div>
+      </div>
+      <div class="col-sm-6 col-lg-4">
+        <div class="field-label">Ativo</div>
+        <div class="field-value" wicket:id="valorAtivo">—</div>
+      </div>
+      <div class="col-sm-6 col-lg-4">
+        <div class="field-label" wicket:id="labelDocumento">CPF / CNPJ</div>
+        <div class="field-value fmt-cpf-cnpj" wicket:id="valorDocumento">—</div>
+      </div>
+      <div class="col-sm-6 col-lg-4">
+        <div class="field-label" wicket:id="labelIdentificacao">RG / IE</div>
+        <div class="field-value" wicket:id="valorIdentificacao">—</div>
+      </div>
+      <div class="col-sm-6 col-lg-4">
+        <div class="field-label" wicket:id="labelData">Data</div>
+        <div class="field-value" wicket:id="valorData">—</div>
+      </div>
+    </div>
+  </div>
+</wicket:panel>
+</body>
+</html>

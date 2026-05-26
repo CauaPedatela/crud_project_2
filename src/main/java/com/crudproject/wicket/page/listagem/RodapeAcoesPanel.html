@@ -1,0 +1,24 @@
+<html xmlns:wicket="http://wicket.apache.org/dtds.data/wicket-xhtml1.4-strict.dtd">
+<body>
+<wicket:panel>
+  <div class="footer-actions page-card mt-3 p-3 d-flex flex-wrap gap-2 justify-content-between">
+    <button type="button" class="btn btn-primary fw-semibold"
+            data-bs-toggle="modal" data-bs-target="#modalCriarCliente">
+      <i class="bi bi-person-plus-fill me-1"></i> Adicionar Cliente
+    </button>
+    <div class="d-flex flex-wrap gap-2">
+      <a wicket:id="linkRelatorioPdf" class="btn btn-primary fw-semibold">
+        <i class="bi bi-file-earmark-pdf-fill me-1"></i> Relatório (PDF)
+      </a>
+      <a wicket:id="linkRelatorioExcel" class="btn btn-success fw-semibold">
+        <i class="bi bi-file-earmark-excel-fill me-1"></i> Exportar Excel
+      </a>
+      <button type="button" class="btn btn-secondary fw-semibold"
+              data-bs-toggle="modal" data-bs-target="#modalImportarExcel">
+        <i class="bi bi-file-earmark-arrow-up-fill me-1"></i> Importar via Excel
+      </button>
+    </div>
+  </div>
+</wicket:panel>
+</body>
+</html>

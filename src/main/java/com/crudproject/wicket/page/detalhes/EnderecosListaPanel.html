@@ -1,0 +1,83 @@
+<html xmlns:wicket="http://wicket.apache.org/dtds.data/wicket-xhtml1.4-strict.dtd">
+<body>
+<wicket:panel>
+  <div class="page-card">
+    <div class="d-flex align-items-center justify-content-between p-3 border-bottom">
+      <div>
+        <h3 class="h6 mb-0"><i class="bi bi-geo-alt-fill me-1 text-primary"></i>Endereços do Cliente</h3>
+        <small class="text-muted">Endereços vinculados a este cliente</small>
+      </div>
+    </div>
+
+    <div class="p-3 d-flex flex-column gap-2">
+      <div wicket:id="listaEnderecos" class="rounded border p-3">
+
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div class="d-flex gap-2 flex-wrap align-items-center">
+            <span class="badge" wicket:id="endTipo">RESIDENCIAL</span>
+            <span class="badge fw-bold" style="font-size: 0.85rem;" wicket:id="endPrincipal">Principal</span>
+          </div>
+          <div class="d-flex gap-1">
+            <button type="button" class="btn btn-sm btn-primary"
+                    wicket:id="btnEditarEndereco" title="Editar endereço">
+              <i class="bi bi-pencil-fill"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-danger"
+                    wicket:id="btnExcluirEndereco" title="Excluir endereço">
+              <i class="bi bi-trash-fill"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-sm-6 col-lg-4">
+            <div class="field-label">Logradouro</div>
+            <div class="field-value" wicket:id="endLogradouro">—</div>
+          </div>
+          <div class="col-sm-3 col-lg-2">
+            <div class="field-label">Número</div>
+            <div class="field-value" wicket:id="endNumeroEndereco">—</div>
+          </div>
+          <div class="col-sm-3 col-lg-3">
+            <div class="field-label">Complemento</div>
+            <div class="field-value" wicket:id="endComplemento">—</div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="field-label">Bairro</div>
+            <div class="field-value" wicket:id="endBairro">—</div>
+          </div>
+          <div class="col-sm-4 col-lg-3">
+            <div class="field-label">Cidade</div>
+            <div class="field-value" wicket:id="endCidade">—</div>
+          </div>
+          <div class="col-sm-2 col-lg-1">
+            <div class="field-label">UF</div>
+            <div class="field-value" wicket:id="endEstado">—</div>
+          </div>
+          <div class="col-sm-3 col-lg-2">
+            <div class="field-label">CEP</div>
+            <div class="field-value fmt-cep" wicket:id="endCep">—</div>
+          </div>
+          <div class="col-sm-3 col-lg-3">
+            <div class="field-label">País</div>
+            <div class="field-value" wicket:id="endPais">—</div>
+          </div>
+          <div class="col-sm-3 col-lg-2">
+            <div class="field-label">Telefone</div>
+            <div class="field-value fmt-telefone" wicket:id="endTelefone">—</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="px-3 pb-3">
+      <button type="button" class="btn btn-primary btn-sm fw-semibold"
+              data-bs-toggle="modal" data-bs-target="#modalAdicionarEndereco">
+        <i class="bi bi-plus-lg me-1"></i>Adicionar Endereço
+      </button>
+    </div>
+  </div>
+</wicket:panel>
+</body>
+</html>

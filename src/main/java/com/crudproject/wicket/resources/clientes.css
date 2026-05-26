@@ -1,0 +1,96 @@
+/* ============================================================
+   clientes.css — estilos compartilhados pelas páginas Wicket
+   (ListagemClientesPage + DetalhesClientePage e seus panels).
+   ============================================================ */
+
+body { background-color: #f6f7f9; }
+
+.app-header { background:#fff; border-bottom:1px solid #e6e8ec; }
+.page-card  { background:#fff; border:1px solid #e6e8ec; border-radius:.5rem; }
+
+/* ===== Listagem ===== */
+.table thead th { font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:#5b6573; background:#f9fafb; border-bottom:1px solid #e6e8ec; }
+.table td       { vertical-align: middle; }
+.btn-icon       { width:34px; height:34px; padding:0; display:inline-flex; align-items:center; justify-content:center; }
+.badge-tipo     { font-weight:500; }
+.footer-actions { background:#fff; border-top:1px solid #e6e8ec; }
+.search-wrap    { max-width: 560px; }
+.empty-hint     { color:#8a93a2; font-size:.85rem; }
+.table-responsive { border-radius:.5rem; }
+
+/* ===== Detalhes — card e endereços ===== */
+.field-label   { font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; color:#6b7280; margin-bottom:.15rem; }
+.field-value   { font-size:1rem; color:#111827; font-weight:500; }
+.section-title { font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:#6b7280; }
+.avatar        { width:48px; height:48px; border-radius:50%; background:#eef2ff; color:#3949ab; display:inline-flex; align-items:center; justify-content:center; font-weight:600; font-size:1.05rem; }
+
+/* ===== Paginação: estiliza o HTML gerado pelo PagingNavigator do Wicket ===== */
+#wicketPaginacao { display: flex; align-items: center; }
+#wicketPaginacao span { display: contents; }
+#wicketPaginacao a {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 32px; height: 32px; padding: 0 .5rem;
+  margin: 0 1px;
+  border: 1px solid #dee2e6; border-radius: .25rem;
+  font-size: .875rem; text-decoration: none;
+  color: #0d6efd; background: #fff;
+  transition: background .15s, color .15s;
+}
+#wicketPaginacao a:hover { background: #e9ecef; color: #0a58ca; }
+#wicketPaginacao em {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 32px; height: 32px; padding: 0 .5rem;
+  margin: 0 1px;
+  border: 1px solid #0d6efd; border-radius: .25rem;
+  font-size: .875rem; font-style: normal; font-weight: 600;
+  color: #fff; background: #0d6efd;
+}
+#wicketPaginacao a[disabled],
+#wicketPaginacao a.wicket_disabled {
+  pointer-events: none; opacity: .45;
+}
+
+/* ===== FeedbackPanel: estiliza como alert do Bootstrap ===== */
+.feedbackPanel { list-style: none; padding: 0; margin: 0 0 1rem 0; }
+.feedbackPanel li { padding: .75rem 1rem; border-radius: .375rem; margin-bottom: .25rem; font-size: .9rem; }
+.feedbackPanelERROR   { color: #842029; background-color: #f8d7da; border: 1px solid #f5c2c7; }
+.feedbackPanelINFO    { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }
+.feedbackPanelWARNING { color: #664d03; background-color: #fff3cd; border: 1px solid #ffecb5; }
+
+/* ===== Animações de interação ===== */
+.btn {
+  transition: color .15s ease-in-out, background-color .15s ease-in-out,
+              border-color .15s ease-in-out, box-shadow .15s ease-in-out,
+              transform .15s ease;
+}
+.btn:hover:not(:disabled)  { transform: scale(1.04); box-shadow: 0 4px 14px rgba(0,0,0,.13); }
+.btn:active:not(:disabled) { transform: scale(0.97); transition-duration: .07s; }
+
+/* Slide-down suave ao aparecer o FeedbackPanel */
+@keyframes feedbackIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.feedbackPanel { animation: feedbackIn 0.3s ease; }
+
+/* ===== Modais com <form> envolvendo body+footer =====
+   O Bootstrap implementa modal-dialog-scrollable assumindo que .modal-body
+   é filho direto de .modal-content (flexbox). O <form> envolvendo body+footer
+   quebra essa hierarquia. display:contents faz o form sumir do layout
+   (continua funcionando para submit), e o flex do Bootstrap volta a enxergar
+   body e footer como irmãos do header. */
+#modalEditarCliente form        { display: contents; }
+#modalCriarCliente form         { display: contents; }
+#modalImportarExcel form        { display: contents; }
+#modalEditarEndereco form       { display: contents; }
+#modalAdicionarEndereco form    { display: contents; }
+
+/* Modal Criar Cliente: força scroll no modal-body para listas grandes */
+#modalCriarCliente .modal-dialog     { max-height: calc(100vh - 2rem); }
+#modalCriarCliente .modal-content    { max-height: calc(100vh - 2rem); }
+#modalCriarCliente .modal-body       { overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+
+/* Modal Adicionar Endereço: mesmo padrão */
+#modalAdicionarEndereco .modal-dialog  { max-height: calc(100vh - 2rem); }
+#modalAdicionarEndereco .modal-content { max-height: calc(100vh - 2rem); }
+#modalAdicionarEndereco .modal-body    { overflow-y: auto; flex: 1 1 auto; min-height: 0; }

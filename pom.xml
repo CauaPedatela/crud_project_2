@@ -163,7 +163,8 @@
     </dependencies>
 
     <build>
-        <!-- Inclui HTMLs e .properties que ficam ao lado das classes Java (padrão Wicket) -->
+        <!-- Inclui HTMLs, .properties, CSS e JS que ficam ao lado das classes Java (padrão Wicket).
+             CSS e JS são servidos como PackageResourceReference pelos panels. -->
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -173,6 +174,8 @@
                 <includes>
                     <include>**/*.html</include>
                     <include>**/*.properties</include>
+                    <include>**/*.css</include>
+                    <include>**/*.js</include>
                 </includes>
             </resource>
         </resources>

@@ -1,0 +1,34 @@
+<html xmlns:wicket="http://wicket.apache.org/dtds.data/wicket-xhtml1.4-strict.dtd">
+<body>
+<wicket:panel>
+  <form wicket:id="formExcluirEndereco">
+    <input type="hidden" wicket:id="hiddenExcluirEnderecoId"/>
+    <div class="modal fade" id="modalConfirmarExcluirEndereco" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header border-0 pb-0">
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body text-center px-5 pb-2">
+            <div class="mb-3">
+              <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size:3rem;"></i>
+            </div>
+            <h5 class="fw-bold mb-1">Excluir Endereço?</h5>
+            <p class="text-muted mb-0">
+              Confirmar exclusão do endereço:<br>
+              <strong id="txtEnderecoParaExcluir" class="text-dark"></strong>
+            </p>
+          </div>
+          <div class="modal-footer border-0 justify-content-center pb-4 gap-2">
+            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" wicket:id="btnConfirmarExcluirEndereco" class="btn btn-danger fw-semibold px-4">
+              <i class="bi bi-trash-fill me-1"></i>Confirmar Exclusão
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</wicket:panel>
+</body>
+</html>

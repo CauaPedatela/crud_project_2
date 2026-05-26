@@ -111,7 +111,14 @@ public class TabelaClientesPanel extends Panel {
         // chama target.add(listView) ao trocar de página.
         listView.setOutputMarkupId(true);
         add(listView);
-        add(new AjaxPagingNavigator("paginacao", listView));
+
+        // setMarkupId fixo: o AjaxPagingNavigator chama setOutputMarkupId(true)
+        // internamente e geraria um id aleatório, quebrando o seletor CSS
+        // #wicketPaginacao do clientes.css.
+        AjaxPagingNavigator paginacao = new AjaxPagingNavigator("paginacao", listView);
+        paginacao.setMarkupId("wicketPaginacao");
+        paginacao.setOutputMarkupId(true);
+        add(paginacao);
     }
 
     // Helper para garantir que data-* attributes nunca sejam "null" (vira string vazia).

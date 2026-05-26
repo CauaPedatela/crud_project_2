@@ -1,0 +1,64 @@
+<html xmlns:wicket="http://wicket.apache.org/dtds.data/wicket-xhtml1.4-strict.dtd">
+<body>
+<wicket:panel>
+  <form wicket:id="formEditarCliente">
+    <input type="hidden" wicket:id="hiddenEditClienteId"/>
+    <div class="modal fade" id="modalEditarCliente" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar Cliente</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body">
+            <div wicket:id="feedbackEditar"></div>
+            <div class="row g-3">
+
+              <div class="col-md-6">
+                <label class="form-label">
+                  <span id="editLabelNome">Nome completo</span>
+                  <span class="text-muted small">(não editável)</span>
+                </label>
+                <input type="text" class="form-control" id="editNome" disabled>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">
+                  <span id="editLabelCpfCnpj">CPF</span>
+                  <span class="text-muted small">(não editável)</span>
+                </label>
+                <input type="text" class="form-control mask-cpf-cnpj" id="editCpfCnpj" disabled>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">E-mail</label>
+                <input type="text" class="form-control" wicket:id="formEmail">
+              </div>
+
+              <div class="col-md-6" id="editCampoIeContainer" style="display:none;">
+                <label class="form-label">Inscrição Estadual</label>
+                <input type="text" class="form-control" wicket:id="formRgIe">
+              </div>
+
+              <div class="col-12">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" wicket:id="formAtivo">
+                  <label class="form-check-label">Cliente ativo</label>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-link text-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" wicket:id="btnSalvarEdicao" class="btn btn-primary fw-semibold">
+              <i class="bi bi-check2 me-1"></i>Salvar Alterações
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</wicket:panel>
+</body>
+</html>

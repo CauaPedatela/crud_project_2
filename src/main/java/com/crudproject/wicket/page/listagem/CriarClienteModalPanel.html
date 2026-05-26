@@ -1,0 +1,162 @@
+<html xmlns:wicket="http://wicket.apache.org/dtds.data/wicket-xhtml1.4-strict.dtd">
+<body>
+<wicket:panel>
+  <!-- IMPORTANTE: o <div class="modal"> envolve o <form>, e não o contrário.
+       Assim o target.add(form) só substitui o conteúdo interno do modal,
+       preservando a instância do Bootstrap para o .hide() funcionar limpo. -->
+  <div class="modal fade" id="modalCriarCliente" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+
+        <div class="modal-header bg-light">
+          <h5 class="modal-title"><i class="bi bi-person-plus-fill me-2 text-primary"></i>Cadastrar Novo Cliente</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+
+        <form wicket:id="formCriarCliente">
+          <div class="modal-body">
+
+            <div wicket:id="feedbackCriar"></div>
+
+            <h6 class="text-uppercase text-muted mb-3"><i class="bi bi-person-badge me-2"></i>Dados do Cliente</h6>
+            <div class="row g-3">
+
+              <div class="col-md-4">
+                <label class="form-label fw-bold text-primary">Tipo de Pessoa</label>
+                <select class="form-select border-primary" wicket:id="criarTipoPessoa" onchange="alternarLabelsCriacao(this)">
+                </select>
+              </div>
+
+              <div class="col-md-8">
+                <label class="form-label" id="lblCriarNome">Nome completo</label>
+                <input type="text" class="form-control" wicket:id="criarNome" required>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label" id="lblCriarCpfCnpj">CPF</label>
+                <input type="text" class="form-control mask-cpf-cnpj" wicket:id="criarCpfCnpj" required>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label" id="lblCriarRgIe">RG</label>
+                <input type="text" class="form-control" wicket:id="criarRgIe">
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label" id="lblCriarData">Data de Nascimento</label>
+                <input type="text" class="form-control" id="criarDataMask" placeholder="dd/mm/aaaa" wicket:id="criarData" required>
+              </div>
+
+              <div class="col-md-10">
+                <label class="form-label">E-mail</label>
+                <input type="text" class="form-control" wicket:id="criarEmail" required>
+              </div>
+
+              <div class="col-md-2 d-flex align-items-end pb-2">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" wicket:id="criarAtivo" checked>
+                  <label class="form-check-label">Ativo</label>
+                </div>
+              </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="text-uppercase text-muted mb-0"><i class="bi bi-geo-alt me-2"></i>Endereços</h6>
+              <button type="submit" formnovalidate wicket:id="btnAdicionarEndereco"
+                      class="btn btn-sm btn-primary">
+                <i class="bi bi-plus-lg me-1"></i>Adicionar outro endereço
+              </button>
+            </div>
+
+            <div wicket:id="containerEnderecos">
+              <div wicket:id="listaEnderecosCriar" class="border rounded p-3 mb-3">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h6 class="mb-0">
+                    <span wicket:id="numeroEndereco">Endereço 1</span>
+                    <span wicket:id="badgePrincipal" class="badge bg-primary ms-2">Principal</span>
+                  </h6>
+                  <div class="d-flex gap-1">
+                    <button type="submit" formnovalidate wicket:id="btnTornarPrincipal"
+                            class="btn btn-sm btn-primary">
+                      <i class="bi bi-star-fill me-1"></i>Tornar Principal
+                    </button>
+                    <button type="submit" formnovalidate wicket:id="btnRemoverEndereco"
+                            class="btn btn-sm btn-danger" title="Remover">
+                      <i class="bi bi-trash-fill"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="row g-2">
+                  <div class="col-md-3">
+                    <label class="form-label small mb-1">CEP</label>
+                    <input type="text" class="form-control form-control-sm mask-cep" wicket:id="endCep"
+                           onblur="buscarCepNoBloco(this)">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label small mb-1">Tipo</label>
+                    <select class="form-select form-select-sm" wicket:id="endTipo"></select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">Logradouro</label>
+                    <input type="text" class="form-control form-control-sm viacep-logradouro" wicket:id="endLogradouro">
+                  </div>
+
+                  <div class="col-md-2">
+                    <label class="form-label small mb-1">Número <span class="text-danger">*</span></label>
+                    <div class="input-group input-group-sm">
+                      <input type="text" class="form-control form-control-sm" wicket:id="endNumero">
+                      <button type="button" class="btn btn-outline-secondary" title="Sem número"
+                              onclick="toggleSemNumero(this)">S/N</button>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small mb-1">Complemento</label>
+                    <input type="text" class="form-control form-control-sm" wicket:id="endComplemento"
+                           placeholder="(opcional)">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">Bairro</label>
+                    <input type="text" class="form-control form-control-sm viacep-bairro" wicket:id="endBairro">
+                  </div>
+
+                  <div class="col-md-5">
+                    <label class="form-label small mb-1">Cidade</label>
+                    <input type="text" class="form-control form-control-sm viacep-cidade" wicket:id="endCidade">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label small mb-1">UF</label>
+                    <select class="form-select form-select-sm viacep-estado" wicket:id="endEstado">
+                      <option value="">Selecione...</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label small mb-1">País</label>
+                    <input type="text" class="form-control form-control-sm" wicket:id="endPais">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label small mb-1">Telefone</label>
+                    <input type="text" class="form-control form-control-sm mask-telefone" wicket:id="endTelefone" placeholder="(opcional)">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" wicket:id="btnSalvarNovoCliente" class="btn btn-primary fw-semibold px-4">
+              <i class="bi bi-check-circle-fill me-2"></i>Cadastrar Cliente
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</wicket:panel>
+</body>
+</html>
