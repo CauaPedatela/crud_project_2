@@ -1,0 +1,89 @@
+<!-- Modal de importação via Excel -->
+<h2 mat-dialog-title>
+  <mat-icon color="primary" style="vertical-align: middle; margin-right: 8px;">upload_file</mat-icon>
+  Importar Clientes via Excel
+</h2>
+
+<mat-dialog-content>
+  <div class="form-dialog">
+
+    <!-- Instrução + link para baixar o modelo -->
+    <mat-card appearance="outlined" style="margin-bottom: 16px; background: #e8f4fd;">
+      <mat-card-content style="display: flex; gap: 12px; align-items: flex-start; padding: 12px;">
+        <mat-icon color="primary" style="flex-shrink: 0;">info</mat-icon>
+        <p class="mat-body-2" style="margin: 0;">
+          Baixe a planilha modelo, preencha cada linha com os dados de um cliente
+          (incluindo um endereço) e faça o upload. Clientes com erro são indicados abaixo;
+          os demais são salvos normalmente.
+        </p>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Botão de download do modelo -->
+    <button mat-stroked-button color="primary"
+            (click)="relatorioService.modeloPlanilha()"
+            style="margin-bottom: 24px;">
+      <mat-icon>download</mat-icon>
+      Baixar Planilha Modelo (.xlsx)
+    </button>
+
+    <mat-divider style="margin-bottom: 24px;"></mat-divider>
+
+    <!-- Input de arquivo -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Arquivo Excel (.xlsx)</mat-label>
+      <input matInput [value]="arquivoSelecionado?.name ?? ''" readonly
+             placeholder="Nenhum arquivo selecionado">
+      <button mat-icon-button matSuffix (click)="fileInput.click()" matTooltip="Selecionar arquivo">
+        <mat-icon>attach_file</mat-icon>
+      </button>
+    </mat-form-field>
+
+    <!-- Input file real (oculto) — acionado pelo botão acima -->
+    <input #fileInput type="file" accept=".xlsx,.xls"
+           (change)="onArquivoSelecionado($event)"
+           style="display: none;">
+
+    <!-- Resultado da importação (aparece após importar) -->
+    <div *ngIf="resultado" style="margin-top: 20px;">
+      <h3 class="mat-subtitle-1" style="margin-bottom: 12px;">
+        <mat-icon style="vertical-align: middle;">assignment_turned_in</mat-icon>
+        Resultado da Importação
+      </h3>
+
+      <!-- Counters de sucesso e erro -->
+      <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+        <div style="background:#e8f5e9; color:#2e7d32; padding: 8px 16px; border-radius: 8px; font-weight: 600;">
+          <mat-icon style="vertical-align: middle; font-size: 18px;">check_circle</mat-icon>
+          {{ resultado.sucessos }} importados com sucesso
+        </div>
+        <div *ngIf="resultado.erros > 0"
+             style="background:#fce4ec; color:#880e4f; padding: 8px 16px; border-radius: 8px; font-weight: 600;">
+          <mat-icon style="vertical-align: middle; font-size: 18px;">error</mat-icon>
+          {{ resultado.erros }} com erro
+        </div>
+      </div>
+
+      <!-- Lista detalhada de erros -->
+      <mat-list *ngIf="resultado.mensagensErro?.length">
+        <mat-list-item *ngFor="let msg of resultado.mensagensErro"
+                       style="color: #c62828; height: auto; padding: 4px 0;">
+          <mat-icon matListItemIcon style="color: #c62828;">cancel</mat-icon>
+          <span matListItemTitle>{{ msg }}</span>
+        </mat-list-item>
+      </mat-list>
+    </div>
+
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="fechar()" [disabled]="importando">Fechar</button>
+  <button mat-raised-button color="primary"
+          (click)="importar()"
+          [disabled]="!arquivoSelecionado || importando">
+    <mat-icon *ngIf="!importando">upload</mat-icon>
+    <mat-spinner *ngIf="importando" diameter="18" style="display:inline-block;"></mat-spinner>
+    {{ importando ? 'Importando…' : 'Importar Clientes' }}
+  </button>
+</mat-dialog-actions>

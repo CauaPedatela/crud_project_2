@@ -1,0 +1,32 @@
+<!-- ================================================================
+     app.component.html — Template raiz do aplicativo
+
+     Estrutura:
+       - mat-toolbar: barra de navegação fixa no topo
+       - router-outlet: espaço onde as páginas são renderizadas
+         (ListagemComponent ou DetalhesComponent, conforme a URL)
+     ================================================================ -->
+
+<!-- Barra de navegação principal -->
+<mat-toolbar color="primary">
+  <!-- Ícone do sistema -->
+  <mat-icon>people</mat-icon>
+
+  <!-- Título clicável que leva à listagem -->
+  <a mat-button routerLink="/clientes" class="toolbar-titulo">
+    {{ titulo }}
+  </a>
+
+  <!-- Spacer empurra os links de navegação para a direita -->
+  <span class="spacer"></span>
+
+  <!-- Link de navegação -->
+  <a mat-button routerLink="/clientes" routerLinkActive="link-ativo">
+    <mat-icon>list</mat-icon>
+    Clientes
+  </a>
+</mat-toolbar>
+
+<!-- Área de conteúdo: o Angular Router renderiza aqui
+     a página correspondente à URL atual -->
+<router-outlet></router-outlet>

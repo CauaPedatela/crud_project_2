@@ -1,0 +1,236 @@
+<!-- ================================================================
+     modal-criar.component.html — Formulário de cadastro de cliente
+     ================================================================ -->
+
+<!-- Título do diálogo -->
+<h2 mat-dialog-title>
+  <mat-icon color="primary" style="vertical-align: middle; margin-right: 8px;">person_add</mat-icon>
+  Cadastrar Novo Cliente
+</h2>
+
+<!-- Conteúdo rolável do diálogo -->
+<mat-dialog-content>
+  <form [formGroup]="form" class="form-dialog">
+
+    <!-- ── Seção: Dados do cliente ── -->
+    <h3 class="secao-titulo">
+      <mat-icon>badge</mat-icon> Dados do Cliente
+    </h3>
+
+    <div class="form-grid">
+
+      <!-- Tipo de Pessoa -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Tipo de Pessoa</mat-label>
+        <mat-select formControlName="tipoPessoa">
+          <mat-option value="FISICA">Pessoa Física</mat-option>
+          <mat-option value="JURIDICA">Pessoa Jurídica</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Nome / Razão Social (label muda conforme tipo) -->
+      <mat-form-field appearance="outline" class="full-width col-span-2">
+        <mat-label>{{ isPJ ? 'Razão Social' : 'Nome completo' }}</mat-label>
+        <input matInput formControlName="nome">
+        <mat-error *ngIf="form.get('nome')?.hasError('required')">Campo obrigatório</mat-error>
+      </mat-form-field>
+
+      <!-- CPF / CNPJ (máscara dinâmica conforme tipo) -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ isPJ ? 'CNPJ' : 'CPF' }}</mat-label>
+        <input matInput formControlName="cpfCnpj" [mask]="maskDocumento">
+        <mat-error *ngIf="form.get('cpfCnpj')?.hasError('required')">Campo obrigatório</mat-error>
+      </mat-form-field>
+
+      <!-- RG / Inscrição Estadual (label muda conforme tipo) — obrigatório nos dois casos -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ isPJ ? 'Inscrição Estadual' : 'RG' }}</mat-label>
+        <input matInput formControlName="rgInscricaoEstadual">
+        <mat-error *ngIf="form.get('rgInscricaoEstadual')?.hasError('required')">
+          Campo obrigatório
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Data de Nascimento / Fundação — obrigatório -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ isPJ ? 'Data de Fundação' : 'Data de Nascimento' }}</mat-label>
+        <input matInput formControlName="dataNascimento"
+               mask="00/00/0000" placeholder="dd/mm/aaaa">
+        <mat-hint>dd/mm/aaaa</mat-hint>
+        <mat-error *ngIf="form.get('dataNascimento')?.hasError('required')">
+          Campo obrigatório
+        </mat-error>
+      </mat-form-field>
+
+      <!-- E-mail -->
+      <mat-form-field appearance="outline" class="full-width col-span-2">
+        <mat-label>E-mail</mat-label>
+        <input matInput formControlName="email" type="email">
+        <mat-error *ngIf="form.get('email')?.hasError('required')">Campo obrigatório</mat-error>
+        <mat-error *ngIf="form.get('email')?.hasError('email')">E-mail inválido</mat-error>
+      </mat-form-field>
+
+      <!-- Toggle Ativo -->
+      <div class="full-width" style="display: flex; align-items: center; margin-bottom: 8px;">
+        <mat-slide-toggle formControlName="ativo" color="primary">
+          Cliente ativo
+        </mat-slide-toggle>
+      </div>
+
+    </div>
+
+    <mat-divider style="margin: 16px 0;"></mat-divider>
+
+    <!-- ── Seção: Endereços ── -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+      <h3 class="secao-titulo" style="margin: 0;">
+        <mat-icon>location_on</mat-icon> Endereços
+      </h3>
+      <button mat-stroked-button type="button" (click)="adicionarEndereco()">
+        <mat-icon>add</mat-icon> Adicionar Endereço
+      </button>
+    </div>
+
+    <!-- Lista de endereços (FormArray) -->
+    <div formArrayName="enderecos">
+      <mat-card *ngFor="let end of enderecos.controls; let i = index"
+                [formGroupName]="i"
+                class="card-endereco">
+
+        <!-- Cabeçalho do endereço com botões -->
+        <mat-card-header>
+          <mat-card-title>
+            Endereço {{ i + 1 }}
+            <!-- Badge "Principal" quando este endereço é o principal -->
+            <span *ngIf="end.get('principal')?.value"
+                  style="background:#3f51b5; color:white; padding:2px 8px; border-radius:10px; font-size:0.75rem; margin-left:8px;">
+              Principal
+            </span>
+          </mat-card-title>
+          <div style="margin-left: auto; display: flex; gap: 4px;">
+            <!-- Tornar Principal (desabilitado se já for principal) -->
+            <button mat-stroked-button type="button"
+                    (click)="tornarPrincipal(i)"
+                    [disabled]="end.get('principal')?.value">
+              <mat-icon>star</mat-icon> Tornar Principal
+            </button>
+            <!-- Remover (desabilitado se for o único endereço) -->
+            <button mat-icon-button color="warn" type="button"
+                    (click)="removerEndereco(i)"
+                    [disabled]="enderecos.length === 1"
+                    matTooltip="Remover endereço">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-card-header>
+
+        <mat-card-content>
+          <div class="form-grid">
+
+            <!-- CEP (busca automática ao sair do campo) — obrigatório -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>CEP</mat-label>
+              <input matInput formControlName="cep"
+                     mask="00000-000"
+                     (blur)="buscarCep(i)"
+                     placeholder="00000-000">
+              <mat-hint>Preenche automaticamente</mat-hint>
+              <mat-error *ngIf="end.get('cep')?.hasError('required')">
+                Campo obrigatório
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Tipo do endereço -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Tipo</mat-label>
+              <mat-select formControlName="tipo">
+                <mat-option value="RESIDENCIAL">Residencial</mat-option>
+                <mat-option value="COMERCIAL">Comercial</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <!-- Logradouro -->
+            <mat-form-field appearance="outline" class="full-width col-span-2">
+              <mat-label>Logradouro</mat-label>
+              <input matInput formControlName="logradouro">
+              <mat-error>Campo obrigatório</mat-error>
+            </mat-form-field>
+
+            <!-- Número + botão S/N — obrigatório (use SN para sem-número) -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Número</mat-label>
+              <input matInput formControlName="numero">
+              <button mat-icon-button matSuffix type="button"
+                      (click)="toggleSemNumero(i)"
+                      matTooltip="Sem número">
+                <mat-icon style="font-size:14px;">
+                  {{ end.get('numero')?.value === 'SN' ? 'edit' : 'block' }}
+                </mat-icon>
+              </button>
+              <mat-error *ngIf="end.get('numero')?.hasError('required')">
+                Campo obrigatório
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Complemento -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Complemento</mat-label>
+              <input matInput formControlName="complemento" placeholder="(opcional)">
+            </mat-form-field>
+
+            <!-- Bairro -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Bairro</mat-label>
+              <input matInput formControlName="bairro">
+              <mat-error>Campo obrigatório</mat-error>
+            </mat-form-field>
+
+            <!-- Cidade -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Cidade</mat-label>
+              <input matInput formControlName="cidade">
+              <mat-error>Campo obrigatório</mat-error>
+            </mat-form-field>
+
+            <!-- Estado (UF) -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>UF</mat-label>
+              <mat-select formControlName="estado">
+                <mat-option *ngFor="let uf of ufOptions" [value]="uf">{{ uf }}</mat-option>
+              </mat-select>
+              <mat-error>Campo obrigatório</mat-error>
+            </mat-form-field>
+
+            <!-- País -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>País</mat-label>
+              <input matInput formControlName="pais">
+              <mat-error>Campo obrigatório</mat-error>
+            </mat-form-field>
+
+            <!-- Telefone do endereço -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Telefone</mat-label>
+              <input matInput formControlName="telefone"
+                     mask="(00) 00000-0000" placeholder="(opcional)">
+            </mat-form-field>
+
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+  </form>
+</mat-dialog-content>
+
+<!-- Botões de ação do diálogo -->
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()" [disabled]="salvando">Cancelar</button>
+  <button mat-raised-button color="primary"
+          (click)="salvar()"
+          [disabled]="salvando">
+    <mat-icon *ngIf="!salvando">check_circle</mat-icon>
+    <mat-spinner *ngIf="salvando" diameter="18" style="display:inline-block;"></mat-spinner>
+    {{ salvando ? 'Salvando…' : 'Cadastrar Cliente' }}
+  </button>
+</mat-dialog-actions>

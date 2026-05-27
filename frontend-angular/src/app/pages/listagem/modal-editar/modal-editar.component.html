@@ -1,0 +1,62 @@
+<!-- Modal de edição de cliente -->
+<h2 mat-dialog-title>
+  <mat-icon style="vertical-align: middle; margin-right: 8px;">edit</mat-icon>
+  Editar Cliente
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="form-dialog">
+
+    <!-- Campos readonly: nome e documento (não editáveis) -->
+    <div class="form-grid">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ isPJ ? 'Razão Social' : 'Nome completo' }} <span class="hint-nao-editavel">(não editável)</span></mat-label>
+        <input matInput [value]="cliente.nome" readonly>
+        <mat-icon matSuffix color="disabled">lock</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ isPJ ? 'CNPJ' : 'CPF' }} <span class="hint-nao-editavel">(não editável)</span></mat-label>
+        <input matInput [value]="documentoFormatado" readonly>
+        <mat-icon matSuffix color="disabled">lock</mat-icon>
+      </mat-form-field>
+    </div>
+
+    <mat-divider style="margin: 8px 0 16px;"></mat-divider>
+
+    <!-- Campos editáveis -->
+    <div class="form-grid">
+
+      <!-- E-mail -->
+      <mat-form-field appearance="outline" class="full-width col-span-2">
+        <mat-label>E-mail</mat-label>
+        <input matInput formControlName="email" type="email">
+        <mat-error *ngIf="form.get('email')?.hasError('required')">Campo obrigatório</mat-error>
+        <mat-error *ngIf="form.get('email')?.hasError('email')">E-mail inválido</mat-error>
+      </mat-form-field>
+
+      <!-- Inscrição Estadual (somente PJ) -->
+      <mat-form-field *ngIf="isPJ" appearance="outline" class="full-width col-span-2">
+        <mat-label>Inscrição Estadual</mat-label>
+        <input matInput formControlName="rgInscricaoEstadual">
+      </mat-form-field>
+
+      <!-- Toggle Ativo -->
+      <div class="full-width" style="display:flex; align-items:center; padding: 8px 0;">
+        <mat-slide-toggle formControlName="ativo" color="primary">
+          Cliente ativo
+        </mat-slide-toggle>
+      </div>
+
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()" [disabled]="salvando">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="salvar()" [disabled]="salvando">
+    <mat-icon *ngIf="!salvando">check</mat-icon>
+    <mat-spinner *ngIf="salvando" diameter="18" style="display:inline-block;"></mat-spinner>
+    {{ salvando ? 'Salvando…' : 'Salvar Alterações' }}
+  </button>
+</mat-dialog-actions>

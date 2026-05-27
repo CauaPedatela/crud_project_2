@@ -1,0 +1,27 @@
+/* Tabela ocupa toda a largura do card */
+.tabela-clientes {
+  width: 100%;
+}
+
+/* Linha da tabela: destaque sutil no hover */
+.linha-cliente:hover {
+  background: #f5f5f5;
+  cursor: pointer;
+}
+
+/* Chip de tipo (PF/PJ) — sobrescreve as classes globais com padding */
+.chip-tipo {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+/* Chip de status (Ativo/Inativo) */
+.chip-status {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}

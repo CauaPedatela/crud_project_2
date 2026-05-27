@@ -13,7 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 //   Expõe as rotas REST de geração de relatórios.
 //
 //   Mapa de rotas:
-//   GET /api/relatorios/clientes/pdf   → lista de todos os clientes ativos em PDF
+//   GET /api/relatorios/clientes/pdf   → lista de clientes em PDF (aceita filtros opcionais)
+//   GET /api/relatorios/clientes/excel → lista de clientes em Excel (aceita filtros opcionais)
+//   GET /api/relatorios/cliente/detalhes/pdf?id=   → detalhes de um cliente em PDF
+//   GET /api/relatorios/cliente/detalhes/excel?id= → detalhes de um cliente em Excel
 
 @RestController
 @RequestMapping("/api/relatorios")
@@ -29,8 +32,17 @@ public class ReportController {
 //       Content-Disposition: inline; ...    → "inline" abre direto; "attachment" força download
 
     @GetMapping("/clientes/pdf")
-    public ResponseEntity<byte[]> gerarListaClientesPdf() throws Exception {
-        byte[] pdf = reportService.gerarListaClientesPdf();
+    public ResponseEntity<byte[]> gerarListaClientesPdf(
+            @RequestParam(required = false) String termo,
+            @RequestParam(required = false) String ativo,
+            @RequestParam(required = false) String tipo,
+            @RequestParam(required = false) String dataInicio,
+            @RequestParam(required = false) String dataFim) throws Exception {
+
+        // Se algum filtro foi enviado, usa o overload filtrado; caso contrário, lista geral.
+        byte[] pdf = temFiltro(termo, ativo, tipo, dataInicio, dataFim)
+                ? reportService.gerarListaClientesPdf(termo, ativo, tipo, dataInicio, dataFim)
+                : reportService.gerarListaClientesPdf();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
@@ -53,8 +65,17 @@ public class ReportController {
     }
 
     @GetMapping("/clientes/excel")
-    public ResponseEntity<byte[]> gerarListaClientesExcel() throws Exception {
-        byte[] excel = reportService.gerarListaClientesExcel();
+    public ResponseEntity<byte[]> gerarListaClientesExcel(
+            @RequestParam(required = false) String termo,
+            @RequestParam(required = false) String ativo,
+            @RequestParam(required = false) String tipo,
+            @RequestParam(required = false) String dataInicio,
+            @RequestParam(required = false) String dataFim) throws Exception {
+
+        // Mesma lógica do PDF: usa overload filtrado se houver filtro.
+        byte[] excel = temFiltro(termo, ativo, tipo, dataInicio, dataFim)
+                ? reportService.gerarListaClientesExcel(termo, ativo, tipo, dataInicio, dataFim)
+                : reportService.gerarListaClientesExcel();
 
         HttpHeaders headers = new HttpHeaders();
         // MIME Type oficial para arquivos .xlsx
@@ -74,5 +95,16 @@ public class ReportController {
         headers.setContentDispositionFormData("attachment", "cliente_detalhes_" + id + ".xlsx");
 
         return ResponseEntity.ok().headers(headers).body(excel);
+    }
+
+    // Retorna true se pelo menos um filtro foi enviado pelo cliente.
+    // Mantemos esta lógica em um único lugar para evitar duplicação entre PDF e Excel.
+    private boolean temFiltro(String termo, String ativo, String tipo,
+                              String dataInicio, String dataFim) {
+        return (termo      != null && !termo.isBlank())
+            || (ativo      != null && !ativo.isBlank())
+            || (tipo       != null && !tipo.isBlank())
+            || (dataInicio != null && !dataInicio.isBlank())
+            || (dataFim    != null && !dataFim.isBlank());
     }
 }

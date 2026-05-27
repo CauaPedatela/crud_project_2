@@ -1,0 +1,81 @@
+/* ================================================================
+   styles.scss — estilos globais do frontend Angular
+   O tema Angular Material (indigo-pink) é carregado via angular.json.
+   Aqui ficam apenas os overrides e utilitários globais do projeto.
+   ================================================================ */
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; background: #f5f5f5; }
+
+/* ── Spacer: empurra o conteúdo à direita da toolbar ── */
+.spacer { flex: 1 1 auto; }
+
+/* ── Cores customizadas para o MatSnackBar de feedback ──
+   Os painéis do snackbar recebem essas classes via panelClass no TypeScript */
+.snack-sucesso .mat-simple-snackbar-action { color: #a5d6a7; }
+.snack-sucesso { background: #2e7d32 !important; color: white !important; }
+
+.snack-erro .mat-simple-snackbar-action { color: #ef9a9a; }
+.snack-erro { background: #c62828 !important; color: white !important; }
+
+/* ── Avatar de iniciais: círculo colorido com as letras do nome ── */
+.avatar-iniciais {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #e8eaf6;
+  color: #3949ab;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+/* ── Utilitários de layout (substituem d-flex/gap-x do Bootstrap) ── */
+.flex-row    { display: flex; flex-direction: row; }
+.flex-col    { display: flex; flex-direction: column; }
+.flex-wrap   { flex-wrap: wrap; }
+.align-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.justify-end     { justify-content: flex-end; }
+.gap-1 { gap: 8px; }
+.gap-2 { gap: 16px; }
+.gap-3 { gap: 24px; }
+.flex-1 { flex: 1; }
+
+/* ── Padding padrão das páginas ── */
+.page-content { padding: 16px 24px; }
+
+/* ── Links sem sublinhado nas células da tabela ── */
+.link-nome {
+  text-decoration: none;
+  color: inherit;
+  font-weight: 500;
+}
+.link-nome:hover { text-decoration: underline; color: #3f51b5; }
+
+/* ── Chip de status na tabela (Ativo / Inativo) ── */
+.chip-ativo   { background: #e8f5e9 !important; color: #2e7d32 !important; }
+.chip-inativo { background: #fce4ec !important; color: #880e4f !important; }
+.chip-pf      { background: #e3f2fd !important; color: #0d47a1 !important; }
+.chip-pj      { background: #fff3e0 !important; color: #e65100 !important; }
+
+/* ── Grid de formulário: 2 colunas no desktop, 1 coluna no mobile ── */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0 16px;
+}
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0 16px;
+}
+@media (max-width: 600px) {
+  .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
+}
+
+/* ── full-width: faz mat-form-field ocupar 100% da célula do grid ── */
+.full-width { width: 100%; }

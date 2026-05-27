@@ -1,0 +1,20 @@
+/* Labels dos campos de detalhe */
+.campo-label {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  margin: 0 0 2px;
+  font-size: 0.72rem;
+}
+
+/* Valores dos campos de detalhe */
+.campo-valor {
+  color: #111827;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Bloco de cada endereço na lista */
+.endereco-item {
+  padding: 16px 16px 0;
+}

@@ -1,0 +1,61 @@
+<!-- Modal de filtros avançados -->
+<h2 mat-dialog-title>
+  <mat-icon style="vertical-align: middle; margin-right: 8px;">filter_list</mat-icon>
+  Filtros
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="form-dialog">
+
+    <!-- Filtro por Status -->
+    <div style="margin-bottom: 20px;">
+      <label class="mat-subtitle-2" style="display:block; margin-bottom: 8px; color: #555;">
+        Status
+      </label>
+      <!-- IMPORTANTE: os valores precisam casar com o que o ClienteDAO espera ("ativo"/"inativo"). -->
+      <mat-radio-group formControlName="ativo" style="display:flex; gap: 16px; flex-wrap: wrap;">
+        <mat-radio-button value="">Todos</mat-radio-button>
+        <mat-radio-button value="ativo">Ativo</mat-radio-button>
+        <mat-radio-button value="inativo">Inativo</mat-radio-button>
+      </mat-radio-group>
+    </div>
+
+    <!-- Filtro por Tipo de Pessoa -->
+    <div style="margin-bottom: 20px;">
+      <label class="mat-subtitle-2" style="display:block; margin-bottom: 8px; color: #555;">
+        Tipo de Pessoa
+      </label>
+      <!-- IMPORTANTE: os valores precisam casar com o que o ClienteDAO espera ("PF"/"PJ"). -->
+      <mat-radio-group formControlName="tipo" style="display:flex; gap: 16px; flex-wrap: wrap;">
+        <mat-radio-button value="">Todos</mat-radio-button>
+        <mat-radio-button value="PF">Pessoa Física</mat-radio-button>
+        <mat-radio-button value="PJ">Pessoa Jurídica</mat-radio-button>
+      </mat-radio-group>
+    </div>
+
+    <!-- Filtro por intervalo de data de cadastro -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Cadastrado de</mat-label>
+        <input matInput formControlName="dataInicio"
+               mask="00/00/0000" placeholder="dd/mm/aaaa">
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Cadastrado até</mat-label>
+        <input matInput formControlName="dataFim"
+               mask="00/00/0000" placeholder="dd/mm/aaaa">
+      </mat-form-field>
+    </div>
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()">Cancelar</button>
+  <button mat-stroked-button (click)="limpar()">
+    <mat-icon>clear</mat-icon> Limpar
+  </button>
+  <button mat-raised-button color="primary" (click)="aplicar()">
+    <mat-icon>check</mat-icon> Aplicar Filtros
+  </button>
+</mat-dialog-actions>

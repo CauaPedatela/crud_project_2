@@ -1,0 +1,141 @@
+<!-- ================================================================
+     modal-add-endereco.component.html — Formulário para adicionar
+     um novo endereço a um cliente existente.
+     ================================================================ -->
+
+<!-- Título do diálogo -->
+<h2 mat-dialog-title>
+  <mat-icon color="primary" style="vertical-align: middle; margin-right: 8px;">add_location</mat-icon>
+  Adicionar Endereço
+</h2>
+
+<!-- Conteúdo rolável -->
+<mat-dialog-content>
+  <form [formGroup]="form" class="form-dialog">
+
+    <!-- ── Linha 1: CEP + Tipo ── -->
+    <div class="form-grid">
+
+      <!-- CEP: ao sair do campo, busca o endereço automaticamente via ViaCEP — obrigatório -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>CEP</mat-label>
+        <input matInput formControlName="cep"
+               mask="00000-000"
+               (blur)="buscarCep()"
+               placeholder="00000-000">
+        <mat-hint>Preenche automaticamente</mat-hint>
+        <mat-error *ngIf="form.get('cep')?.hasError('required')">
+          Campo obrigatório
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Tipo: Residencial ou Comercial -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Tipo</mat-label>
+        <mat-select formControlName="tipo">
+          <mat-option value="RESIDENCIAL">Residencial</mat-option>
+          <mat-option value="COMERCIAL">Comercial</mat-option>
+        </mat-select>
+        <mat-error>Campo obrigatório</mat-error>
+      </mat-form-field>
+
+      <!-- Logradouro: preenchido automaticamente pelo CEP -->
+      <mat-form-field appearance="outline" class="full-width col-span-2">
+        <mat-label>Logradouro</mat-label>
+        <input matInput formControlName="logradouro">
+        <mat-error>Campo obrigatório</mat-error>
+      </mat-form-field>
+
+      <!-- Número + botão "S/N" para endereços sem número — obrigatório -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Número</mat-label>
+        <input matInput formControlName="numero">
+        <!-- Ícone que alterna entre "bloquear" (inserir SN) e "editar" (liberar campo) -->
+        <button mat-icon-button matSuffix type="button"
+                (click)="toggleSemNumero()"
+                matTooltip="Sem número (S/N)">
+          <mat-icon style="font-size: 14px;">
+            {{ form.get('numero')?.value === 'SN' ? 'edit' : 'block' }}
+          </mat-icon>
+        </button>
+        <mat-error *ngIf="form.get('numero')?.hasError('required')">
+          Campo obrigatório
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Complemento: campo opcional -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Complemento</mat-label>
+        <input matInput formControlName="complemento" placeholder="(opcional)">
+      </mat-form-field>
+
+      <!-- Bairro: preenchido automaticamente pelo CEP -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Bairro</mat-label>
+        <input matInput formControlName="bairro">
+        <mat-error>Campo obrigatório</mat-error>
+      </mat-form-field>
+
+      <!-- Cidade: preenchida automaticamente pelo CEP -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Cidade</mat-label>
+        <input matInput formControlName="cidade">
+        <mat-error>Campo obrigatório</mat-error>
+      </mat-form-field>
+
+      <!-- UF: lista completa dos 27 estados -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>UF</mat-label>
+        <mat-select formControlName="estado">
+          <mat-option *ngFor="let uf of ufOptions" [value]="uf">{{ uf }}</mat-option>
+        </mat-select>
+        <mat-error>Campo obrigatório</mat-error>
+      </mat-form-field>
+
+      <!-- País: padrão "Brasil" -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>País</mat-label>
+        <input matInput formControlName="pais">
+        <mat-error>Campo obrigatório</mat-error>
+      </mat-form-field>
+
+      <!-- Telefone do endereço (opcional) -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Telefone</mat-label>
+        <input matInput formControlName="telefone"
+               mask="(00) 00000-0000"
+               placeholder="(opcional)">
+      </mat-form-field>
+
+    </div>
+
+    <mat-divider style="margin: 16px 0;"></mat-divider>
+
+    <!-- Toggle de endereço principal -->
+    <!-- Desabilitado quando já existe um endereço principal (o atual passa a ser secundário por padrão) -->
+    <div style="display: flex; align-items: center; gap: 12px; padding: 4px 0;">
+      <mat-slide-toggle formControlName="principal" color="primary">
+        Endereço Principal
+      </mat-slide-toggle>
+      <span class="mat-caption" style="color: #6b7280;">
+        {{ form.get('principal')?.value
+            ? 'Este será o endereço principal do cliente'
+            : 'Endereço secundário' }}
+      </span>
+    </div>
+
+  </form>
+</mat-dialog-content>
+
+<!-- Botões de ação -->
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()" [disabled]="salvando">Cancelar</button>
+  <button mat-raised-button color="primary"
+          (click)="salvar()"
+          [disabled]="salvando">
+    <!-- Spinner aparece enquanto aguarda a resposta da API -->
+    <mat-icon *ngIf="!salvando">add_location_alt</mat-icon>
+    <mat-spinner *ngIf="salvando" diameter="18" style="display: inline-block;"></mat-spinner>
+    {{ salvando ? 'Salvando…' : 'Adicionar Endereço' }}
+  </button>
+</mat-dialog-actions>

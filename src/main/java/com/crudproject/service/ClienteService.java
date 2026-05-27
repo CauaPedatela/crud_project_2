@@ -9,6 +9,7 @@ import com.crudproject.repository.ClienteRepository;
 import com.crudproject.service.validation.ClienteValidator;
 import com.crudproject.service.validation.DocumentoUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -64,7 +65,9 @@ public class ClienteService {
 
     @Transactional
     public List<ClienteResponseDTO> buscarTodos() {
-        return clienteRepository.findAll()
+        // Ordena por dataCadastro DESC para que clientes recém-criados apareçam
+        // no topo da listagem (mesmo comportamento do buscarComFiltros).
+        return clienteRepository.findAll(Sort.by(Sort.Direction.DESC, "dataCadastro"))
                 .stream()
                 .map(clienteMapper::toResponse)
                 .collect(Collectors.toList());

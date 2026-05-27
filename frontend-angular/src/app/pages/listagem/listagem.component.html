@@ -1,0 +1,206 @@
+<!-- ================================================================
+     listagem.component.html — Página de listagem de clientes
+     ================================================================ -->
+
+<div class="page-content">
+
+  <!-- ── Cabeçalho da página ── -->
+  <div class="flex-row align-center justify-between" style="margin-bottom: 16px;">
+    <div>
+      <!-- Breadcrumb -->
+      <p class="mat-caption" style="margin: 0; color: #888;">
+        Início / <strong>Clientes</strong>
+      </p>
+      <h2 class="mat-h2" style="margin: 4px 0 0;">Listagem de Clientes</h2>
+    </div>
+
+    <!-- Contadores -->
+    <div class="flex-row gap-2">
+      <div style="text-align: center;">
+        <div class="mat-headline" style="color: #3f51b5; margin: 0; font-size: 1.8rem;">
+          {{ totalClientes }}
+        </div>
+        <div class="mat-caption">clientes</div>
+      </div>
+      <div style="text-align: center;">
+        <div class="mat-headline" style="color: #4caf50; margin: 0; font-size: 1.8rem;">
+          {{ totalAtivos }}
+        </div>
+        <div class="mat-caption">ativos</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Barra de busca ── -->
+  <mat-card style="margin-bottom: 16px;">
+    <mat-card-content>
+      <div class="flex-row align-center gap-1" style="padding: 8px 0;">
+
+        <!-- Campo de busca por texto -->
+        <mat-form-field appearance="outline" class="flex-1" style="margin-bottom: -1.25em;">
+          <mat-label>Buscar por nome, CPF/CNPJ ou e-mail</mat-label>
+          <input matInput
+                 [(ngModel)]="termoBusca"
+                 (keydown.enter)="buscar()"
+                 placeholder="Digite e pressione Enter…">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <!-- Botão de pesquisar -->
+        <button mat-raised-button color="primary" (click)="buscar()">
+          <mat-icon>search</mat-icon>
+          Buscar
+        </button>
+
+        <!-- Botão de filtros avançados -->
+        <button mat-stroked-button (click)="abrirFiltros()">
+          <mat-icon>filter_list</mat-icon>
+          Filtros
+        </button>
+
+        <!-- Limpar busca (só aparece quando há busca/filtros ativos) -->
+        <button mat-icon-button
+                *ngIf="termoBusca || filtros.ativo || filtros.tipo || filtros.dataInicio"
+                (click)="limparBusca()"
+                matTooltip="Limpar busca e filtros">
+          <mat-icon>clear</mat-icon>
+        </button>
+
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- ── Tabela de clientes ── -->
+  <mat-card>
+    <mat-card-content style="padding: 0;">
+
+      <!-- Spinner de carregamento -->
+      <div *ngIf="carregando" style="display:flex; justify-content:center; padding: 32px;">
+        <mat-spinner diameter="48"></mat-spinner>
+      </div>
+
+      <!-- Tabela (oculta durante carregamento) -->
+      <div [style.display]="carregando ? 'none' : 'block'" style="overflow-x: auto;">
+        <table mat-table [dataSource]="dataSource" matSort class="tabela-clientes">
+
+          <!-- ── Coluna: Nome ── -->
+          <ng-container matColumnDef="nome">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Nome / Razão Social</th>
+            <td mat-cell *matCellDef="let c">
+              <!-- Clique no nome navega para a página de detalhes -->
+              <a [routerLink]="['/clientes', c.id]" class="link-nome">
+                {{ c.nome }}
+              </a>
+            </td>
+          </ng-container>
+
+          <!-- ── Coluna: Tipo (chip PF/PJ) ── -->
+          <ng-container matColumnDef="tipo">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let c">
+              <span class="chip-tipo" [class.chip-pf]="c.tipoPessoa === 'FISICA'"
+                                      [class.chip-pj]="c.tipoPessoa === 'JURIDICA'">
+                {{ c.tipoPessoa === 'FISICA' ? 'PF' : 'PJ' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- ── Coluna: Documento (CPF ou CNPJ formatado) ── -->
+          <ng-container matColumnDef="documento">
+            <th mat-header-cell *matHeaderCellDef>Documento</th>
+            <td mat-cell *matCellDef="let c">{{ formatarDocumento(c.cpfCnpj) }}</td>
+          </ng-container>
+
+          <!-- ── Coluna: E-mail ── -->
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>E-mail</th>
+            <td mat-cell *matCellDef="let c">{{ c.email }}</td>
+          </ng-container>
+
+          <!-- ── Coluna: Status (chip Ativo/Inativo) ── -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let c">
+              <span class="chip-status" [class.chip-ativo]="c.ativo"
+                                        [class.chip-inativo]="!c.ativo">
+                {{ c.ativo ? 'Ativo' : 'Inativo' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- ── Coluna: Ações (botões por linha) ── -->
+          <ng-container matColumnDef="acoes">
+            <th mat-header-cell *matHeaderCellDef style="text-align: right;">Ações</th>
+            <td mat-cell *matCellDef="let c" style="text-align: right; white-space: nowrap;">
+              <button mat-icon-button (click)="abrirModalEditar(c)" matTooltip="Editar">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn"
+                      (click)="abrirModalExcluir(c)"
+                      matTooltip="Excluir">
+                <mat-icon>delete</mat-icon>
+              </button>
+              <button mat-icon-button color="primary"
+                      (click)="abrirModalRelatorio(c)"
+                      matTooltip="Relatório">
+                <mat-icon>description</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <!-- Linhas da tabela -->
+          <tr mat-header-row *matHeaderRowDef="colunas; sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: colunas;"
+              class="linha-cliente"></tr>
+
+          <!-- Mensagem quando não há resultados -->
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" colspan="6" style="text-align:center; padding: 32px; color: #888;">
+              <mat-icon style="vertical-align: middle; margin-right: 8px;">search_off</mat-icon>
+              Nenhum cliente encontrado.
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Paginação -->
+      <mat-paginator [pageSizeOptions]="[10, 25, 50]"
+                     showFirstLastButtons
+                     aria-label="Selecionar página">
+      </mat-paginator>
+
+    </mat-card-content>
+  </mat-card>
+
+  <!-- ── Rodapé de ações ── -->
+  <div class="flex-row flex-wrap gap-1" style="margin-top: 16px;">
+
+    <!-- Botão principal: Adicionar Cliente -->
+    <button mat-raised-button color="primary" (click)="abrirModalCriar()">
+      <mat-icon>person_add</mat-icon>
+      Adicionar Cliente
+    </button>
+
+    <span class="spacer"></span>
+
+    <!-- Botões de relatório/exportação (lado direito) — passam os filtros atuais -->
+    <button mat-stroked-button
+            (click)="gerarRelatorioPdf()"
+            matTooltip="Relatório dos clientes filtrados em PDF">
+      <mat-icon>picture_as_pdf</mat-icon>
+      Relatório PDF
+    </button>
+    <button mat-stroked-button
+            (click)="gerarRelatorioExcel()"
+            matTooltip="Exportar clientes filtrados como Excel">
+      <mat-icon>table_chart</mat-icon>
+      Exportar Excel
+    </button>
+    <button mat-stroked-button (click)="abrirModalImportar()" matTooltip="Importar clientes via planilha">
+      <mat-icon>upload_file</mat-icon>
+      Importar via Excel
+    </button>
+
+  </div>
+
+</div>

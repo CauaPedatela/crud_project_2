@@ -1,0 +1,12 @@
+/* Título da toolbar clicável */
+.toolbar-titulo {
+  color: white !important;
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+/* Link da navbar que está ativo (página atual) */
+.link-ativo {
+  background: rgba(255, 255, 255, 0.15) !important;
+}

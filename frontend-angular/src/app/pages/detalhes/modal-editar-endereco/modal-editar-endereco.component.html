@@ -1,0 +1,132 @@
+<!-- ================================================================
+     modal-editar-endereco.component.html — Editar endereço existente
+     Campos readonly: logradouro, bairro, cidade, UF, CEP (referência)
+     Campos editáveis: número, complemento, telefone, principal
+     ================================================================ -->
+
+<!-- Título do diálogo -->
+<h2 mat-dialog-title>
+  <mat-icon color="primary" style="vertical-align: middle; margin-right: 8px;">edit_location</mat-icon>
+  Editar Endereço
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="form-dialog">
+
+    <!-- ── Seção: campos de referência (somente leitura) ── -->
+    <!-- Exibidos para o usuário saber qual endereço está editando,
+         mas não podem ser alterados — só troca o endereço inteiro -->
+    <h3 class="secao-titulo">
+      <mat-icon>info_outline</mat-icon> Referência do Endereço
+    </h3>
+
+    <div class="form-grid" style="margin-bottom: 8px;">
+
+      <!-- Logradouro readonly -->
+      <mat-form-field appearance="outline" class="full-width col-span-2">
+        <mat-label>Logradouro</mat-label>
+        <input matInput formControlName="logradouro" readonly>
+        <!-- Ícone cadeado indica que o campo não pode ser alterado -->
+        <mat-icon matSuffix color="disabled">lock</mat-icon>
+        <mat-hint>Não editável</mat-hint>
+      </mat-form-field>
+
+      <!-- Bairro readonly -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Bairro</mat-label>
+        <input matInput formControlName="bairro" readonly>
+        <mat-icon matSuffix color="disabled">lock</mat-icon>
+      </mat-form-field>
+
+      <!-- Cidade readonly -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Cidade</mat-label>
+        <input matInput formControlName="cidade" readonly>
+        <mat-icon matSuffix color="disabled">lock</mat-icon>
+      </mat-form-field>
+
+      <!-- UF readonly -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>UF</mat-label>
+        <input matInput formControlName="estado" readonly>
+        <mat-icon matSuffix color="disabled">lock</mat-icon>
+      </mat-form-field>
+
+      <!-- CEP readonly -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>CEP</mat-label>
+        <input matInput formControlName="cep" readonly>
+        <mat-icon matSuffix color="disabled">lock</mat-icon>
+      </mat-form-field>
+
+    </div>
+
+    <mat-divider style="margin: 16px 0;"></mat-divider>
+
+    <!-- ── Seção: campos editáveis ── -->
+    <h3 class="secao-titulo">
+      <mat-icon>edit</mat-icon> Dados Editáveis
+    </h3>
+
+    <div class="form-grid">
+
+      <!-- Número + botão S/N — obrigatório -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Número</mat-label>
+        <input matInput formControlName="numero">
+        <button mat-icon-button matSuffix type="button"
+                (click)="toggleSemNumero()"
+                matTooltip="Sem número (S/N)">
+          <mat-icon style="font-size: 14px;">
+            {{ form.get('numero')?.value === 'SN' ? 'edit' : 'block' }}
+          </mat-icon>
+        </button>
+        <mat-error *ngIf="form.get('numero')?.hasError('required')">
+          Campo obrigatório
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Complemento -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Complemento</mat-label>
+        <input matInput formControlName="complemento" placeholder="(opcional)">
+      </mat-form-field>
+
+      <!-- Telefone do endereço -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Telefone</mat-label>
+        <input matInput formControlName="telefone"
+               mask="(00) 00000-0000"
+               placeholder="(opcional)">
+      </mat-form-field>
+
+    </div>
+
+    <mat-divider style="margin: 16px 0;"></mat-divider>
+
+    <!-- Toggle de endereço principal -->
+    <div style="display: flex; align-items: center; gap: 12px; padding: 4px 0;">
+      <mat-slide-toggle formControlName="principal" color="primary">
+        Endereço Principal
+      </mat-slide-toggle>
+      <span class="mat-caption" style="color: #6b7280;">
+        {{ form.get('principal')?.value
+            ? 'Este é o endereço principal do cliente'
+            : 'Endereço secundário' }}
+      </span>
+    </div>
+
+  </form>
+</mat-dialog-content>
+
+<!-- Botões de ação -->
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()" [disabled]="salvando">Cancelar</button>
+  <button mat-raised-button color="primary"
+          (click)="salvar()"
+          [disabled]="salvando">
+    <mat-icon *ngIf="!salvando">save</mat-icon>
+    <mat-spinner *ngIf="salvando" diameter="18" style="display: inline-block;"></mat-spinner>
+    {{ salvando ? 'Salvando…' : 'Salvar Alterações' }}
+  </button>
+</mat-dialog-actions>

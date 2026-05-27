@@ -1,0 +1,32 @@
+<!-- Modal de seleção de formato de relatório individual -->
+<h2 mat-dialog-title>
+  <mat-icon style="vertical-align: middle; margin-right: 8px;">description</mat-icon>
+  Emitir Relatório
+</h2>
+
+<mat-dialog-content>
+  <p class="mat-body-2" style="color: #666; margin-bottom: 20px;">
+    Selecione o formato para o cliente selecionado:
+  </p>
+
+  <div style="display: flex; flex-direction: column; gap: 12px;">
+    <!-- PDF -->
+    <button mat-raised-button color="warn"
+            (click)="relatorioService.pdfCliente(clienteId); fechar()">
+      <mat-icon>picture_as_pdf</mat-icon>
+      Gerar PDF
+    </button>
+
+    <!-- Excel -->
+    <button mat-raised-button
+            style="background: #1b5e20; color: white;"
+            (click)="relatorioService.excelCliente(clienteId); fechar()">
+      <mat-icon>table_chart</mat-icon>
+      Exportar Excel
+    </button>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="fechar()">Fechar</button>
+</mat-dialog-actions>

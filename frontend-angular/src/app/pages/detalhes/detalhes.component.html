@@ -1,0 +1,195 @@
+<!-- ================================================================
+     detalhes.component.html — Página de detalhes do cliente
+     ================================================================ -->
+
+<div class="page-content">
+
+  <!-- Spinner de carregamento inicial -->
+  <div *ngIf="carregando" style="display:flex; justify-content:center; padding: 64px;">
+    <mat-spinner></mat-spinner>
+  </div>
+
+  <ng-container *ngIf="!carregando && cliente">
+
+    <!-- ── Cabeçalho da página ── -->
+    <div class="flex-row align-center justify-between" style="margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+      <div>
+        <!-- Breadcrumb -->
+        <p class="mat-caption" style="margin: 0; color: #888;">
+          <a routerLink="/clientes" style="color: #3f51b5; text-decoration: none;">Clientes</a>
+          / <strong>Detalhes</strong>
+        </p>
+        <h2 class="mat-h2" style="margin: 4px 0 0;">Detalhes do Cliente</h2>
+      </div>
+
+      <!-- Botões de ação -->
+      <div class="flex-row gap-1" style="flex-wrap: wrap;">
+        <button mat-stroked-button (click)="voltar()">
+          <mat-icon>arrow_back</mat-icon> Voltar
+        </button>
+        <button mat-stroked-button (click)="abrirModalRelatorio()">
+          <mat-icon>description</mat-icon> Relatório
+        </button>
+        <button mat-raised-button color="primary" (click)="abrirModalEditar()">
+          <mat-icon>edit</mat-icon> Editar
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Card de dados do cliente ── -->
+    <mat-card style="margin-bottom: 16px;">
+      <mat-card-header style="padding-bottom: 16px;">
+        <!-- Avatar com iniciais -->
+        <div mat-card-avatar class="avatar-iniciais">
+          {{ getIniciais(cliente.nome) }}
+        </div>
+
+        <mat-card-title>{{ cliente.nome }}</mat-card-title>
+
+        <mat-card-subtitle>
+          <!-- Chips de tipo e status -->
+          <span class="chip-tipo"
+                [class.chip-pf]="!isPJ" [class.chip-pj]="isPJ"
+                style="margin-right: 8px; padding: 2px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 600;">
+            {{ isPJ ? 'Pessoa Jurídica' : 'Pessoa Física' }}
+          </span>
+          <span class="chip-status"
+                [class.chip-ativo]="cliente.ativo" [class.chip-inativo]="!cliente.ativo"
+                style="padding: 2px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 600;">
+            {{ cliente.ativo ? 'Ativo' : 'Inativo' }}
+          </span>
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-divider></mat-divider>
+
+      <mat-card-content style="padding-top: 16px;">
+        <!-- Grid de campos -->
+        <div class="form-grid">
+
+          <div>
+            <p class="mat-caption campo-label">{{ isPJ ? 'CNPJ' : 'CPF' }}</p>
+            <p class="mat-body-1 campo-valor">{{ formatarDocumento(cliente.cpfCnpj) }}</p>
+          </div>
+
+          <div>
+            <p class="mat-caption campo-label">{{ isPJ ? 'Inscrição Estadual' : 'RG' }}</p>
+            <p class="mat-body-1 campo-valor">{{ cliente.rgInscricaoEstadual || '—' }}</p>
+          </div>
+
+          <div>
+            <p class="mat-caption campo-label">{{ isPJ ? 'Data de Fundação' : 'Data de Nascimento' }}</p>
+            <p class="mat-body-1 campo-valor">{{ formatarData(cliente.dataNascimento) }}</p>
+          </div>
+
+          <div>
+            <p class="mat-caption campo-label">E-mail</p>
+            <p class="mat-body-1 campo-valor">{{ cliente.email }}</p>
+          </div>
+
+          <div>
+            <p class="mat-caption campo-label">Data de Cadastro</p>
+            <p class="mat-body-1 campo-valor">{{ formatarData(cliente.dataCadastro) }}</p>
+          </div>
+
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- ── Card de endereços ── -->
+    <mat-card>
+      <mat-card-header style="padding-bottom: 8px;">
+        <mat-card-title>
+          <mat-icon style="vertical-align: middle; margin-right: 8px; color: #3f51b5;">
+            location_on
+          </mat-icon>
+          Endereços
+        </mat-card-title>
+        <mat-card-subtitle>{{ cliente.enderecos.length }} endereço(s) vinculado(s)</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-divider></mat-divider>
+
+      <mat-card-content style="padding: 0;">
+        <!-- Lista de endereços -->
+        <div *ngFor="let end of cliente.enderecos; let ultimo = last"
+             class="endereco-item">
+
+          <!-- Cabeçalho do endereço: tipo + badges + ações -->
+          <div class="flex-row align-center justify-between" style="margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <div class="flex-row align-center gap-1">
+              <!-- Badge do tipo (Residencial/Comercial) -->
+              <span style="background: #e3f2fd; color: #0d47a1; padding: 2px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 600;">
+                {{ end.tipo }}
+              </span>
+              <!-- Badge "Principal" -->
+              <span *ngIf="end.principal"
+                    style="background: #3f51b5; color: white; padding: 2px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 600;">
+                Principal
+              </span>
+            </div>
+
+            <!-- Botões de ação por endereço -->
+            <div>
+              <button mat-icon-button (click)="abrirModalEditarEndereco(end)" matTooltip="Editar endereço">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn"
+                      (click)="abrirModalExcluirEndereco(end)"
+                      matTooltip="Excluir endereço">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <!-- Campos do endereço -->
+          <div class="form-grid">
+            <div>
+              <p class="mat-caption campo-label">Logradouro</p>
+              <p class="mat-body-2 campo-valor">{{ end.logradouro }}</p>
+            </div>
+            <div>
+              <p class="mat-caption campo-label">Número</p>
+              <p class="mat-body-2 campo-valor">{{ end.numero || '—' }}</p>
+            </div>
+            <div>
+              <p class="mat-caption campo-label">Complemento</p>
+              <p class="mat-body-2 campo-valor">{{ end.complemento || '—' }}</p>
+            </div>
+            <div>
+              <p class="mat-caption campo-label">Bairro</p>
+              <p class="mat-body-2 campo-valor">{{ end.bairro }}</p>
+            </div>
+            <div>
+              <p class="mat-caption campo-label">Cidade / UF</p>
+              <p class="mat-body-2 campo-valor">{{ end.cidade }} / {{ end.estado }}</p>
+            </div>
+            <div>
+              <p class="mat-caption campo-label">CEP</p>
+              <p class="mat-body-2 campo-valor">{{ formatarCep(end.cep) }}</p>
+            </div>
+            <div>
+              <p class="mat-caption campo-label">País</p>
+              <p class="mat-body-2 campo-valor">{{ end.pais }}</p>
+            </div>
+            <div *ngIf="end.telefone">
+              <p class="mat-caption campo-label">Telefone</p>
+              <p class="mat-body-2 campo-valor">{{ end.telefone }}</p>
+            </div>
+          </div>
+
+          <mat-divider *ngIf="!ultimo" style="margin-top: 16px;"></mat-divider>
+        </div>
+      </mat-card-content>
+
+      <!-- Rodapé do card de endereços: botão adicionar -->
+      <mat-card-actions>
+        <button mat-stroked-button color="primary" (click)="abrirModalAddEndereco()">
+          <mat-icon>add</mat-icon> Adicionar Endereço
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+  </ng-container>
+
+</div>

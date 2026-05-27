@@ -1,0 +1,53 @@
+<!-- ================================================================
+     modal-excluir-endereco.component.html — Confirmação de exclusão
+     de um endereço. Exibe o logradouro para o usuário confirmar.
+     ================================================================ -->
+
+<!-- Título do diálogo -->
+<h2 mat-dialog-title>Excluir Endereço</h2>
+
+<mat-dialog-content>
+
+  <!-- Ícone de aviso centralizado -->
+  <div style="text-align: center; padding: 16px 0 8px;">
+    <mat-icon style="font-size: 56px; width: 56px; height: 56px; color: #c62828;">
+      warning_amber
+    </mat-icon>
+  </div>
+
+  <!-- Mensagem de confirmação com o logradouro em destaque -->
+  <p class="mat-body-1" style="text-align: center; margin: 8px 0 4px;">
+    Deseja excluir o endereço:
+  </p>
+  <p class="mat-body-1" style="text-align: center; font-weight: 600; margin: 0 0 8px;">
+    {{ data.endereco.logradouro }}
+    <span *ngIf="data.endereco.numero">, {{ data.endereco.numero }}</span>
+    — {{ data.endereco.bairro }}, {{ data.endereco.cidade }}/{{ data.endereco.estado }}
+  </p>
+
+  <!-- Aviso especial quando o endereço excluído era o principal -->
+  <div *ngIf="data.endereco.principal"
+       style="background: #fff3e0; border-left: 4px solid #f57c00; padding: 10px 14px; border-radius: 4px; margin-top: 12px;">
+    <span class="mat-caption" style="color: #e65100;">
+      <mat-icon style="font-size: 16px; vertical-align: middle; margin-right: 4px;">info</mat-icon>
+      Este é o endereço <strong>principal</strong>. O próximo endereço da lista passará a ser o principal automaticamente.
+    </span>
+  </div>
+
+  <p class="mat-caption" style="color: #6b7280; text-align: center; margin-top: 16px;">
+    Esta ação é irreversível.
+  </p>
+
+</mat-dialog-content>
+
+<!-- Botões de ação -->
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()" [disabled]="excluindo">Cancelar</button>
+  <button mat-raised-button color="warn"
+          (click)="confirmar()"
+          [disabled]="excluindo">
+    <mat-icon *ngIf="!excluindo">delete</mat-icon>
+    <mat-spinner *ngIf="excluindo" diameter="18" style="display: inline-block;"></mat-spinner>
+    {{ excluindo ? 'Excluindo…' : 'Excluir Endereço' }}
+  </button>
+</mat-dialog-actions>
