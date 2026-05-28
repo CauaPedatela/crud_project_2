@@ -95,3 +95,21 @@ export interface ViaCepResponse {
   uf: string;         // estado (UF)
   erro?: boolean;     // true quando o CEP não existe na base dos Correios
 }
+
+// ── Resposta paginada genérica vinda do backend ──
+// Espelha o PageResponseDTO<T> do Java. Usada pelo endpoint /api/clientes/buscar.
+// O componente lê `content` para a tabela e `totalElements` para o MatPaginator.
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  page: number;
+  size: number;
+}
+
+// ── Contadores agregados do header (espelha ContadoresDTO.java) ──
+// Vem do endpoint /api/clientes/contadores — não traz nenhum cliente, só os números.
+export interface Contadores {
+  total: number;
+  ativos: number;
+}

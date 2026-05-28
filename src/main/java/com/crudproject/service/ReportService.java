@@ -43,8 +43,10 @@ public class ReportService {
     // ────────────────────────────────────────────────────────────────────────
 
     // Lista geral (todos os clientes, inclusive inativos) — usada pelo controller REST.
+    // buscarComFiltros com todos os parâmetros nulos retorna a lista completa do banco
+    // (equivale ao antigo buscarTodos, que foi removido por ser redundante).
     public byte[] gerarListaClientesPdf() throws Exception {
-        return gerarPdfDaLista(clienteService.buscarTodos());
+        return gerarPdfDaLista(clienteService.buscarComFiltros(null, null, null, null, null));
     }
 
     // Lista filtrada — usada pela tela Wicket, recebe os filtros da tela.
@@ -95,8 +97,10 @@ public class ReportService {
     // ────────────────────────────────────────────────────────────────────────
 
     // Lista geral (todos os clientes, inclusive inativos) — usada pelo controller REST.
+    // Mesma justificativa do PDF acima: buscarComFiltros(null,...) = todos do banco.
     public byte[] gerarListaClientesExcel() throws Exception {
-        return ClientesListaExcelBuilder.gerar(clienteService.buscarTodos());
+        return ClientesListaExcelBuilder.gerar(
+                clienteService.buscarComFiltros(null, null, null, null, null));
     }
 
     public byte[] gerarListaClientesExcel(String termo, String filtroAtivo, String filtroTipo,

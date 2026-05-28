@@ -12,7 +12,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Cliente, ClienteDTO, ImportacaoResultado } from '../models/cliente.model';
+import { Cliente, ClienteDTO, ImportacaoResultado, PageResponse, Contadores } from '../models/cliente.model';
 
 // URL base da API — o proxy.conf.json redireciona /api → localhost:8080
 const BASE = '/api/clientes';
@@ -23,28 +23,44 @@ export class ClienteService {
   // O HttpClient é injetado pelo Angular automaticamente
   constructor(private http: HttpClient) {}
 
-  // ── Lista todos os clientes cadastrados ──
+  // ── Lista todos os clientes cadastrados (sem paginação) ──
+  // Mantido para compatibilidade — não é usado pela listagem (que agora pagina).
   listar(): Observable<Cliente[]> {
     return this.http.get<Cliente[]>(BASE);
   }
 
-  // ── Busca clientes com filtros opcionais ──
-  // Parâmetros vazios ou nulos são ignorados pelo backend
+  // ── Apenas os totais para o header (sem trazer nenhum cliente) ──
+  // Evita carregar a lista inteira só para mostrar "X clientes / Y ativos".
+  // Backend faz dois COUNT(*) no banco — sem instanciar entidades.
+  contadores(): Observable<Contadores> {
+    return this.http.get<Contadores>(`${BASE}/contadores`);
+  }
+
+  // ── Busca clientes com filtros opcionais + paginação no backend ──
+  // Parâmetros vazios são ignorados; page e size vão sempre (defaults 0 e 10).
+  // Retorna uma página com { content, totalElements, totalPages, page, size }.
   buscarComFiltros(params: {
     termo?: string;
     ativo?: string;      // "true", "false" ou ""
     tipo?: string;       // "FISICA", "JURIDICA" ou ""
     dataInicio?: string; // "yyyy-MM-dd"
     dataFim?: string;    // "yyyy-MM-dd"
-  }): Observable<Cliente[]> {
-    // HttpParams monta a query string automaticamente: ?termo=abc&ativo=true
+    page?: number;       // 0-based
+    size?: number;       // itens por página
+  }): Observable<PageResponse<Cliente>> {
+    // HttpParams monta a query string automaticamente: ?termo=abc&page=0&size=10
     let httpParams = new HttpParams();
     if (params.termo)      httpParams = httpParams.set('termo',      params.termo);
     if (params.ativo)      httpParams = httpParams.set('ativo',      params.ativo);
     if (params.tipo)       httpParams = httpParams.set('tipo',       params.tipo);
     if (params.dataInicio) httpParams = httpParams.set('dataInicio', params.dataInicio);
     if (params.dataFim)    httpParams = httpParams.set('dataFim',    params.dataFim);
-    return this.http.get<Cliente[]>(`${BASE}/buscar`, { params: httpParams });
+    httpParams = httpParams.set('page', String(params.page ?? 0));
+    httpParams = httpParams.set('size', String(params.size ?? 10));
+    // Sort fixo: mais recentes primeiro (espelha o comportamento antigo do DAO).
+    httpParams = httpParams.set('sort', 'dataCadastro,desc');
+
+    return this.http.get<PageResponse<Cliente>>(`${BASE}/buscar`, { params: httpParams });
   }
 
   // ── Busca um cliente pelo ID ──

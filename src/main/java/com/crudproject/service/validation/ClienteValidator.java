@@ -150,6 +150,24 @@ public class ClienteValidator {
         }
     }
 
+    // Garante que pelo menos um endereço continuará marcado como principal após a atualização.
+    // Este método só é chamado no fluxo de ATUALIZAÇÃO (PUT), nunca no de criação (POST).
+    //
+    // Por que não no salvar()? No cadastro, se nenhum endereço vier marcado, o
+    // EnderecoSincronizador.ajustarPrincipal() promove o primeiro automaticamente — isso é ok.
+    // No UPDATE, porém, o cliente já tem um endereço principal definido; silenciosamente
+    // trocar o principal viola a expectativa do usuário, então preferimos rejeitar e avisar.
+    public void validarPrincipalMantido(List<EnderecoDTO> enderecos) {
+        long qtdPrincipais = enderecos.stream()
+                .filter(e -> Boolean.TRUE.equals(e.getPrincipal()))
+                .count();
+        if (qtdPrincipais == 0) {
+            throw new RuntimeException(
+                "Não é possível desmarcar o único endereço principal. " +
+                "Defina outro endereço como principal antes.");
+        }
+    }
+
     public void validarTipoPessoaImutavel(Cliente existente, ClienteDTO dto) {
         if (dto.getTipoPessoa() != null
                 && !Objects.equals(existente.getTipoPessoa(), dto.getTipoPessoa())) {

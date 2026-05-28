@@ -163,9 +163,14 @@
         </table>
       </div>
 
-      <!-- Paginação -->
-      <mat-paginator [pageSizeOptions]="[10, 25, 50]"
+      <!-- Paginação server-side: bindings explícitos refletem o estado vindo do backend.
+           (page) dispara onPageChange, que altera pageIndex/pageSize e recarrega. -->
+      <mat-paginator [length]="totalElements"
+                     [pageSize]="pageSize"
+                     [pageIndex]="pageIndex"
+                     [pageSizeOptions]="[10, 25, 50]"
                      showFirstLastButtons
+                     (page)="onPageChange($event)"
                      aria-label="Selecionar página">
       </mat-paginator>
 

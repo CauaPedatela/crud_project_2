@@ -1,11 +1,14 @@
 package com.crudproject.controller;
 
+import com.crudproject.dto.ContadoresDTO;
+import com.crudproject.dto.PageResponseDTO;
 import com.crudproject.dto.cliente.ClienteDTO;
 import com.crudproject.dto.cliente.ClienteResponseDTO;
 import com.crudproject.service.ClienteImportacaoService;
 import com.crudproject.service.ClienteService;
 import com.crudproject.service.ImportacaoResultado;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -41,11 +44,13 @@ public class ClienteController {
         return clienteService.salvar(dto);
     }
 
-//     Lista todos os clientes cadastrados.
+//     Lista todos os clientes cadastrados (sem paginação).
+//     Internamente delega ao buscarComFiltros sem filtros — é só um caso particular.
+//     Mantido para compatibilidade do contrato REST (consumers externos podem depender).
 
     @GetMapping
     public List<ClienteResponseDTO> listarTodos() {
-        return clienteService.buscarTodos();
+        return clienteService.buscarComFiltros(null, null, null, null, null);
     }
 
 //     Busca um cliente pelo id.
@@ -75,22 +80,39 @@ public class ClienteController {
         clienteService.excluir(id);
     }
 
-//     Busca clientes com filtros opcionais — usado pelo Angular para a barra de filtros.
+//     Busca clientes com filtros opcionais + PAGINAÇÃO — usado pelo Angular.
 //     Todos os parâmetros são opcionais: enviar apenas os que o usuário preencheu.
 //       termo      → busca por nome, CPF/CNPJ ou e-mail (like %termo%)
 //       ativo      → "true", "false" ou vazio (todos)
 //       tipo       → "FISICA", "JURIDICA" ou vazio (todos)
 //       dataInicio → data de cadastro inicial, formato yyyy-MM-dd
 //       dataFim    → data de cadastro final, formato yyyy-MM-dd
+//
+//     Paginação: Spring monta o Pageable automaticamente a partir dos query params:
+//       ?page=0&size=10&sort=dataCadastro,desc
+//
+//     Resposta: PageResponseDTO<ClienteResponseDTO> com { content, totalElements,
+//     totalPages, page, size }.
 
     @GetMapping("/buscar")
-    public List<ClienteResponseDTO> buscarComFiltros(
+    public PageResponseDTO<ClienteResponseDTO> buscarComFiltros(
             @RequestParam(required = false) String termo,
             @RequestParam(required = false) String ativo,
             @RequestParam(required = false) String tipo,
             @RequestParam(required = false) String dataInicio,
-            @RequestParam(required = false) String dataFim) {
-        return clienteService.buscarComFiltros(termo, ativo, tipo, dataInicio, dataFim);
+            @RequestParam(required = false) String dataFim,
+            Pageable pageable) {
+        return clienteService.buscarComFiltrosPaginado(
+                termo, ativo, tipo, dataInicio, dataFim, pageable);
+    }
+
+//     Devolve apenas os totais (total geral e total de ativos) — sem carregar
+//     nenhuma entidade em memória. Usado pelo header da listagem do Angular
+//     para os cartões "X clientes cadastrados / Y ativos".
+
+    @GetMapping("/contadores")
+    public ContadoresDTO contadores() {
+        return clienteService.contadores();
     }
 
 //     Faz upload de um arquivo .xlsx e importa os clientes em lote.

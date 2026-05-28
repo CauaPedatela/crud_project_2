@@ -1,58 +1,67 @@
 # =============================================================================
-# Docker Compose — Banco de dados do projeto
-# =============================================================================
-#
-# Sobe um container MySQL 8 configurado para o projeto crud-project.
-# Substitui a necessidade de instalar MySQL localmente.
-#
-# Como usar:
-#   docker compose up -d       → sobe o banco em background
-#   docker compose down        → desliga o banco (mantém os dados)
-#   docker compose down -v     → desliga e APAGA TODOS OS DADOS (cuidado!)
-#   docker compose logs -f db  → mostra os logs do banco
-#   docker compose ps          → mostra os containers rodando
-#
-# A conexão JDBC fica idêntica à de um MySQL nativo:
-#   jdbc:mysql://localhost:3306/crud_project_db
-# Por isso o application.properties NÃO precisa mudar.
+# Docker Compose — Orquestração Completa do Sistema
 # =============================================================================
 
 services:
+  # 1. BASE DE DADOS
   db:
-    # Imagem oficial do MySQL 8 — a mesma versão que estava instalada local
     image: mysql:8.0
     container_name: crud-project-db
-
-    # Reinicia o container automaticamente se ele cair (ou após reboot)
     restart: unless-stopped
-
-    # Variáveis de ambiente do MySQL.
-    # MYSQL_DATABASE faz o MySQL criar o banco automaticamente no primeiro start —
-    # você não precisa rodar "CREATE DATABASE" manualmente.
     environment:
       MYSQL_ROOT_PASSWORD: UnikaDevDB
       MYSQL_DATABASE: crud_project_db
-
-    # Mapeia a porta 3306 do container para a porta 3306 da sua máquina.
-    # É isso que faz "localhost:3306" funcionar como se o MySQL fosse nativo.
     ports:
       - "3306:3306"
-
-    # Volume nomeado — os dados do banco ficam dentro do Docker, não na pasta do projeto.
-    # Sobrevive a "docker compose down". Só some com "docker compose down -v".
     volumes:
       - crud_project_db_data:/var/lib/mysql
-
-    # Health check — o Docker testa se o MySQL está realmente pronto para conexões.
-    # Útil quando o Spring Boot tenta conectar antes do MySQL terminar de subir.
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pUnikaDevDB"]
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - crud-network
 
-# Definição do volume nomeado citado acima.
-# O Docker gerencia onde isso fica fisicamente — você não precisa se preocupar.
+  # 2. BACKEND (Spring Boot + Wicket)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crud-project-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Sobrescreve as variáveis do application.properties para apontar para o contentor 'db'
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/crud_project_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=UnikaDevDB
+    depends_on:
+      db:
+        condition: service_healthy # O Java só arranca quando a base de dados estiver pronta
+    networks:
+      - crud-network
+
+  # 3. FRONTEND (Angular)
+  frontend:
+    build:
+      context: ./frontend-angular # Caminho para a pasta onde está o Dockerfile do Angular
+      dockerfile: Dockerfile
+    container_name: crud-project-frontend
+    restart: unless-stopped
+    ports:
+      # Mapeia a porta 80 do Nginx interno para a 4200 na máquina local (para manter o seu padrão)
+      - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - crud-network
+
 volumes:
   crud_project_db_data:
     name: crud_project_db_data
+
+networks:
+  crud-network:
+    driver: bridge

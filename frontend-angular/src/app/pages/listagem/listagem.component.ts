@@ -10,7 +10,7 @@
 
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -42,7 +42,8 @@ interface FiltrosState {
 export class ListagemComponent implements OnInit, AfterViewInit {
 
   // ── Tabela ──
-  // MatTableDataSource gerencia filtragem, ordenação e paginação automaticamente
+  // MatTableDataSource é usado como container reativo da tabela.
+  // Paginação é server-side agora — apenas o sort fica client-side dentro da página atual.
   dataSource = new MatTableDataSource<Cliente>();
   // Colunas que aparecem na tabela, na ordem da esquerda para a direita
   colunas: string[] = ['nome', 'tipo', 'documento', 'email', 'status', 'acoes'];
@@ -56,9 +57,18 @@ export class ListagemComponent implements OnInit, AfterViewInit {
   filtros: FiltrosState = {};
   carregando = false;
 
-  // ── Getters calculados para os contadores no cabeçalho ──
-  get totalClientes(): number { return this.dataSource.data.length; }
-  get totalAtivos(): number   { return this.dataSource.data.filter(c => c.ativo).length; }
+  // ── Estado da paginação server-side ──
+  // O MatPaginator não pagina mais em memória — apenas dispara onPageChange,
+  // que altera pageIndex/pageSize e chama carregar() pra pedir a página nova ao backend.
+  pageIndex = 0;
+  pageSize = 10;
+  totalElements = 0;
+
+  // ── Contadores do cabeçalho ──
+  // Populados pelo endpoint /api/clientes/contadores (dois COUNT no banco).
+  // Não carregamos mais a lista inteira de clientes só para contar.
+  totalClientes = 0;
+  totalAtivos = 0;
 
   constructor(
     private clienteService:   ClienteService,
@@ -67,23 +77,34 @@ export class ListagemComponent implements OnInit, AfterViewInit {
     private snackBar: MatSnackBar
   ) {}
 
-  // Carrega a lista inicial ao abrir a página
+  // Carrega a primeira página e os contadores ao abrir a página
   ngOnInit(): void {
-    this.carregarTodos();
+    this.carregar();
+    this.carregarContadores();
   }
 
-  // Conecta paginator e sort ao dataSource depois que o HTML foi renderizado
+  // Conecta apenas o sort ao dataSource — paginator agora é server-side.
   ngAfterViewInit(): void {
-    this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
   }
 
-  // ── Carrega todos os clientes sem filtros ──
-  carregarTodos(): void {
+  // ── Carrega a página atual do backend ──
+  // Método único que sempre pede ao servidor a fatia correspondente a
+  // (pageIndex, pageSize) + filtros atuais. Substitui o antigo carregarTodos().
+  carregar(): void {
     this.carregando = true;
-    this.clienteService.listar().subscribe({
-      next: clientes => {
-        this.dataSource.data = clientes;
+    this.clienteService.buscarComFiltros({
+      termo:      this.termoBusca || undefined,
+      ativo:      this.filtros.ativo,
+      tipo:       this.filtros.tipo,
+      dataInicio: this.filtros.dataInicio,
+      dataFim:    this.filtros.dataFim,
+      page:       this.pageIndex,
+      size:       this.pageSize
+    }).subscribe({
+      next: response => {
+        this.dataSource.data = response.content;
+        this.totalElements = response.totalElements;
         this.carregando = false;
       },
       error: () => {
@@ -93,29 +114,38 @@ export class ListagemComponent implements OnInit, AfterViewInit {
     });
   }
 
-  // ── Executa busca com o termo e os filtros atuais ──
-  buscar(): void {
-    this.carregando = true;
-    this.clienteService.buscarComFiltros({
-      termo: this.termoBusca,
-      ...this.filtros
-    }).subscribe({
-      next: clientes => {
-        this.dataSource.data = clientes;
-        this.carregando = false;
-      },
-      error: () => {
-        this.mostrarErro('Erro ao buscar clientes.');
-        this.carregando = false;
+  // ── Carrega apenas os contadores do header ──
+  // Endpoint dedicado /contadores devolve { total, ativos } sem trazer nenhum cliente.
+  carregarContadores(): void {
+    this.clienteService.contadores().subscribe({
+      next: c => {
+        this.totalClientes = c.total;
+        this.totalAtivos = c.ativos;
       }
     });
   }
 
-  // ── Limpa a busca e volta a mostrar todos ──
+  // ── Disparado pelo MatPaginator quando muda página ou tamanho ──
+  onPageChange(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.carregar();
+  }
+
+  // ── Executa busca com o termo e os filtros atuais ──
+  // Reseta para a primeira página — caso contrário, se o usuário está na página 5
+  // e filtra, pode acabar pedindo uma página que nem existe no resultado filtrado.
+  buscar(): void {
+    this.pageIndex = 0;
+    this.carregar();
+  }
+
+  // ── Limpa a busca e volta a mostrar a primeira página ──
   limparBusca(): void {
     this.termoBusca = '';
     this.filtros = {};
-    this.carregarTodos();
+    this.pageIndex = 0;
+    this.carregar();
   }
 
   // ── Abre o diálogo de filtros avançados ──
@@ -142,7 +172,8 @@ export class ListagemComponent implements OnInit, AfterViewInit {
       disableClose: true // impede fechar clicando fora (formulário longo)
     }).afterClosed().subscribe((criado: boolean) => {
       if (criado) {
-        this.carregarTodos();
+        this.carregar();
+        this.carregarContadores();
         this.mostrarSucesso('Cliente cadastrado com sucesso!');
       }
     });
@@ -155,7 +186,8 @@ export class ListagemComponent implements OnInit, AfterViewInit {
       data: cliente
     }).afterClosed().subscribe((editado: boolean) => {
       if (editado) {
-        this.carregarTodos();
+        this.carregar();
+        this.carregarContadores();  // status ativo/inativo pode ter mudado
         this.mostrarSucesso('Cliente atualizado com sucesso!');
       }
     });
@@ -168,7 +200,8 @@ export class ListagemComponent implements OnInit, AfterViewInit {
       data: cliente
     }).afterClosed().subscribe((excluido: boolean) => {
       if (excluido) {
-        this.carregarTodos();
+        this.carregar();
+        this.carregarContadores();
         this.mostrarSucesso('Cliente excluído com sucesso!');
       }
     });
@@ -210,7 +243,10 @@ export class ListagemComponent implements OnInit, AfterViewInit {
       width: '640px',
       disableClose: true
     }).afterClosed().subscribe((houve: boolean) => {
-      if (houve) this.carregarTodos(); // recarrega se importou algum cliente
+      if (houve) {
+        this.carregar();           // recarrega a página atual
+        this.carregarContadores(); // atualiza os totais do header
+      }
     });
   }
 

@@ -17,4 +17,9 @@ import java.util.Optional;
 public interface ClienteRepository extends JpaRepository<Cliente, Long>,
                                             JpaSpecificationExecutor<Cliente> {
     Optional<Cliente> findByCpfCnpj(String cpfCnpj);
+
+    // Conta apenas os clientes com ativo = ?, sem carregar entidades em memória.
+    // Spring Data resolve o nome do método e gera: SELECT count(*) FROM tb_cliente WHERE ativo = ?
+    // O método count() (total geral) já vem grátis do JpaRepository.
+    long countByAtivo(boolean ativo);
 }

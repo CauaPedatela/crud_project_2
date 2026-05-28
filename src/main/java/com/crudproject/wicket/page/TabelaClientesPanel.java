@@ -8,24 +8,24 @@ import com.crudproject.dto.cliente.ClienteResponseDTO;
 import com.crudproject.model.TipoPessoa;
 import com.crudproject.service.ClienteService;
 import org.apache.wicket.AttributeModifier;
+import org.apache.wicket.ajax.markup.html.navigation.paging.AjaxPagingNavigator;
 import org.apache.wicket.behavior.AttributeAppender;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
-import org.apache.wicket.markup.html.list.ListItem;
-import org.apache.wicket.ajax.markup.html.navigation.paging.AjaxPagingNavigator;
-import org.apache.wicket.markup.html.list.PageableListView;
 import org.apache.wicket.markup.html.panel.Panel;
+import org.apache.wicket.markup.repeater.Item;
+import org.apache.wicket.markup.repeater.data.DataView;
+import org.apache.wicket.markup.repeater.data.IDataProvider;
 import org.apache.wicket.model.AbstractReadOnlyModel;
-import org.apache.wicket.model.IModel;
-import org.apache.wicket.model.LoadableDetachableModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.apache.wicket.spring.injection.annot.SpringBean;
 
-import java.util.List;
-
 public class TabelaClientesPanel extends Panel {
+
+    // Tamanho de página padroniza com o MatPaginator do Angular.
+    private static final int ITENS_POR_PAGINA = 10;
 
     @SpringBean
     private ClienteService clienteService;
@@ -34,28 +34,25 @@ public class TabelaClientesPanel extends Panel {
     public TabelaClientesPanel(String id, FiltroState filtros) {
         super(id);
 
-        IModel<List<ClienteResponseDTO>> clientesFiltradosModel = new LoadableDetachableModel<List<ClienteResponseDTO>>() {
-            @Override
-            protected List<ClienteResponseDTO> load() {
-                return clienteService.buscarComFiltros(
-                        filtros.getTermoBusca(),
-                        filtros.getFiltroAtivo(),
-                        filtros.getFiltroTipo(),
-                        filtros.getDataCriacaoInicio(),
-                        filtros.getDataCriacaoFim());
-            }
-        };
+        // Provider paginado — substitui o LoadableDetachableModel + PageableListView antigo.
+        // Cada render do Wicket dispara apenas as queries necessárias para a página atual.
+        IDataProvider<ClienteResponseDTO> dataProvider =
+                new ClienteDataProvider(filtros, clienteService);
 
+        // Label do total — chama dataProvider.size() que faz só SELECT count(*) no banco,
+        // sem carregar nenhum cliente em memória.
         add(new Label("contadorPagina", new AbstractReadOnlyModel<String>() {
             @Override
             public String getObject() {
-                return clientesFiltradosModel.getObject().size() + " clientes encontrados";
+                return dataProvider.size() + " clientes encontrados";
             }
         }));
 
-        PageableListView<ClienteResponseDTO> listView = new PageableListView<ClienteResponseDTO>("listaClientes", clientesFiltradosModel, 5) {
+        // DataView é o equivalente paginado-server-side do PageableListView.
+        // O 3º parâmetro define quantos itens por página o Wicket vai pedir ao provider.
+        DataView<ClienteResponseDTO> listView = new DataView<ClienteResponseDTO>("listaClientes", dataProvider, ITENS_POR_PAGINA) {
             @Override
-            protected void populateItem(ListItem<ClienteResponseDTO> item) {
+            protected void populateItem(Item<ClienteResponseDTO> item) {
                 ClienteResponseDTO cliente = item.getModelObject();
 
                 item.add(new Label("numero", item.getIndex() + 1));
@@ -109,6 +106,7 @@ public class TabelaClientesPanel extends Panel {
         listView.setOutputMarkupId(true);
         add(listView);
 
+        // AjaxPagingNavigator também aceita DataView (ambos implementam IPageable).
         AjaxPagingNavigator paginacao = new AjaxPagingNavigator("paginacao", listView);
         paginacao.setMarkupId("wicketPaginacao");
         paginacao.setOutputMarkupId(true);

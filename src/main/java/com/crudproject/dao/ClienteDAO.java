@@ -4,6 +4,8 @@ import com.crudproject.model.Cliente;
 import com.crudproject.model.TipoPessoa;
 import com.crudproject.repository.ClienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
@@ -34,7 +36,58 @@ public class ClienteDAO {
     // o Hibernate gera o SQL e retorna apenas os registros que passam em
     // todos os filtros. Nada é carregado em memória desnecessariamente.
 
+    // Lista completa (sem paginação) — usada por relatórios e contadores do Wicket.
+    // Internamente delega a montagem das Specifications ao helper privado.
     public List<Cliente> buscarComFiltros(
+            String termo,
+            String filtroAtivo,
+            String filtroTipo,
+            LocalDate dataInicio,
+            LocalDate dataFim) {
+
+        // Ordena por dataCadastro DESC para que clientes recém-criados apareçam no topo da listagem.
+        return clienteRepository.findAll(
+                montarSpecification(termo, filtroAtivo, filtroTipo, dataInicio, dataFim),
+                Sort.by(Sort.Direction.DESC, "dataCadastro"));
+    }
+
+    // Busca paginada — usada pelo controller REST (Angular) e pelo Wicket (DataProvider).
+    // O Pageable carrega: número da página, tamanho da página e Sort.
+    // Spring Data gera AUTOMATICAMENTE duas queries:
+    //   1) SELECT count(*) FROM tb_cliente WHERE <filtros>           (para totalElements)
+    //   2) SELECT * FROM tb_cliente WHERE <filtros> LIMIT ? OFFSET ?  (para a página atual)
+    public Page<Cliente> buscarComFiltrosPaginado(
+            String termo,
+            String filtroAtivo,
+            String filtroTipo,
+            LocalDate dataInicio,
+            LocalDate dataFim,
+            Pageable pageable) {
+
+        return clienteRepository.findAll(
+                montarSpecification(termo, filtroAtivo, filtroTipo, dataInicio, dataFim),
+                pageable);
+    }
+
+    // Apenas conta os registros que passam nos filtros — sem buscar nenhum dado.
+    // Usado pelo IDataProvider.size() do Wicket para saber o total sem carregar a página.
+    // SQL gerado: SELECT count(*) FROM tb_cliente WHERE <filtros>
+    public long contarComFiltros(
+            String termo,
+            String filtroAtivo,
+            String filtroTipo,
+            LocalDate dataInicio,
+            LocalDate dataFim) {
+
+        return clienteRepository.count(
+                montarSpecification(termo, filtroAtivo, filtroTipo, dataInicio, dataFim));
+    }
+
+    // ============================================================
+    // HELPER PRIVADO — monta a Specification combinando os filtros.
+    // Reutilizado pelos 3 métodos públicos acima (busca, busca paginada, count).
+    // ============================================================
+    private Specification<Cliente> montarSpecification(
             String termo,
             String filtroAtivo,
             String filtroTipo,
@@ -63,8 +116,7 @@ public class ClienteDAO {
             spec = spec.and(cadastradoAntesDe(dataFim));
         }
 
-        // Ordena por dataCadastro DESC para que clientes recém-criados apareçam no topo da listagem.
-        return clienteRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "dataCadastro"));
+        return spec;
     }
 
     // ============================================================

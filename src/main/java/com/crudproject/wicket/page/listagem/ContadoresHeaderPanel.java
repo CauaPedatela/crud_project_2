@@ -1,13 +1,15 @@
 /*
  * ContadoresHeaderPanel — renderiza os contadores "Total de clientes" e
- * "Total de ativos" no cabeçalho da Listagem. Faz uma única leitura ao
- * ClienteService por requisição (AbstractReadOnlyModel) e expõe os dois
- * Labels via getters para que panels que mutam clientes (criar, editar,
- * excluir, importar) re-renderizem os contadores via target.add(...).
+ * "Total de ativos" no cabeçalho da Listagem.
+ *
+ * Usa clienteRepository.count() e countByAtivo(true) DIRETAMENTE — SQL gera
+ * apenas SELECT count(*), sem trazer entidades para a memória do servidor.
+ * Os Labels são expostos via getters para que panels que mutam clientes
+ * (criar, editar, excluir, importar) os re-renderizem via target.add(...).
  */
 package com.crudproject.wicket.page.listagem;
 
-import com.crudproject.service.ClienteService;
+import com.crudproject.repository.ClienteRepository;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.AbstractReadOnlyModel;
@@ -15,8 +17,10 @@ import org.apache.wicket.spring.injection.annot.SpringBean;
 
 public class ContadoresHeaderPanel extends Panel {
 
+    // Injetado direto — não passamos pelo Service porque é uma consulta agregada simples,
+    // sem regras de negócio. Service só faria delegação cega ao mesmo repository.
     @SpringBean
-    private ClienteService clienteService;
+    private ClienteRepository clienteRepository;
 
     private final Label totalClientesLabel;
     private final Label totalAtivosLabel;
@@ -24,21 +28,21 @@ public class ContadoresHeaderPanel extends Panel {
     public ContadoresHeaderPanel(String id) {
         super(id);
 
-        totalClientesLabel = new Label("totalClientes", new AbstractReadOnlyModel<Integer>() {
+        // Total geral — uma única query: SELECT count(*) FROM tb_cliente
+        totalClientesLabel = new Label("totalClientes", new AbstractReadOnlyModel<Long>() {
             @Override
-            public Integer getObject() {
-                return clienteService.buscarTodos().size();
+            public Long getObject() {
+                return clienteRepository.count();
             }
         });
         totalClientesLabel.setOutputMarkupId(true);
         add(totalClientesLabel);
 
-        totalAtivosLabel = new Label("totalAtivos", new AbstractReadOnlyModel<Integer>() {
+        // Total de ativos — uma única query: SELECT count(*) FROM tb_cliente WHERE ativo = true
+        totalAtivosLabel = new Label("totalAtivos", new AbstractReadOnlyModel<Long>() {
             @Override
-            public Integer getObject() {
-                return (int) clienteService.buscarTodos().stream()
-                        .filter(c -> Boolean.TRUE.equals(c.getAtivo()))
-                        .count();
+            public Long getObject() {
+                return clienteRepository.countByAtivo(true);
             }
         });
         totalAtivosLabel.setOutputMarkupId(true);
