@@ -1,3 +1,14 @@
+# =============================================================================
+# ⚠️ ARQUIVO OBSOLETO — NÃO É MAIS UTILIZADO
+# =============================================================================
+# Este Dockerfile foi criado quando o plano era dockerizar TUDO (banco + backend
+# + frontend). A decisão atual é dockerizar APENAS o banco (ver docker-compose.yml).
+# O backend Spring Boot agora roda localmente via IntelliJ (run config "RODAR WICKET").
+#
+# Mantido aqui apenas para referência futura — caso queira voltar a dockerizar
+# o backend, este arquivo serve como ponto de partida.
+# =============================================================================
+
 # Estágio 1: Build (Compilação)
 FROM maven:3.8.5-openjdk-17 AS build
 WORKDIR /app
@@ -15,4 +26,4 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "--add-opens", "java.base/java.lang=ALL-UNNAMED", "--add-opens", "java.base/java.lang.reflect=ALL-UNNAMED", "-jar", "app.jar"]

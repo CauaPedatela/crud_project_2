@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="RODAR WICKET" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.crudproject.CrudProjectApplication" />
+    <module name="crud-project" />
+    <!--
+      VM Option obrigatória para o Java 17:
+      O Wicket (via Objenesis) e o Apache POI fazem reflection em classes internas
+      da JDK que, no Java 17, estão "fechadas" pelo sistema de módulos (JPMS).
+      O --add-opens reabre o pacote java.lang para reflection, evitando
+      "InaccessibleObjectException" no startup.
+    -->
+    <option name="VM_PARAMETERS" value="--add-opens java.base/java.lang=ALL-UNNAMED" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

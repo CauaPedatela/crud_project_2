@@ -1,3 +1,15 @@
+# =============================================================================
+# ⚠️ ARQUIVO OBSOLETO — NÃO É MAIS UTILIZADO
+# =============================================================================
+# Este Dockerfile foi criado quando o plano era dockerizar TUDO (banco + backend
+# + frontend). A decisão atual é dockerizar APENAS o banco (ver docker-compose.yml
+# na raiz). O frontend Angular agora roda localmente via IntelliJ (run config
+# "RODAR ANGULAR" = npm run start) ou direto pelo terminal.
+#
+# Mantido aqui apenas para referência futura — caso queira voltar a dockerizar
+# o frontend, este arquivo + o nginx.conf ao lado servem como ponto de partida.
+# =============================================================================
+
 # Estágio 1: Build do Angular
 FROM node:16.20.2-alpine AS build
 WORKDIR /app

@@ -1,9 +1,4 @@
-# =============================================================================
-# Docker Compose — Orquestração Completa do Sistema
-# =============================================================================
-
 services:
-  # 1. BASE DE DADOS
   db:
     image: mysql:8.0
     container_name: crud-project-db
@@ -12,7 +7,7 @@ services:
       MYSQL_ROOT_PASSWORD: UnikaDevDB
       MYSQL_DATABASE: crud_project_db
     ports:
-      - "3306:3306"
+      - "3306:3306" # Mapeia a porta para o localhost do Windows
     volumes:
       - crud_project_db_data:/var/lib/mysql
     healthcheck:
@@ -20,48 +15,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    networks:
-      - crud-network
-
-  # 2. BACKEND (Spring Boot + Wicket)
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: crud-project-backend
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    environment:
-      # Sobrescreve as variáveis do application.properties para apontar para o contentor 'db'
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/crud_project_db
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=UnikaDevDB
-    depends_on:
-      db:
-        condition: service_healthy # O Java só arranca quando a base de dados estiver pronta
-    networks:
-      - crud-network
-
-  # 3. FRONTEND (Angular)
-  frontend:
-    build:
-      context: ./frontend-angular # Caminho para a pasta onde está o Dockerfile do Angular
-      dockerfile: Dockerfile
-    container_name: crud-project-frontend
-    restart: unless-stopped
-    ports:
-      # Mapeia a porta 80 do Nginx interno para a 4200 na máquina local (para manter o seu padrão)
-      - "4200:80"
-    depends_on:
-      - backend
-    networks:
-      - crud-network
 
 volumes:
   crud_project_db_data:
     name: crud_project_db_data
-
-networks:
-  crud-network:
-    driver: bridge

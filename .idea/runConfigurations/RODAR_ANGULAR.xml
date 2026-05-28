@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="RODAR ANGULAR" type="js.build_tools.npm">
+    <!--
+      Roda "npm run start" dentro da pasta frontend-angular.
+      Equivalente a abrir um terminal naquela pasta e digitar "npm start".
+    -->
+    <package-json value="$PROJECT_DIR$/frontend-angular/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="start" />
+    </scripts>
+    <node-interpreter value="project" />
+    <envs />
+    <method v="2" />
+  </configuration>
+</component>
