@@ -2,9 +2,9 @@
 // modal-editar.component.ts — Diálogo para editar cliente
 //
 // Recebe o Cliente completo via MAT_DIALOG_DATA.
-// Apenas email, rgInscricaoEstadual e ativo são editáveis.
-// CPF/CNPJ, tipoPessoa e nome são exibidos como readonly
-// (imutáveis após o cadastro — regra de negócio da seção 7 do PDF).
+// Campos editáveis: nome, email, rgInscricaoEstadual e ativo.
+// CPF/CNPJ e tipoPessoa permanecem readonly (imutáveis após cadastro
+// — regra de negócio da seção 7 do PDF).
 // ================================================================
 
 import { Component, Inject } from '@angular/core';
@@ -31,8 +31,10 @@ export class ModalEditarComponent {
     private snackBar:       MatSnackBar,
     @Inject(MAT_DIALOG_DATA) public cliente: Cliente  // dados do cliente recebidos do pai
   ) {
-    // Inicializa o form com os valores atuais do cliente
+    // Inicializa o form com os valores atuais do cliente.
+    // Nome agora também é editável (antes era exibido apenas como readonly).
     this.form = this.fb.group({
+      nome:                [cliente.nome,                [Validators.required, Validators.minLength(2)]],
       email:               [cliente.email,               [Validators.required, Validators.email]],
       rgInscricaoEstadual: [cliente.rgInscricaoEstadual ?? ''],
       ativo:               [cliente.ativo]
@@ -61,10 +63,11 @@ export class ModalEditarComponent {
     this.salvando = true;
     const v = this.form.value;
 
-    // Monta o DTO preservando os campos imutáveis e os endereços existentes
+    // Monta o DTO preservando os campos imutáveis (CPF/CNPJ, tipoPessoa)
+    // e os endereços existentes. Nome agora vem do form (editável).
     const dto: ClienteDTO = {
       tipoPessoa:          this.cliente.tipoPessoa,     // imutável — backend ignora, mas enviamos
-      nome:                this.cliente.nome,           // imutável
+      nome:                v.nome.trim(),               // agora editável
       cpfCnpj:             this.cliente.cpfCnpj,        // imutável
       rgInscricaoEstadual: v.rgInscricaoEstadual || undefined,
       dataNascimento:      this.cliente.dataNascimento,

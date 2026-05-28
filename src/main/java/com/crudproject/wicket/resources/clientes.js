@@ -59,12 +59,108 @@ function aplicarMascarasExibicao() {
   });
 }
 
+/* ───────────────── Integração IBGE (estados / cidades) ─────────────────
+   Estratégia: <select> puro controlado por JS + <input type="hidden"
+   wicket:id="..."> capturando o valor pra Wicket ler na submissão.
+
+   - cacheEstados: lista única dos 27 UFs, baixada uma vez por sessão.
+   - cacheCidades: mapa UF → lista de cidades, baixadas sob demanda.
+   - ibgePopularSelectEstado(select, hidden, preselecionado): preenche um
+     <select> de estados, mantém o hidden em sincronia, e seleciona o UF
+     atual se informado (ex: ao reabrir o modal de editar).
+   - ibgePopularSelectCidade(select, hidden, uf, preselecionada): mesma
+     coisa pra cidades, dado o UF.
+*/
+
+var IBGE_BASE = 'https://servicodados.ibge.gov.br/api/v1/localidades';
+var cacheEstados = null;     // Promise compartilhada
+var cacheCidades = {};       // chave: UF → Promise
+
+function ibgeListarEstados() {
+  if (!cacheEstados) {
+    cacheEstados = fetch(IBGE_BASE + '/estados?orderBy=nome')
+      .then(function(r) { return r.json(); })
+      .catch(function() { return []; });
+  }
+  return cacheEstados;
+}
+
+function ibgeListarCidades(uf) {
+  if (!uf) return Promise.resolve([]);
+  var key = uf.toUpperCase();
+  if (!cacheCidades[key]) {
+    cacheCidades[key] = fetch(IBGE_BASE + '/estados/' + key + '/municipios?orderBy=nome')
+      .then(function(r) { return r.json(); })
+      .catch(function() { return []; });
+  }
+  return cacheCidades[key];
+}
+
+/**
+ * Preenche um <select> com a lista de estados do IBGE.
+ * Mantém um <input> hidden em sincronia (para o Wicket ler).
+ * Opcionalmente, dispara um callback ao mudar (útil para carregar cidades).
+ */
+function ibgePopularSelectEstado(selectEl, hiddenEl, preselecionado, onChange) {
+  if (!selectEl) return;
+  ibgeListarEstados().then(function(estados) {
+    selectEl.innerHTML = '<option value="">Selecione...</option>';
+    estados.forEach(function(uf) {
+      var opt = document.createElement('option');
+      opt.value = uf.sigla;
+      opt.textContent = uf.sigla + ' — ' + uf.nome;
+      if (preselecionado && uf.sigla === preselecionado) opt.selected = true;
+      selectEl.appendChild(opt);
+    });
+    if (hiddenEl) hiddenEl.value = selectEl.value || '';
+
+    // Atribui o listener apenas uma vez
+    if (!selectEl.dataset.ibgeWired) {
+      selectEl.dataset.ibgeWired = '1';
+      selectEl.addEventListener('change', function() {
+        if (hiddenEl) hiddenEl.value = selectEl.value;
+        if (typeof onChange === 'function') onChange(selectEl.value);
+      });
+    }
+  });
+}
+
+/**
+ * Preenche um <select> com a lista de cidades do UF informado.
+ * Mantém um <input> hidden em sincronia.
+ */
+function ibgePopularSelectCidade(selectEl, hiddenEl, uf, preselecionada) {
+  if (!selectEl) return;
+  if (!uf) {
+    selectEl.innerHTML = '<option value="">Selecione um estado primeiro</option>';
+    if (hiddenEl) hiddenEl.value = '';
+    return;
+  }
+  ibgeListarCidades(uf).then(function(cidades) {
+    selectEl.innerHTML = '<option value="">Selecione...</option>';
+    cidades.forEach(function(c) {
+      var opt = document.createElement('option');
+      opt.value = c.nome;
+      opt.textContent = c.nome;
+      if (preselecionada && c.nome === preselecionada) opt.selected = true;
+      selectEl.appendChild(opt);
+    });
+    if (hiddenEl) hiddenEl.value = selectEl.value || '';
+
+    if (!selectEl.dataset.ibgeWired) {
+      selectEl.dataset.ibgeWired = '1';
+      selectEl.addEventListener('change', function() {
+        if (hiddenEl) hiddenEl.value = selectEl.value;
+      });
+    }
+  });
+}
+
 /* ───────────────── Integração ViaCEP ───────────────── */
 function buscarCepNoBloco(input) {
   var cep = input.value.replace(/\D/g, '');
   if (cep.length !== 8) return;
 
-  // A trava cirúrgica: garante que preenchemos apenas o endereço atual
   var bloco = input.closest('.bloco-endereco');
   if (!bloco) return;
 
@@ -72,7 +168,6 @@ function buscarCepNoBloco(input) {
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data.erro) {
-        // Aviso amigável no console para não acharmos que o código quebrou!
         console.warn("ViaCEP: O CEP " + cep + " não foi encontrado na base dos Correios.");
         return;
       }
@@ -84,24 +179,33 @@ function buscarCepNoBloco(input) {
 
       set('viacep-logradouro', data.logradouro);
       set('viacep-bairro',     data.bairro);
-      set('viacep-cidade',     data.localidade);
 
-      // O Wicket pode usar o texto ou o value numérico nas options de Estado
+      // Estado e Cidade agora são dropdowns dinâmicos do IBGE.
+      // O <select> visual e o <input hidden wicket:id> ficam dentro do bloco
+      // com classes .ibge-estado-select / .ibge-estado-hidden e equivalentes
+      // para cidade. Após preencher o UF via ViaCEP, carregamos as cidades.
       if (data.uf) {
-        var sel = bloco.querySelector('.viacep-estado');
-        if (sel) {
-          for (var i = 0; i < sel.options.length; i++) {
-            if (sel.options[i].text === data.uf || sel.options[i].value === data.uf) {
-                sel.selectedIndex = i;
-                break;
+        var estadoSel    = bloco.querySelector('.ibge-estado-select');
+        var estadoHidden = bloco.querySelector('.ibge-estado-hidden');
+        if (estadoSel && estadoHidden) {
+          // Seleciona o UF que veio do ViaCEP no select (já populado via init)
+          for (var i = 0; i < estadoSel.options.length; i++) {
+            if (estadoSel.options[i].value === data.uf) {
+              estadoSel.selectedIndex = i;
+              break;
             }
           }
+          estadoHidden.value = data.uf;
+        }
+        // Carrega cidades do UF e seleciona a do ViaCEP
+        var cidadeSel    = bloco.querySelector('.ibge-cidade-select');
+        var cidadeHidden = bloco.querySelector('.ibge-cidade-hidden');
+        if (cidadeSel && cidadeHidden) {
+          ibgePopularSelectCidade(cidadeSel, cidadeHidden, data.uf, data.localidade);
         }
       }
     })
-    .catch(function(e) {
-        console.error("Erro ao consultar o ViaCEP: ", e);
-    });
+    .catch(function(e) { console.error("Erro ao consultar o ViaCEP: ", e); });
 }
 
 /* ───────────────── Abridores de modal com data-* ───────────────── */
@@ -179,18 +283,112 @@ function abrirModalExcluirEndereco(btn) {
 }
 
 function abrirModalEditarEndereco(btn) {
-  if (document.getElementById('editEnderecoId')) document.getElementById('editEnderecoId').value = btn.dataset.id;
-  if (document.getElementById('editEndNumero')) document.getElementById('editEndNumero').value = btn.dataset.numero || '';
-  if (document.getElementById('editEndComplemento')) document.getElementById('editEndComplemento').value = btn.dataset.complemento || '';
-  if (document.getElementById('editEndPrincipal')) document.getElementById('editEndPrincipal').checked = btn.dataset.principal === 'true';
-  if (document.getElementById('editEndLogradouroDisplay')) document.getElementById('editEndLogradouroDisplay').value = btn.dataset.logradouro || '';
+  // Helper local — não polui o escopo global.
+  var set = function(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.value = val || '';
+  };
+
+  // Preenche os campos de texto a partir dos data-* attributes.
+  // Estado e cidade são tratados via IBGE abaixo (não como campos de texto).
+  set('editEnderecoId',    btn.dataset.id);
+  set('editEndLogradouro', btn.dataset.logradouro);
+  set('editEndNumero',     btn.dataset.numero);
+  set('editEndComplemento', btn.dataset.complemento);
+  set('editEndBairro',     btn.dataset.bairro);
+  set('editEndCep',        formatarCep(btn.dataset.cep));
+  set('editEndPais',       btn.dataset.pais);
+  // Hidden inputs (Wicket lê pra binding) — selects ficam em sincronia
+  set('editEndEstado',     btn.dataset.estado);
+  set('editEndCidade',     btn.dataset.cidade);
+
+  if (document.getElementById('editEndPrincipal')) {
+    document.getElementById('editEndPrincipal').checked = btn.dataset.principal === 'true';
+  }
 
   if (document.getElementById('editEndTelefone')) {
-    $('#editEndTelefone').val(btn.dataset.telefone || '').mask(maskTelefoneBehavior, maskTelefoneOpcoes);
+    $('#editEndTelefone').val(btn.dataset.telefone || '')
+      .mask(maskTelefoneBehavior, maskTelefoneOpcoes);
   }
 
   var modalEl = document.getElementById('modalEditarEndereco');
-  if (modalEl) new bootstrap.Modal(modalEl).show();
+  if (modalEl) {
+    // Inicializa os dropdowns IBGE pré-selecionando o UF e a cidade do endereço
+    inicializarIbgeNoElemento(modalEl, btn.dataset.estado, btn.dataset.cidade);
+    new bootstrap.Modal(modalEl).show();
+  }
+}
+
+/**
+ * Consulta ViaCEP no modal de editar endereço.
+ * Diferente do modal de criar (que tem múltiplos endereços em .bloco-endereco),
+ * aqui há um único endereço com IDs fixos. Os dropdowns de estado e cidade
+ * são preenchidos via IBGE.
+ */
+function buscarCepEditarEndereco(input) {
+  var cep = input.value.replace(/\D/g, '');
+  if (cep.length !== 8) return;
+
+  fetch('https://viacep.com.br/ws/' + cep + '/json/')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.erro) {
+        console.warn("ViaCEP: O CEP " + cep + " não foi encontrado.");
+        return;
+      }
+      var set = function(id, val) {
+        var el = document.getElementById(id);
+        if (el && val) el.value = val;
+      };
+      set('editEndLogradouro', data.logradouro);
+      set('editEndBairro',     data.bairro);
+
+      // Estado e Cidade agora são dropdowns dinâmicos
+      if (data.uf) {
+        var estadoSel    = document.getElementById('editEndEstadoSelect');
+        var estadoHidden = document.getElementById('editEndEstado');
+        if (estadoSel && estadoHidden) {
+          for (var i = 0; i < estadoSel.options.length; i++) {
+            if (estadoSel.options[i].value === data.uf) {
+              estadoSel.selectedIndex = i;
+              break;
+            }
+          }
+          estadoHidden.value = data.uf;
+        }
+        var cidadeSel    = document.getElementById('editEndCidadeSelect');
+        var cidadeHidden = document.getElementById('editEndCidade');
+        if (cidadeSel && cidadeHidden) {
+          ibgePopularSelectCidade(cidadeSel, cidadeHidden, data.uf, data.localidade);
+        }
+      }
+    })
+    .catch(function(e) { console.error("Erro ao consultar o ViaCEP: ", e); });
+}
+
+/**
+ * Inicializa os dropdowns IBGE de um modal. Deve ser chamado quando o
+ * modal abre e quando o Wicket re-renderiza componentes via AJAX.
+ *
+ * - `seletorRaiz`: elemento DOM que contém os selects (modal ou bloco-endereco)
+ * - `ufAtual`, `cidadeAtual`: valores pré-selecionados (no editar, vêm do data-*)
+ */
+function inicializarIbgeNoElemento(raiz, ufAtual, cidadeAtual) {
+  if (!raiz) return;
+  var estadoSel    = raiz.querySelector('.ibge-estado-select');
+  var estadoHidden = raiz.querySelector('.ibge-estado-hidden');
+  var cidadeSel    = raiz.querySelector('.ibge-cidade-select');
+  var cidadeHidden = raiz.querySelector('.ibge-cidade-hidden');
+
+  if (estadoSel && estadoHidden) {
+    ibgePopularSelectEstado(estadoSel, estadoHidden, ufAtual, function(uf) {
+      // Quando o usuário muda o estado manualmente, recarrega cidades e limpa a anterior
+      ibgePopularSelectCidade(cidadeSel, cidadeHidden, uf, null);
+    });
+  }
+  if (cidadeSel && cidadeHidden && ufAtual) {
+    ibgePopularSelectCidade(cidadeSel, cidadeHidden, ufAtual, cidadeAtual);
+  }
 }
 
 function mostrarAvisoNaoPodeDeletar(btn) {
@@ -226,6 +424,26 @@ function initMasks() {
   $('.mask-cpf-cnpj').mask(maskCpfCnpjBehavior, maskCpfCnpjOpcoes);
   $('#criarDataMask').mask('00/00/0000');
   aplicarMascarasExibicao();
+  initIbgeSelects();
+}
+
+/**
+ * Inicializa todos os selects IBGE que ainda não foram populados.
+ * Cobre:
+ *   - Blocos-endereço dinâmicos do modal de criar (novos adicionados via AJAX)
+ *   - Modal de adicionar endereço (tem 1 bloco fixo)
+ * O modal de editar é inicializado em abrirModalEditarEndereco (pré-seleciona valores).
+ */
+function initIbgeSelects() {
+  document.querySelectorAll('.bloco-endereco').forEach(function(bloco) {
+    var estadoSel = bloco.querySelector('.ibge-estado-select');
+    // Já populado? Pula. (data.ibgeWired é setado dentro de ibgePopularSelectEstado)
+    if (estadoSel && !estadoSel.dataset.ibgeWired) {
+      var ufAtual    = (bloco.querySelector('.ibge-estado-hidden') || {}).value || null;
+      var cidadeAtual = (bloco.querySelector('.ibge-cidade-hidden') || {}).value || null;
+      inicializarIbgeNoElemento(bloco, ufAtual, cidadeAtual);
+    }
+  });
 }
 
 function autoHideFeedback() {

@@ -17,7 +17,9 @@
 
             <div wicket:id="feedbackEndereco"></div>
 
-            <div class="row g-2">
+            <!-- bloco-endereco: container exigido pelo JS de ViaCEP e IBGE
+                 (eles usam closest('.bloco-endereco') para escopo seguro) -->
+            <div class="row g-2 bloco-endereco">
               <div class="col-md-3">
                 <label class="form-label small mb-1">CEP</label>
                 <input type="text" class="form-control form-control-sm mask-cep" wicket:id="addEndCep"
@@ -50,15 +52,22 @@
                 <input type="text" class="form-control form-control-sm viacep-bairro" wicket:id="addEndBairro">
               </div>
 
-              <div class="col-md-5">
-                <label class="form-label small mb-1">Cidade</label>
-                <input type="text" class="form-control form-control-sm viacep-cidade" wicket:id="addEndCidade">
-              </div>
+              <!-- UF e Cidade — dropdowns dinâmicos via IBGE.
+                   Os <select>s puros são populados pelo JS. Os <input hidden>
+                   com wicket:id são os que o Wicket lê. -->
               <div class="col-md-2">
                 <label class="form-label small mb-1">UF</label>
-                <select class="form-select form-select-sm viacep-estado" wicket:id="addEndEstado">
-                  <option value="">Selecione...</option>
+                <select class="form-select form-select-sm ibge-estado-select">
+                  <option value="">Carregando…</option>
                 </select>
+                <input type="hidden" class="ibge-estado-hidden" wicket:id="addEndEstado">
+              </div>
+              <div class="col-md-5">
+                <label class="form-label small mb-1">Cidade</label>
+                <select class="form-select form-select-sm ibge-cidade-select">
+                  <option value="">Selecione um estado primeiro</option>
+                </select>
+                <input type="hidden" class="ibge-cidade-hidden" wicket:id="addEndCidade">
               </div>
               <div class="col-md-3">
                 <label class="form-label small mb-1">País</label>

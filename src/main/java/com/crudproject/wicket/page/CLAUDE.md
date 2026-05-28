@@ -48,6 +48,33 @@ Usar pelo nome quando aplicável: `Panel`, `TextField`, `NumberTextField`, `Radi
 - Parse no Java via `DateTimeFormatter.ofPattern("dd/MM/yyyy")`.
 - **Não misturar formatos** — gera ParseException silenciosa.
 
+### 8) Dropdowns dinâmicos (IBGE) — padrão hidden field + select JS
+
+`DropDownChoice` do Wicket valida a submissão contra uma **lista estática**.
+Para listas dinâmicas (UF/Cidade vindas da API do IBGE) usamos um padrão diferente:
+
+```html
+<!-- <select> puro HTML (sem wicket:id), populado pelo JS -->
+<select class="ibge-estado-select">
+  <option value="">Carregando…</option>
+</select>
+<!-- HiddenField com wicket:id — o JS mantém em sincronia, Wicket lê na submissão -->
+<input type="hidden" class="ibge-estado-hidden" wicket:id="endEstado">
+```
+
+```java
+// No .java: HiddenField, não DropDownChoice
+form.add(new HiddenField<>("endEstado", new PropertyModel<>(state, "estado")));
+```
+
+O JS (`clientes.js`) cuida do resto: `ibgePopularSelectEstado`/`ibgePopularSelectCidade`
+populam as opções, e `inicializarIbgeNoElemento` é chamado quando o modal abre.
+A inicialização global acontece em `initMasks()` → `initIbgeSelects()`.
+
+> **Por que não DropDownChoice com lista dinâmica?** Porque o Wicket valida o
+> valor submetido contra a lista que conhece. Como JS pode adicionar opções
+> que o Wicket não viu, a validação falha. HiddenField não tem esse problema.
+
 ## Pode alterar sem perguntar
 - Adicionar/refatorar panels internos dentro do mesmo pacote.
 - Ajustar CSS / estilos.

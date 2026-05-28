@@ -7,12 +7,13 @@
 <mat-dialog-content>
   <form [formGroup]="form" class="form-dialog">
 
-    <!-- Campos readonly: nome e documento (não editáveis) -->
+    <!-- Nome agora é editável. CPF/CNPJ continua readonly (imutável). -->
     <div class="form-grid">
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>{{ isPJ ? 'Razão Social' : 'Nome completo' }} <span class="hint-nao-editavel">(não editável)</span></mat-label>
-        <input matInput [value]="cliente.nome" readonly>
-        <mat-icon matSuffix color="disabled">lock</mat-icon>
+        <mat-label>{{ isPJ ? 'Razão Social' : 'Nome completo' }}</mat-label>
+        <input matInput formControlName="nome">
+        <mat-error *ngIf="form.get('nome')?.hasError('required')">Campo obrigatório</mat-error>
+        <mat-error *ngIf="form.get('nome')?.hasError('minlength')">Mínimo de 2 caracteres</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">

@@ -1,445 +1,332 @@
 # Desafio de Estágio — CRUD de Clientes
 
-## O que é esse projeto?
-
-Sistema para cadastrar e gerenciar **Clientes e Endereços**, desenvolvido como desafio de estágio.
-
-O usuário pode: **criar, editar, excluir e listar** clientes, além de gerar relatórios em PDF e Excel.
+Sistema CRUD de **Clientes** (Pessoa Física e Jurídica) com seus **Endereços** em relação 1:N,
+geração de relatórios em PDF e Excel, importação por planilha e dois frontends
+(Wicket 7 servindo HTML server-side + Angular 14 SPA consumindo a mesma API REST).
 
 ---
 
-## Arquitetura do sistema
+## Pré-requisitos
 
-```
-FRONTEND (o que o usuário vê)
-  ├── Wicket 7   → Fase 1 (implementar primeiro)
-  └── Angular 14 → Fase 2 (migrar depois)
-        ↕  HTTP (chamadas REST)
-BACKEND (Spring Boot - Java 17)
-  ├── Controller → recebe as requisições HTTP
-  ├── DTO        → contrato de entrada/saída (JSON)
-  ├── Mapper     → converte DTO ↔ Entity
-  ├── Service    → aplica as regras de negócio
-  ├── Repository → acessa o banco (Spring Data JPA)
-  └── DAO        → queries avançadas (HQL, SQL puro, Search) — Fase futura
-        ↕  Hibernate (JPA)
-BANCO DE DADOS (MySQL via Docker)
-```
-
-**Padrão MVC:**
-- **M** (Model): classes Java que representam os dados (`Cliente`, `Endereco`)
-- **V** (View): telas do usuário (Wicket ou Angular)
-- **C** (Controller): código que recebe as requisições e decide o que fazer
-
----
-
-## Estado atual do projeto
-
-> Última atualização: **CRUD completo de Cliente/Endereço em REST. Banco zerado, pronto para refactor grande baseado no modelo passado pelo supervisor.**
-
-### ✅ Concluído
-
-**Infraestrutura**
-- Java 17 + Maven + IntelliJ
-- `pom.xml` com Spring Boot 2.7, Hibernate 5, MySQL driver, JasperReports, Apache POI
-- **MySQL via Docker Compose** (`docker-compose.yml` na raiz)
-- `application.properties` com mensagens de erro detalhadas (no `.gitignore`, com `.example` no repo)
-
-**Models (entidades JPA)**
-- `Cliente.java` — PF + PJ na mesma tabela, com `@JsonManagedReference`
-- `Endereco.java` — FK para Cliente, com `@JsonBackReference`
-- `TipoPessoa.java` — enum FISICA / JURIDICA
-
-**Repositories**
-- `ClienteRepository` — `findByCpf`, `findByCnpj`
-- `EnderecoRepository` — `findByClienteId`
-
-**DTOs** (sufixados por intenção — contratos claros)
-- `dto/cliente/`
-  - `ClienteCadastroDTO` — POST (com lista de endereços iniciais embedded)
-  - `ClienteAtualizacaoDTO` — PUT (sem tipoPessoa, sem enderecos)
-  - `ClienteResponseDTO` — saída (com lista de endereços)
-- `dto/endereco/`
-  - `EnderecoCadastroDTO` — POST (com clienteId)
-  - `EnderecoAtualizacaoDTO` — PUT (sem clienteId)
-  - `EnderecoResponseDTO` — saída
-
-**Mappers**
-- `ClienteMapper` — toEntity, toResponse, updateEntity, lida com endereços embedded
-- `EnderecoMapper` — toEntity (recebe Cliente do Service), toResponse, updateEntity
-
-**Services**
-- `ClienteService` — `salvar`, `buscarTodos`, `buscarPorId`, `atualizar`, `excluir`
-  - Validação cruzada PF/PJ
-  - Algoritmo Receita Federal pra CPF/CNPJ
-  - Sincronização de endereços no salvar (mín. 1, ajusta principal)
-  - tipoPessoa imutável após cadastro
-- `EnderecoService` — CRUD completo + `definirComoPrincipal`
-  - Regras de endereço principal automatizadas
-  - Bloqueio de mover endereço entre clientes
-
-**Controllers REST**
-- `ClienteController` — `POST`, `GET`, `GET/{id}`, `PUT/{id}`, `DELETE/{id}`
-- `EnderecoController` — `POST`, `GET/{id}`, `GET cliente/{clienteId}`, `PUT/{id}`, `DELETE/{id}`, `PUT/{id}/principal`
-
-**Banco de dados**
-- Banco `crud_project_db` rodando no Docker
-- ⚠ **Tabelas `tb_cliente` e `tb_endereco` foram dropadas em preparação para o refactor**
-
----
-
-## Próximo passo — REFACTOR GRANDE
-
-> Quando voltar ao projeto, retome aqui.
-
-O supervisor passou um novo modelo de dados que exige refatoração. O JSON novo:
-
-```json
-{
-  "id": 1001,
-  "tipoPessoa": "FISICA",
-  "nome": "João Carlos da Silva",
-  "cpfCnpj": "12345678901",
-  "rgInscricaoEstadual": "123456789",
-  "dataNascimento": "1990-05-15",
-  "email": "joao.silva@email.com",
-  "telefone": "(11) 99999-9999",
-  "ativo": true,
-  "dataCadastro": "2026-05-11T10:30:00",
-  "enderecos": [
-    {
-      "id": 1,
-      "tipo": "RESIDENCIAL",
-      "logradouro": "Rua das Flores",
-      "numero": "123",
-      "complemento": "Apartamento 45",
-      "bairro": "Centro",
-      "cidade": "São Paulo",
-      "estado": "SP",
-      "cep": "01001-000",
-      "pais": "Brasil",
-      "principal": true
-    }
-  ]
-}
-```
-
-### Decisões já tomadas
-
-| Pergunta | Decisão |
-|---|---|
-| Wrapper `{ "cliente": {...} }`? | **NÃO** — JSON direto na raiz, padrão REST |
-| `dataNascimento` para PJ? | Sim — mesmo campo, semântica de "data de fundação" |
-| PUT com endereços: replace ou sync? | **Sync** — id existe → atualiza, sem id → cria, sumiu → deleta |
-| Manter rotas de Endereço separadas? | **NÃO** — tudo passa pelo `/api/clientes` |
-
-### Mudanças que serão feitas
-
-**Model — `Cliente.java`**
-- Remove: `cpf`, `rg`, `cnpj`, `razaoSocial`, `inscricaoEstadual`, `dataCriacao`
-- Adiciona: `cpfCnpj`, `rgInscricaoEstadual`, `telefone`, `dataCadastro`
-- Mantém: `id`, `tipoPessoa`, `nome`, `dataNascimento`, `email`, `ativo`, `enderecos`
-
-**Model — `Endereco.java`**
-- Remove: `telefone` (vai pra Cliente)
-- Renomeia: `enderecoPrincipal` → `principal`
-- Adiciona: `tipo` (enum `TipoEndereco`), `pais`
-
-**Model — novo enum `TipoEndereco.java`**
-- `RESIDENCIAL, COMERCIAL`
-
-**DTOs — unificação**
-- `ClienteCadastroDTO` + `ClienteAtualizacaoDTO` → `ClienteDTO` (único)
-- `EnderecoCadastroDTO` + `EnderecoAtualizacaoDTO` → `EnderecoDTO` (com `id` opcional)
-- `ClienteResponseDTO` e `EnderecoResponseDTO` mantidos, com os novos campos
-
-**Service**
-- `EnderecoService.java` → **DELETADO**
-- `ClienteService` ganha:
-  - Validação `cpfCnpj` (length 11 = PF, 14 = PJ)
-  - Método `sincronizarEnderecos` (semântica de sync)
-  - `dataCadastro = now()` no salvar
-
-**Controller**
-- `EnderecoController.java` → **DELETADO**
-- `ClienteController` mantém as 5 rotas, com `ClienteDTO` unificado
-
-**Repository**
-- `ClienteRepository.findByCpfCnpj(String)` substitui `findByCpf` + `findByCnpj`
-
-### Plano de execução amanhã
-
-1. Pull do projeto
-2. Levantar Docker (`docker compose up -d`)
-3. Subir Spring Boot uma vez para o Hibernate criar tabelas novas
-4. Iniciar o refactor: model → DTO → mapper → service → controller
-5. Testar todas as rotas no Apidog
-
----
-
-## Fluxo do cadastro — do Apidog ao banco
-
-Quando uma rota REST é chamada (ex: pelo Apidog, Angular ou Postman), o dado atravessa todas as camadas.
-
-```
-APIDOG (cliente HTTP)
-       │ envia JSON via HTTP
-       ▼
-SPRING (recebe a requisição)
-       │ converte JSON em DTO
-       ▼
-CONTROLLER (ClienteController)
-       │ repassa o DTO para o Service
-       ▼
-SERVICE (ClienteService)
-       │ ① mapeia DTO em entidade
-       │ ② aplica regras de negócio
-       │ ③ manda Repository salvar
-       ▼
-MAPPER (ClienteMapper)
-       │ copia DTO → Cliente
-       ▼
-REPOSITORY (ClienteRepository)
-       │ executa INSERT/UPDATE
-       ▼
-MYSQL (Docker)
-       │ gera id, devolve ao Hibernate
-       ▼
-SERVICE (caminho de volta)
-       │ mapeia Cliente → DTO de saída
-       ▼
-CONTROLLER → SPRING
-       │ converte DTO em JSON
-       ▼
-APIDOG (resposta)
-```
-
-**Resumo em uma frase:** o DTO atravessa Controller e Service, vira Entity no Mapper, é salvo pelo Repository, e volta o caminho inverso até o JSON que o Apidog recebe.
-
-A entidade nunca é exposta — quem sai e entra é sempre DTO.
-
-### Por que cada camada existe
-
-| Camada | Por que precisa existir |
-|---|---|
-| **Controller** | Tradutor HTTP ↔ Java |
-| **DTO** | Embalagem segura, não expõe a entidade |
-| **Service** | Lugar das regras de negócio |
-| **Mapper** | Centraliza a conversão entre DTO e Entity |
-| **Repository** | Fala com o banco |
-| **Entity** | Mapeia a tabela do banco |
-
-### E o Wicket?
-
-O Wicket **não usa HTTP entre frontend e backend** — ele roda no mesmo servidor que o Spring Boot. A página Wicket chama o `Service` **diretamente em Java**, sem passar por Controller nem JSON.
-
-```
-WICKET                        APIDOG / ANGULAR
-──────                        ──────────────
-ClientePage.java              Apidog envia JSON
-   │                                │
-   │ chama em Java                  │ HTTP POST
-   ▼                                ▼
-ClienteService.salvar(dto)  ◄── ClienteController
-   │
-   ▼
-ClienteRepository.save(entity)
-   │
-   ▼
-MySQL
-```
-
-**A camada Service é o ponto de encontro.** Tudo abaixo dela é reaproveitado pelos dois frontends.
-
----
-
-## Tecnologias
-
-| Tecnologia | Para que serve |
-|---|---|
-| Java 17 | Linguagem do backend |
-| Spring Boot 2.7 | Framework Web + DI + auto-config |
-| Hibernate 5 | ORM (objeto Java → tabela) |
-| MySQL 8 (Docker) | Banco de dados |
-| Apache Wicket 7 | Framework para criar telas em Java (Fase 1) |
-| Angular 14 | Framework frontend moderno (Fase 2) |
-| JasperReports | Relatórios PDF |
-| Apache POI | Planilhas Excel |
-| JUnit | Testes automatizados |
-| Apidog | Cliente HTTP para testes |
-
-> **Observação:** Spring Boot 2.7 (não 3.x) por compatibilidade com Wicket 7. O `wicket-spring-boot-starter` foi **removido** por incompatibilidade — será feita integração manual quando chegar a fase do Wicket.
-
----
-
-## Modelos de dados — após refactor (próximo passo)
-
-### Cliente
-
-| Campo | Tipo | Observação |
+| Ferramenta | Versão | Para quê |
 |---|---|---|
-| id | Long | PK |
-| tipoPessoa | Enum | FISICA / JURIDICA — imutável após cadastro |
-| nome | String | Nome (PF) ou Razão Social (PJ) |
-| cpfCnpj | String | CPF (11 dígitos) ou CNPJ (14 dígitos) |
-| rgInscricaoEstadual | String | RG (PF) ou Inscrição Estadual (PJ) |
-| dataNascimento | LocalDate | Nascimento (PF) ou Fundação (PJ) |
-| email | String | Email do cliente |
-| telefone | String | Telefone principal |
-| ativo | Boolean | Status |
-| dataCadastro | LocalDateTime | Gerado no save automaticamente |
-| enderecos | List\<Endereco\> | Relação 1:N |
+| **Docker Desktop** | última | Subir o MySQL |
+| **JDK** | 17 | Compilar e rodar o Spring Boot |
+| **Node.js** | 16+ | Rodar o frontend Angular |
+| **IntelliJ IDEA** | 2024+ | Rodar os run configurations já versionados |
+| **Git** | — | Clonar o repositório |
 
-> **Decisão arquitetural:** uma única tabela `tb_cliente`. Campos são unificados (não há separação cpf/cnpj). As validações de negócio (CPF vs CNPJ) acontecem no Service baseado no `tipoPessoa`.
-
-### Endereço
-
-| Campo | Tipo | Observação |
-|---|---|---|
-| id | Long | PK |
-| tipo | Enum | RESIDENCIAL / COMERCIAL |
-| logradouro | String | |
-| numero | String | |
-| complemento | String | Opcional |
-| bairro | String | |
-| cidade | String | |
-| estado | String | UF |
-| cep | String | |
-| pais | String | |
-| principal | Boolean | Apenas 1 principal por cliente |
+> Maven **não** precisa instalar — o projeto roda via IntelliJ ou pela classe principal.
+> Apenas o **banco** é dockerizado; backend e frontend rodam localmente.
 
 ---
 
-## Estrutura de pastas atual
+## Como rodar (passo a passo)
 
-```
-src/main/java/com/crudproject/
-├── CrudProjectApplication.java     ← entrypoint
-├── model/
-│   ├── Cliente.java
-│   ├── Endereco.java
-│   └── TipoPessoa.java
-├── dto/
-│   ├── cliente/
-│   │   ├── ClienteCadastroDTO.java
-│   │   ├── ClienteAtualizacaoDTO.java
-│   │   └── ClienteResponseDTO.java
-│   └── endereco/
-│       ├── EnderecoCadastroDTO.java
-│       ├── EnderecoAtualizacaoDTO.java
-│       └── EnderecoResponseDTO.java
-├── mapper/
-│   ├── ClienteMapper.java
-│   └── EnderecoMapper.java
-├── repository/
-│   ├── ClienteRepository.java
-│   └── EnderecoRepository.java
-├── service/
-│   ├── ClienteService.java
-│   └── EnderecoService.java
-├── controller/
-│   ├── ClienteController.java
-│   └── EnderecoController.java
-└── wicket/page/                    ← vazio (Fase 1)
-
-docker-compose.yml                  ← MySQL 8 em container
-```
-
----
-
-## Configuração local
-
-### MySQL via Docker (recomendado)
-
-O projeto roda o MySQL em container Docker. **Não precisa instalar MySQL nativamente**.
+### 1. Clonar e entrar na pasta
 
 ```bash
-# Subir o banco
+git clone <url-do-repo>
+cd crud_project_2
+```
+
+### 2. Configurar o `application.properties`
+
+O `application.properties` está no `.gitignore` porque tem senha do banco. Crie a partir do exemplo:
+
+```bash
+# Copie o modelo
+cp src/main/resources/application.properties.example src/main/resources/application.properties
+```
+
+E ajuste a senha para `UnikaDevDB` (que é a definida no `docker-compose.yml`).
+
+### 3. Subir o banco (Docker)
+
+```bash
 docker compose up -d
-
-# Verificar status
-docker compose ps    # deve mostrar "healthy"
-
-# Desligar (mantém os dados)
-docker compose down
-
-# ⚠ NUNCA use down -v — apaga todos os dados
 ```
 
-A conexão JDBC continua sendo `localhost:3306` — indistinguível de um MySQL nativo.
-
-### application.properties
-
-Está no `.gitignore` pra proteger a senha. Existe um `application.properties.example` no repo como modelo.
-
-**Ao clonar em outro PC:**
-1. Copie `src/main/resources/application.properties.example` para `application.properties`
-2. Substitua `SUA_SENHA_AQUI` por `UnikaDevDB` (ou a senha que escolheu pro container)
-3. Suba o Docker: `docker compose up -d`
-
----
-
-## Git — Comandos essenciais
+Aguarde alguns segundos até o MySQL ficar "healthy". Para conferir:
 
 ```bash
-git status                       # estado atual
-git log --oneline                # histórico
-git add .                        # adicionar tudo
-git commit -m "mensagem"         # commit
-git push origin main             # enviar pro GitHub
-git pull origin main             # baixar do GitHub
-git reset --hard origin/main     # voltar pro último push (descarta locais)
-git clean -fd                    # remove arquivos não-rastreados
+docker compose ps
 ```
 
-**Boas práticas:**
-- Commits diários
-- Prefixos: `feat:`, `chore:`, `docs:`, `refactor:`, `fix:`
-- Nunca commitar senhas — `.gitignore` cuida
+### 4. Rodar o backend Spring Boot
+
+**Opção A — pelo IntelliJ (recomendado):** abra o projeto, escolha o run config **`RODAR WICKET`** (ou **`RODAR TUDO`** para subir Wicket + Angular juntos) e clique em Run.
+
+**Opção B — pela linha de comando:** abra o `CrudProjectApplication.java` e rode pela IDE,
+ou compile o jar manualmente.
+
+A aplicação sobe em `http://localhost:8080`.
+
+> **VM Option necessária:** `--add-opens java.base/java.lang=ALL-UNNAMED`
+> Já está configurada no run config `RODAR WICKET`. Necessária para Wicket/POI funcionarem em Java 17 (sistema de módulos do JPMS).
+
+### 5. Rodar o frontend Angular
+
+Em outro terminal:
+
+```bash
+cd frontend-angular
+npm install        # apenas na primeira vez
+npm start
+```
+
+Acesse em `http://localhost:4200`.
+
+> Pelo IntelliJ existe o run config `RODAR ANGULAR` que faz isso automaticamente.
+
+### 6. Pronto — pontos de acesso
+
+| URL | O que é |
+|---|---|
+| `http://localhost:8080/` | Frontend **Wicket** (homepage redireciona para listagem de clientes) |
+| `http://localhost:4200/` | Frontend **Angular** (SPA) |
+| `http://localhost:8080/api/clientes` | API REST (lista todos) |
 
 ---
 
-## Como continuar amanhã
+## Arquitetura
 
-1. **Pull do repositório:**
-   ```bash
-   git pull origin main
-   ```
+```
+┌─────────────────────────────────┐     ┌─────────────────────────────────┐
+│  WICKET 7 (server-side)         │     │  ANGULAR 14 (SPA)               │
+│  http://localhost:8080          │     │  http://localhost:4200          │
+│  - Conecta direto ao Service    │     │  - Consome a API REST           │
+└──────────────┬──────────────────┘     └──────────────┬──────────────────┘
+               │                                       │ HTTP/JSON
+               │                                       ▼
+               │                        ┌──────────────────────────────┐
+               │                        │  REST Controllers            │
+               │                        │  /api/clientes, /api/relat.  │
+               │                        └──────────────┬───────────────┘
+               │                                       │
+               └───────────────────┬───────────────────┘
+                                   ▼
+                  ┌────────────────────────────────────┐
+                  │  Service Layer (regras de negócio) │
+                  │  ClienteService, ReportService,    │
+                  │  ClienteValidator, etc.            │
+                  └────────────────┬───────────────────┘
+                                   │
+                  ┌────────────────▼───────────────────┐
+                  │  Repository / DAO (Spring Data)    │
+                  └────────────────┬───────────────────┘
+                                   │ Hibernate / JPA
+                                   ▼
+                  ┌────────────────────────────────────┐
+                  │  MySQL 8 (rodando no Docker)       │
+                  │  banco: crud_project_db            │
+                  └────────────────────────────────────┘
+```
 
-2. **Subir o Docker:**
-   ```bash
-   docker compose up -d
-   ```
-
-3. **Abrir o IntelliJ** e configurar `application.properties` (se for um PC novo)
-
-4. **Continuar do refactor** — ler a seção "Próximo passo — REFACTOR GRANDE" acima
+**Pontos importantes:**
+- O **Wicket** chama o `Service` diretamente em Java (mesma JVM) — não passa pelo Controller REST.
+- O **Angular** consome só a API REST (`/api/...`).
+- A camada **Service** é o ponto de encontro: regras de negócio centralizadas servem os dois frontends.
 
 ---
 
-## Sessões com o Claude Code
+## Funcionalidades implementadas
 
-Ao abrir o Claude Code amanhã, basta dizer:
+### Backend
+- ✅ CRUD completo de Cliente (POST, GET, GET/{id}, PUT, DELETE)
+- ✅ Sincronização de endereços no PUT (id existe = update, sem id = create, sumiu = delete)
+- ✅ Validação CPF/CNPJ (Caelum Stella — matematicamente válido)
+- ✅ Validação de e-mail e telefone (regex + comprimento)
+- ✅ CPF/CNPJ, TipoPessoa e dataCadastro **imutáveis após cadastro**
+- ✅ Exatamente 1 endereço principal por cliente (validado)
+- ✅ Busca filtrada paginada (Specification API)
+- ✅ Contadores agregados (total / ativos) sem carregar dados
+- ✅ Geração de relatórios PDF (Jasper) — lista geral e detalhes individuais
+- ✅ Geração de relatórios Excel (Apache POI) — lista e detalhes
+- ✅ Importação de clientes via planilha Excel
+- ✅ Tratamento global de exceções (datas inválidas → mensagem amigável)
 
-> "Continuando o desafio — leia o README e vamos fazer o refactor do modelo do supervisor."
+### Frontend Wicket
+- ✅ Listagem com paginação, busca, filtros (modal AJAX)
+- ✅ Modal de **criar cliente** com múltiplos endereços
+- ✅ Modal de **editar cliente** (nome, e-mail, IE, ativo — CPF/CNPJ imutável)
+- ✅ Modal de **excluir cliente** com confirmação
+- ✅ Página de **detalhes** com CRUD de endereços (adicionar, editar, excluir)
+- ✅ Modal de **importar Excel**
+- ✅ Modal de **relatórios** (PDF/Excel) por cliente e geral
+- ✅ Integração **ViaCEP** (CEP → preenche logradouro/bairro/cidade/UF)
+- ✅ Integração **API IBGE** (UF e Cidade como dropdowns dinâmicos)
+- ✅ Máscaras de CPF/CNPJ, CEP, telefone e data
 
-O Claude vai ler o estado atual e o plano, e retoma de onde foi deixado.
+### Frontend Angular
+- ✅ Listagem com filtros, paginação e contadores
+- ✅ Modal de criar / editar / excluir cliente
+- ✅ Página de detalhes com CRUD de endereços
+- ✅ Integração ViaCEP + IBGE (paridade com o Wicket)
+- ✅ Validação local antes do submit (com mensagens amigáveis)
+- ✅ Importação de Excel
+- ✅ Download de relatórios PDF/Excel
 
 ---
 
-## Dúvidas frequentes
+## Modelos de dados
 
-**Por que Spring Boot 2.7 e não 3.x?**
-Compatibilidade com Wicket 7 (que o desafio pede). Spring Boot 3 exigiria Wicket 9+.
+### Cliente (`tb_cliente`)
 
-**Por que removi o `wicket-spring-boot-starter`?**
-A versão 3.x do starter quebrou com Wicket 7 (`NoSuchMethodError` no setTimeout). Quando chegar a fase do Wicket, vamos integrar manualmente com uma `@Configuration` que registra o `WicketFilter`.
+| Campo | Tipo | Observação |
+|---|---|---|
+| `id` | Long | PK |
+| `tipoPessoa` | Enum | `FISICA` ou `JURIDICA` — imutável |
+| `nome` | String | Nome civil (PF) ou Razão Social (PJ) |
+| `cpfCnpj` | String | 11 dígitos (CPF) ou 14 (CNPJ) — imutável, unique |
+| `rgInscricaoEstadual` | String | RG (PF) ou Inscrição Estadual (PJ) |
+| `dataNascimento` | LocalDate | Nascimento (PF) ou Fundação (PJ) |
+| `email` | String | E-mail do cliente |
+| `telefone` | String | Telefone principal (opcional) |
+| `ativo` | Boolean | Status |
+| `dataCadastro` | LocalDateTime | Gerada no servidor — imutável |
+| `enderecos` | List\<Endereco\> | 1:N, cascade ALL, orphanRemoval |
 
-**Por que DTOs se a Entity já existe?**
-Para não expor a entidade JPA diretamente — segurança e desacoplamento. DTOs são "embalagens" sem anotações JPA, sem ciclos de serialização e sem campos sensíveis.
+### Endereço (`tb_endereco`)
 
-**Por que usar Docker pro MySQL?**
-Portabilidade. Não precisa instalar MySQL em cada máquina onde for desenvolver — basta ter Docker instalado e rodar `docker compose up -d`.
+| Campo | Tipo | Observação |
+|---|---|---|
+| `id` | Long | PK |
+| `tipo` | Enum | `RESIDENCIAL` ou `COMERCIAL` |
+| `logradouro` | String | Obrigatório |
+| `numero` | String | Aceita `"SN"` para sem-número |
+| `complemento` | String | Opcional |
+| `bairro` | String | Obrigatório |
+| `cidade` | String | Obrigatório |
+| `estado` | String | UF (2 letras) |
+| `cep` | String | 8 dígitos (sem máscara no banco) |
+| `pais` | String | Padrão "Brasil" |
+| `telefone` | String | Opcional (do endereço) |
+| `principal` | Boolean | Exatamente um endereço deve ser `true` |
+| `cliente_id` | Long | FK para `tb_cliente` |
 
-**Repository vs DAO?**
-Repository (Spring Data JPA) cobre CRUD simples. DAO entra para queries avançadas exigidas pelo desafio: Search dinâmico (`com.googlecode.genericdao.search`), HQL, SQL puro.
+---
+
+## Rotas da API REST
+
+```
+POST   /api/clientes                              criar cliente
+GET    /api/clientes                              listar todos (sem paginação)
+GET    /api/clientes/buscar                       listar paginado com filtros
+GET    /api/clientes/contadores                   total e ativos
+GET    /api/clientes/{id}                         buscar por id
+PUT    /api/clientes/{id}                         atualizar (sync de endereços)
+DELETE /api/clientes/{id}                         excluir
+POST   /api/clientes/importar                     importar Excel
+GET    /api/clientes/modelo-planilha              baixar modelo de importação
+
+GET    /api/relatorios/clientes/pdf               lista em PDF
+GET    /api/relatorios/cliente/detalhes/pdf?id=   detalhes em PDF
+GET    /api/relatorios/clientes/excel             lista em Excel
+GET    /api/relatorios/cliente/detalhes/excel?id= detalhes em Excel
+```
+
+---
+
+## Stack
+
+| Tecnologia | Versão | Função |
+|---|---|---|
+| Java | 17 | Linguagem do backend |
+| Spring Boot | 2.7.18 | Framework Web + DI |
+| Hibernate / JPA | (via Spring Boot) | ORM |
+| MySQL | 8.0 (Docker) | Banco de dados |
+| Apache Wicket | 7.18.0 | Frontend server-side (Fase 1) |
+| Angular | 14.2 | Frontend SPA (Fase 2) |
+| Angular Material | 14.2 | Components do Angular |
+| JasperReports | 6.20.0 | Geração de PDF |
+| Apache POI | 5.2.3 | Geração e leitura de Excel |
+| Caelum Stella | 2.1.6 | Validação matemática de CPF/CNPJ |
+| jQuery Mask Plugin | 1.14.16 | Máscaras de input (Wicket) |
+| ngx-mask | 13.2 | Máscaras de input (Angular) |
+| Bootstrap | 5.3 | CSS do Wicket |
+
+**APIs externas consumidas:**
+- **ViaCEP** (`https://viacep.com.br`) — busca de endereço por CEP
+- **IBGE Localidades** (`https://servicodados.ibge.gov.br/api/v1/localidades`) — UFs e municípios
+
+---
+
+## Estrutura de pastas
+
+```
+crud_project_2/
+├── docker-compose.yml          ← MySQL 8 (único serviço dockerizado)
+├── pom.xml                     ← Configuração Maven do backend
+├── src/main/
+│   ├── java/com/crudproject/
+│   │   ├── config/             ← GlobalExceptionHandler
+│   │   ├── controller/         ← REST controllers
+│   │   ├── dao/                ← Busca filtrada via Specification
+│   │   ├── dto/                ← DTOs de entrada e saída
+│   │   │   ├── cliente/
+│   │   │   └── endereco/
+│   │   ├── mapper/             ← Conversão DTO ↔ Entity
+│   │   ├── model/              ← Entidades JPA
+│   │   ├── repository/         ← Spring Data JPA
+│   │   ├── service/            ← Regras de negócio
+│   │   │   ├── reports/        ← Builders de Excel
+│   │   │   └── validation/     ← ClienteValidator, DocumentoUtil
+│   │   ├── wicket/             ← Frontend Wicket
+│   │   │   ├── page/           ← Pages e Panels
+│   │   │   ├── resources/      ← CSS, JS (incluindo IBGE/ViaCEP)
+│   │   │   └── state/          ← POJOs Serializable de form state
+│   │   └── CrudProjectApplication.java
+│   └── resources/
+│       ├── application.properties.example
+│       └── reports/            ← Templates .jrxml do Jasper
+└── frontend-angular/
+    ├── src/app/
+    │   ├── models/             ← Interfaces TS (Cliente, Endereco, Estado…)
+    │   ├── pages/
+    │   │   ├── listagem/       ← Tela principal + modais
+    │   │   └── detalhes/       ← Tela de detalhes + modais
+    │   ├── services/           ← ClienteService, ViaCepService, IbgeService
+    │   └── app.module.ts
+    └── package.json
+```
+
+---
+
+## Troubleshooting
+
+### "Conexão recusada na porta 3306"
+O Docker não terminou de subir o MySQL. Aguarde uns 10 segundos e tente de novo.
+Para verificar: `docker compose ps` deve mostrar STATUS = `healthy`.
+
+### "Cannot deserialize value of type LocalDate"
+Backend já trata isso com o `GlobalExceptionHandler` — retorna a mensagem amigável "Data inválida…".
+
+### Angular não carrega cidades depois de selecionar UF
+Verificar console: a API do IBGE pode estar fora do ar. O frontend tem fallback (lista vazia).
+
+### Wicket exibe "InaccessibleObjectException"
+Falta a VM Option `--add-opens java.base/java.lang=ALL-UNNAMED`.
+Use o run config **`RODAR WICKET`** (já configurado).
+
+### Banco vem vazio após `docker compose up`
+Comportamento esperado. O Hibernate cria as tabelas na primeira inicialização do Spring Boot.
+Para cadastrar dados de teste, use a tela do Wicket ou as rotas REST.
+
+### Para zerar tudo (banco + dados)
+```bash
+docker compose down -v   # ⚠️ apaga todos os dados!
+docker compose up -d
+```
+
+---
+
+## Run Configurations (IntelliJ)
+
+Estão versionadas em `.idea/runConfigurations/`:
+
+| Config | O que faz |
+|---|---|
+| `RODAR WICKET` | Sobe o Spring Boot (Wicket + REST + Angular consumidor) com VM Options corretas |
+| `RODAR ANGULAR` | Roda `npm start` na pasta `frontend-angular` |
+| `RODAR TUDO` | Compound — sobe os dois ao mesmo tempo |

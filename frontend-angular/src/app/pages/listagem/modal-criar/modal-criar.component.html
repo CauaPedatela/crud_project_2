@@ -185,18 +185,25 @@
               <mat-error>Campo obrigatório</mat-error>
             </mat-form-field>
 
-            <!-- Cidade -->
+            <!-- Estado (UF) — dropdown do IBGE -->
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Cidade</mat-label>
-              <input matInput formControlName="cidade">
+              <mat-label>UF</mat-label>
+              <mat-select formControlName="estado"
+                          (selectionChange)="onEstadoChange(i, $event.value)">
+                <mat-option *ngFor="let uf of (estados$ | async)" [value]="uf.sigla">
+                  {{ uf.sigla }} — {{ uf.nome }}
+                </mat-option>
+              </mat-select>
               <mat-error>Campo obrigatório</mat-error>
             </mat-form-field>
 
-            <!-- Estado (UF) -->
+            <!-- Cidade — dropdown alimentado conforme o UF escolhido -->
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>UF</mat-label>
-              <mat-select formControlName="estado">
-                <mat-option *ngFor="let uf of ufOptions" [value]="uf">{{ uf }}</mat-option>
+              <mat-label>Cidade</mat-label>
+              <mat-select formControlName="cidade">
+                <mat-option *ngFor="let cidade of (cidades$(i) | async)" [value]="cidade.nome">
+                  {{ cidade.nome }}
+                </mat-option>
               </mat-select>
               <mat-error>Campo obrigatório</mat-error>
             </mat-form-field>

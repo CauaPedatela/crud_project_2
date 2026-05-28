@@ -75,14 +75,22 @@ public class EnderecosListaPanel extends Panel {
                 item.add(new Label("endPais",           nvl(end.getPais())));
                 item.add(new Label("endTelefone",       nvl(end.getTelefone())));
 
+                // Botão "Editar" — agora carrega TODOS os campos do endereço via data-*
+                // porque o modal de editar passou a permitir editar tudo (não só número/
+                // complemento/telefone/principal como antes).
                 WebMarkupContainer btnEditar = new WebMarkupContainer("btnEditarEndereco");
                 btnEditar.add(AttributeModifier.replace("onclick",          "abrirModalEditarEndereco(this)"));
                 btnEditar.add(AttributeModifier.replace("data-id",          String.valueOf(end.getId())));
+                btnEditar.add(AttributeModifier.replace("data-logradouro",  safe(end.getLogradouro())));
                 btnEditar.add(AttributeModifier.replace("data-numero",      safe(end.getNumero())));
                 btnEditar.add(AttributeModifier.replace("data-complemento", safe(end.getComplemento())));
+                btnEditar.add(AttributeModifier.replace("data-bairro",      safe(end.getBairro())));
+                btnEditar.add(AttributeModifier.replace("data-cidade",      safe(end.getCidade())));
+                btnEditar.add(AttributeModifier.replace("data-estado",      safe(end.getEstado())));
+                btnEditar.add(AttributeModifier.replace("data-cep",         safe(end.getCep())));
+                btnEditar.add(AttributeModifier.replace("data-pais",        safe(end.getPais())));
                 btnEditar.add(AttributeModifier.replace("data-telefone",    safe(end.getTelefone())));
                 btnEditar.add(AttributeModifier.replace("data-principal",   String.valueOf(isPrincipal)));
-                btnEditar.add(AttributeModifier.replace("data-logradouro",  safe(end.getLogradouro())));
                 item.add(btnEditar);
 
                 WebMarkupContainer btnExcluir = new WebMarkupContainer("btnExcluirEndereco");

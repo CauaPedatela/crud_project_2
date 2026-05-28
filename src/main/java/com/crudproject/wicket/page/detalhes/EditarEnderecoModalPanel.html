@@ -1,12 +1,15 @@
 <html xmlns:wicket="http://wicket.apache.org/dtds.data/wicket-xhtml1.4-strict.dtd">
 <body>
 <wicket:panel>
-  <!-- Editáveis: número, complemento, telefone, principal.
-       O logradouro é exibido como referência (não editável). -->
+  <!--
+    Modal "Editar Endereço". Todos os campos são editáveis nesta versão.
+    O campo CEP tem a classe "mask-cep" (máscara) e "viacep-editar" (gatilho
+    ViaCEP no editar — implementado em clientes.js).
+  -->
   <form wicket:id="formEditarEndereco">
     <input type="hidden" wicket:id="hiddenEditarEnderecoId"/>
     <div class="modal fade" id="modalEditarEndereco" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>Editar Endereço</h5>
@@ -15,15 +18,23 @@
           <div class="modal-body">
             <div wicket:id="feedbackEditarEndereco"></div>
             <p class="text-muted small mb-3">
-              Número, complemento, telefone e status de principal podem ser editados.
+              Edite os campos desejados. Ao alterar o CEP, os campos de endereço
+              são preenchidos automaticamente via ViaCEP.
             </p>
             <div class="row g-3">
 
-              <div class="col-12">
-                <label class="form-label">
-                  Logradouro <span class="text-muted small">(não editável)</span>
-                </label>
-                <input type="text" class="form-control" id="editEndLogradouroDisplay" disabled>
+              <!-- CEP em destaque: ao sair do campo (onblur) chama o ViaCEP,
+                   que preenche logradouro/bairro/cidade/UF automaticamente. -->
+              <div class="col-md-4">
+                <label class="form-label">CEP <span class="text-danger">*</span></label>
+                <input type="text" class="form-control mask-cep"
+                       wicket:id="editEndCep"
+                       onblur="buscarCepEditarEndereco(this)">
+              </div>
+
+              <div class="col-md-8">
+                <label class="form-label">Logradouro <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" wicket:id="editEndLogradouro">
               </div>
 
               <div class="col-md-4">
@@ -41,11 +52,42 @@
               </div>
 
               <div class="col-md-6">
+                <label class="form-label">Bairro <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" wicket:id="editEndBairro">
+              </div>
+
+              <!-- UF: dropdown dinâmico via API do IBGE.
+                   O <select> é puro HTML (sem wicket:id) e o JS o popula.
+                   O <input type=hidden wicket:id="editEndEstado"> recebe o valor
+                   selecionado e é o que o Wicket lê no submit. -->
+              <div class="col-md-2">
+                <label class="form-label">UF <span class="text-danger">*</span></label>
+                <select class="form-select ibge-estado-select" id="editEndEstadoSelect">
+                  <option value="">Carregando…</option>
+                </select>
+                <input type="hidden" class="ibge-estado-hidden" wicket:id="editEndEstado">
+              </div>
+
+              <!-- Cidade: mesmo padrão — dropdown dinâmico do IBGE -->
+              <div class="col-md-4">
+                <label class="form-label">Cidade <span class="text-danger">*</span></label>
+                <select class="form-select ibge-cidade-select" id="editEndCidadeSelect">
+                  <option value="">Selecione um estado primeiro</option>
+                </select>
+                <input type="hidden" class="ibge-cidade-hidden" wicket:id="editEndCidade">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">País <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" wicket:id="editEndPais">
+              </div>
+
+              <div class="col-md-6">
                 <label class="form-label">Telefone</label>
                 <input type="text" class="form-control mask-telefone" wicket:id="editEndTelefone">
               </div>
 
-              <div class="col-md-6 d-flex align-items-center pt-4">
+              <div class="col-12">
                 <div class="form-check form-switch">
                   <input class="form-check-input" type="checkbox" role="switch" wicket:id="editEndPrincipal">
                   <label class="form-check-label">Endereço principal</label>

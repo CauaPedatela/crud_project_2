@@ -31,6 +31,7 @@ import org.apache.wicket.markup.html.form.CheckBox;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
+import org.apache.wicket.markup.html.form.HiddenField;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
@@ -44,11 +45,8 @@ import java.util.List;
 
 public class CriarClienteModalPanel extends Panel {
 
-    private static final List<String> UFS = Arrays.asList(
-            "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO",
-            "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI",
-            "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"
-    );
+    // Lista estática de UFs foi removida — agora os estados (e cidades) vêm
+    // dinamicamente da API do IBGE via JS (ver clientes.js).
 
     @SpringBean
     private ClienteService clienteService;
@@ -203,8 +201,11 @@ public class CriarClienteModalPanel extends Panel {
                 item.add(new TextField<>("endNumero",      new PropertyModel<>(endereco, "numero")));
                 item.add(new TextField<>("endComplemento", new PropertyModel<>(endereco, "complemento")));
                 item.add(new TextField<>("endBairro",      new PropertyModel<>(endereco, "bairro")));
-                item.add(new TextField<>("endCidade",      new PropertyModel<>(endereco, "cidade")));
-                item.add(new DropDownChoice<>("endEstado", new PropertyModel<>(endereco, "estado"), UFS));
+                // Estado e Cidade são HiddenFields — o JS popula <select>s puros
+                // e mantém estes hidden em sincronia. Permite lista dinâmica do IBGE
+                // sem brigar com a validação interna do DropDownChoice.
+                item.add(new HiddenField<>("endCidade",    new PropertyModel<>(endereco, "cidade")));
+                item.add(new HiddenField<>("endEstado",    new PropertyModel<>(endereco, "estado")));
                 item.add(new TextField<>("endPais",        new PropertyModel<>(endereco, "pais")));
                 item.add(new TextField<>("endTelefone",    new PropertyModel<>(endereco, "telefone")));
             }

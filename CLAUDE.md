@@ -14,7 +14,7 @@ Estas regras valem para QUALQUER conversa, mesmo após `/clear`:
 
 1. **Stack congelada.** Não introduzir libs, frameworks ou padrões fora dos listados em "Stack e Versões". Se achar que falta algo, **pergunte primeiro**.
 2. **Sem refatorações amplas espontâneas.** Limpeza, renomeação em massa, extração de abstrações novas, troca de bibliotecas — só com pedido explícito do usuário.
-3. **REST Controllers são intocáveis.** Eles existem em paralelo ao Wicket e serão o ponto de integração da fase Angular futura. **NUNCA remova endpoints**, mesmo que pareçam não usados.
+3. **REST Controllers são intocáveis.** Eles atendem ao Angular em paralelo ao Wicket. **NUNCA remova endpoints**, mesmo que pareçam não usados — o Angular consome todos eles.
 4. **Schema do banco é congelado.** Não altere `@Entity`, `@Column`, `@OneToMany`, `nullable`, `unique`, tipos de colunas ou nomes de tabelas sem confirmação. Hibernate gera DDL automaticamente — qualquer mudança altera o banco real.
 5. **CPF/CNPJ e TipoPessoa são IMUTÁVEIS após cadastro.** Não permitir edição em nenhum lugar do código.
 6. **Endereço principal: exatamente UM por cliente.** Regra forte do validator — nunca relaxar.
@@ -55,10 +55,10 @@ Checklist sintetizado das seções 4-8 do PDF "Desafio Estágio":
 | 4.1 | Modelo `Cliente` (PF/PJ unificado) com `Endereco` 1:N | ✅ |
 | 5.1 | Validações no **serviço**, não no controller | ✅ |
 | 5.1 | Comentar em pt-BR, métodos com objetivo único | ✅ |
-| 6.1 | Wicket + Angular | ⏳ Wicket pronto / Angular futuro |
+| 6.1 | Wicket + Angular | ✅ Ambos prontos |
 | 6.1 | Validações de campos obrigatórios | ✅ |
 | 6.1 | Visibilidade de campos por ação do usuário (PF↔PJ) | ✅ |
-| 6.1 | jQuery para máscaras | ✅ data / ⏳ CPF, CEP, telefone |
+| 6.1 | jQuery para máscaras | ✅ data, CPF/CNPJ, CEP, telefone |
 | 6.3 | CRUD numa mesma página + Modal Windows | ✅ |
 | 6.3 | Paginação | ✅ |
 | 7 | `FeedbackPanel` no Wicket | ✅ |
@@ -89,14 +89,20 @@ Checklist sintetizado das seções 4-8 do PDF "Desafio Estágio":
 | Java | 17 |
 | Spring Boot | 2.7.18 |
 | Hibernate / JPA | via Spring Boot |
-| MySQL | (local, configurado em application.properties) |
+| MySQL | 8.0 (Docker — único serviço dockerizado) |
 | Apache Wicket | 7.18.0 |
 | JasperReports | 6.20.0 |
 | Apache POI (Excel) | 5.2.3 |
 | Caelum Stella | 2.1.6 (validação matemática CPF/CNPJ) |
-| jQuery Mask Plugin | 1.14.16 (máscaras de campo no frontend) |
-| Angular | 14 (fase futura) |
+| jQuery Mask Plugin | 1.14.16 (máscaras no Wicket) |
+| Angular | 14.2 |
+| Angular Material | 14.2 |
+| ngx-mask | 13.2 (máscaras no Angular) |
 | Bootstrap | 5.3 (nos HTMLs Wicket) |
+
+**APIs externas consumidas:**
+- **ViaCEP** — busca de endereço por CEP
+- **IBGE Localidades** — lista de UFs e municípios (dropdowns dinâmicos)
 
 ---
 
@@ -104,22 +110,25 @@ Checklist sintetizado das seções 4-8 do PDF "Desafio Estágio":
 
 ```
 com.crudproject
+├── config/
+│   └── GlobalExceptionHandler.java   — @ControllerAdvice (data inválida, regras de negócio)
+│
 ├── model/
 │   ├── Cliente.java           — entidade JPA unificada PF+PJ
 │   ├── Endereco.java          — entidade JPA, FK cliente_id
 │   ├── TipoPessoa.java        — enum: FISICA, JURIDICA
-│   └── TipoEndereco.java      — enum de tipos de endereço
+│   └── TipoEndereco.java      — enum: RESIDENCIAL, COMERCIAL
 │
 ├── dto/
 │   ├── cliente/
-│   │   ├── ClienteDTO.java          — entrada (POST/PUT)
-│   │   └── ClienteResponseDTO.java  — saída (GET), implements Serializable (Wicket)
+│   │   ├── ClienteDTO.java          — entrada (POST/PUT), implements Serializable
+│   │   └── ClienteResponseDTO.java  — saída (GET), implements Serializable
 │   └── endereco/
-│       ├── EnderecoDTO.java
-│       └── EnderecoResponseDTO.java  — implements Serializable (Wicket)
+│       ├── EnderecoDTO.java         — implements Serializable
+│       └── EnderecoResponseDTO.java — implements Serializable
 │
 ├── mapper/
-│   ├── ClienteMapper.java     — DTO ↔ Entity
+│   ├── ClienteMapper.java     — DTO ↔ Entity (updateEntity ignora campos imutáveis)
 │   └── EnderecoMapper.java
 │
 ├── repository/
@@ -130,28 +139,38 @@ com.crudproject
 │   └── ClienteDAO.java        — busca filtrada via JPA Specification API (WHERE dinâmico)
 │
 ├── service/
-│   ├── ClienteService.java        — orquestrador principal; delega ao DAO para filtros
-│   ├── EnderecoSincronizador.java — lógica de sync no PUT
-│   ├── ReportService.java         — geração PDF e Excel
+│   ├── ClienteService.java         — orquestrador principal (salvar/atualizar/buscar)
+│   ├── ClienteImportacaoService.java — importação por planilha Excel
+│   ├── EnderecoSincronizador.java  — lógica de sync no PUT (id existe→update, sumiu→delete)
+│   ├── ReportService.java          — geração PDF (Jasper) e Excel (POI builders)
+│   ├── reports/                    — builders Excel internos
 │   └── validation/
-│       ├── ClienteValidator.java  — regras de negócio
-│       └── DocumentoUtil.java     — validação CPF/CNPJ
+│       ├── ClienteValidator.java   — regras de negócio
+│       ├── DocumentoUtil.java      — validação CPF/CNPJ (Caelum Stella) + limpeza
+│       └── MascaraUtil.java        — formatação para exibição
 │
-├── controller/                — REST (usado para testes e futura integração Angular)
+├── controller/                — REST (consumido pelo Angular)
 │   ├── ClienteController.java
 │   └── ReportController.java
 │
 └── wicket/
     ├── WicketApplication.java — homepage = ListagemClientesPage; registra SpringComponentInjector
     ├── WicketConfig.java      — registra WicketFilter no Spring Boot para /*
+    ├── resources/
+    │   ├── clientes.css       — estilos compartilhados
+    │   └── clientes.js        — máscaras, ViaCEP, IBGE, autoHideFeedback
+    ├── state/                 — POJOs Serializable (CriacaoClienteState, EdicaoClienteState, etc)
     └── page/
-        ├── FiltroState.java           — POJO Serializable com termo, ativo, tipo, datas
-        ├── BuscaPanel.java    + .html  — barra de pesquisa (AjaxButton → atualiza tabela)
-        ├── FiltrosPanel.java  + .html  — modal de filtros (AjaxButton Aplicar/Limpar)
-        ├── TabelaClientesPanel.java + .html — tabela (PageableListView + AjaxPagingNavigator)
-        ├── ListagemClientesPage.java  + .html  — ✅ orquestra panels + CRUD de cliente (criar/editar/excluir)
-        └── DetalhesClientePage.java   + .html  — ✅ visualiza + edita cliente (cardCliente AJAX-atualizável)
+        ├── ListagemClientesPage  — orquestra panels (busca, filtros, tabela, rodapé)
+        ├── DetalhesClientePage   — exibe cliente + CRUD de endereços
+        ├── listagem/             — modais CRUD de cliente + importação
+        ├── detalhes/             — modais CRUD de endereço + card do cliente
+        └── shared/               — modais reutilizados (Editar Cliente, Relatório)
 ```
+
+> **Frontend Angular** vive em `frontend-angular/` na raiz. Estrutura:
+> `src/app/{models,services,pages/listagem,pages/detalhes}` — espelha
+> a organização do Wicket (com `services/ibge.service.ts` para a integração IBGE).
 
 ---
 
@@ -178,9 +197,9 @@ com.crudproject
 | id | id | PK |
 | tipo | tipo | enum TipoEndereco |
 | logradouro | logradouro | obrigatório |
-| numero | numero | opcional |
+| numero | numero | obrigatório (aceita "SN" para sem-número) |
 | complemento | complemento | opcional |
-| bairro | bairro | opcional |
+| bairro | bairro | obrigatório (validado no service) |
 | cidade | cidade | obrigatório |
 | estado | estado | UF, 2 chars |
 | cep | cep | obrigatório |
@@ -190,18 +209,22 @@ com.crudproject
 
 ---
 
-## Rotas REST Existentes (para testes / Angular futuro)
+## Rotas REST Existentes (consumidas pelo Angular)
 
 ```
-POST   /api/clientes                          → cadastrar
-GET    /api/clientes                          → listar todos
-GET    /api/clientes/{id}                     → buscar por id
-PUT    /api/clientes/{id}                     → atualizar (sync de endereços)
-DELETE /api/clientes/{id}                     → excluir
+POST   /api/clientes                              → cadastrar
+GET    /api/clientes                              → listar todos (sem paginação)
+GET    /api/clientes/buscar                       → listar paginado com filtros
+GET    /api/clientes/contadores                   → total e ativos (sem trazer dados)
+GET    /api/clientes/{id}                         → buscar por id
+PUT    /api/clientes/{id}                         → atualizar (sync de endereços)
+DELETE /api/clientes/{id}                         → excluir
+POST   /api/clientes/importar                     → importação via Excel
+GET    /api/clientes/modelo-planilha              → modelo de planilha para download
 
-GET    /api/relatorios/clientes/pdf           → lista em PDF
-GET    /api/relatorios/cliente/detalhes/pdf?id=  → detalhes em PDF
-GET    /api/relatorios/clientes/excel         → lista em Excel
+GET    /api/relatorios/clientes/pdf               → lista em PDF
+GET    /api/relatorios/cliente/detalhes/pdf?id=   → detalhes em PDF
+GET    /api/relatorios/clientes/excel             → lista em Excel
 GET    /api/relatorios/cliente/detalhes/excel?id= → detalhes em Excel
 ```
 
@@ -212,7 +235,7 @@ GET    /api/relatorios/cliente/detalhes/excel?id= → detalhes em Excel
 > **As páginas Wicket se conectam DIRETAMENTE ao Service, sem passar pelo Controller.**
 > `Page → @SpringBean → ClienteService → Repository → MySQL`
 
-O Controller REST existe em paralelo e ficará disponível para a futura migração Angular.
+O Controller REST existe em paralelo e é o que o frontend Angular consome.
 
 ### Como o Wicket funciona (resumo para contexto)
 - Cada página = 1 `.java` (lógica) + 1 `.html` (template), mesmo nome, mesmo pacote
@@ -275,8 +298,8 @@ O Controller REST existe em paralelo e ficará disponível para a futura migraç
 - **Excluir cliente** a partir da listagem (botão lixeira na linha) — modal de confirmação + `AjaxButton` + `target.add(tabelaPanel, contadores)`
 - **Editar cliente** a partir da listagem (botão lápis) **e** da página de detalhes (botão "Editar"):
   - Modal pré-preenchido via `data-*` attributes + JS (`abrirModalEdicao(btn)`)
-  - Campos editáveis: email, telefone, IE (PJ), ativo
-  - Nome e CPF/CNPJ exibidos `disabled` (imutáveis após cadastro)
+  - Campos editáveis: nome, email, IE (PJ), ativo
+  - **CPF/CNPJ e tipoPessoa permanecem imutáveis** (regra forte do desafio)
   - `onSubmit` recarrega o cliente do banco pra preservar campos imutáveis + endereços
   - Após salvar: re-renderiza `tabelaPanel`/`cardCliente`/`contadores`/`btnEditarCliente` via `target.add(...)`
 - **Criar cliente** com 1 ou mais endereços (modal "Cadastrar Novo Cliente"):
@@ -296,20 +319,39 @@ O Controller REST existe em paralelo e ficará disponível para a futura migraç
 - **Data de nascimento** no modal de criar: campo com máscara `dd/mm/aaaa` via **jQuery Mask Plugin**; o Java parseia via `DateTimeFormatter.ofPattern("dd/MM/yyyy")`
 - **CSS fix para scroll do modal de criar:** `form { display: contents }` faz o `<form>` sumir do layout flex do Bootstrap, restaurando o scroll do `.modal-body` sem quebrar o submit
 
-### Pendente Wicket ⏳
-1. **CRUD de endereços** dentro de `DetalhesClientePage` (adicionar/editar/excluir endereço de cliente já existente)
-2. **Importação via Excel** (UI)
-3. **Mensagens flutuantes com auto-dismiss** (toast) — requisito do desafio
-4. Máscaras de CPF/CNPJ, CEP e telefone no frontend (jQuery Mask — data já feita)
+### Feito ✅ — Frontend Wicket (CRUD de endereços + importação + IBGE)
+- **CRUD de endereços** em `DetalhesClientePage`:
+  - `AdicionarEnderecoModalPanel` — modal de criar endereço
+  - `EditarEnderecoModalPanel` — modal de editar (TODOS os campos editáveis)
+  - `ExcluirEnderecoModalPanel` — exclusão com confirmação + regra de "não excluir principal/único"
+- **Importação Excel** via `ImportarExcelModalPanel` (UI + endpoint backend)
+- **Máscaras jQuery** completas: data, CPF/CNPJ, CEP, telefone (em `clientes.js`)
+- **Auto-dismiss de feedback** (`autoHideFeedback()` no JS — desaparece após 5s)
+- **Integração API IBGE** para UF e Cidade (dropdowns dinâmicos via `<select>` puro + `<input type="hidden" wicket:id>`):
+  - JS popula opções; hidden mantém o valor que o Wicket lê na submissão
+  - Funciona em `CriarClienteModalPanel`, `AdicionarEnderecoModalPanel` e `EditarEnderecoModalPanel`
+  - Integrado com ViaCEP: ao buscar CEP, seleciona UF e carrega cidades do estado
+
+### Feito ✅ — Frontend Angular (paridade completa com Wicket)
+- Listagem com filtros, busca, paginação e contadores
+- CRUD de cliente (criar / editar / excluir) com modais Material
+- Página de detalhes com CRUD de endereços
+- Integração **ViaCEP** + **API IBGE** (dropdowns dinâmicos de UF/Cidade)
+- Importação por planilha Excel
+- Download de relatórios PDF / Excel
+- Validação local com mensagens amigáveis (incluindo data inválida)
+- `ibge.service.ts` com cache local (estados uma vez, cidades por UF)
+
+### Feito ✅ — Tratamento de erros
+- `GlobalExceptionHandler` (`@ControllerAdvice`):
+  - `HttpMessageNotReadableException` → detecta `LocalDate` inválido vindo do Jackson e retorna mensagem amigável "Data inválida. Use o formato dd/mm/aaaa com dia/mês/ano válidos."
+  - `DateTimeParseException` → mesma mensagem amigável
+  - `RuntimeException` e `IllegalArgumentException` → propagam `getMessage()` ao frontend como 400
 
 ### Pendente Backend ⏳
-- Endpoint `POST /api/clientes/importar` (upload Excel)
 - **Testes JUnit dos CRUDs** (requisito explícito 7 — `src/test/` ainda não existe)
 - **Consultas via Search `com.googlecode.genericdao.search`** (requisito explícito 8.4 — hoje usa Specification API, é diferente)
 - **Pelo menos uma consulta HQL pura e uma SQL nativa** (requisito explícito 8.4)
-
-### Fase futura — Angular ⏳
-- Replicar tudo em Angular 14 + Angular Material, consumindo os REST Controllers
 
 ---
 

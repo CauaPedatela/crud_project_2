@@ -1,8 +1,8 @@
 /*
  * EditarClienteModalPanel — modal de edição de cliente compartilhado pela
- * Listagem e por Detalhes. Os campos editáveis são apenas e-mail, RG/IE
- * (visível só para PJ) e ativo. Nome, CPF/CNPJ, tipo e data são imutáveis
- * após o cadastro (regra de negócio do ClienteService).
+ * Listagem e por Detalhes. Os campos editáveis são nome, e-mail, RG/IE
+ * (visível só para PJ) e ativo. CPF/CNPJ e tipo permanecem imutáveis após
+ * o cadastro (regra de negócio do ClienteService).
  *
  * O JS abrirModalEdicao(btn) pré-preenche os campos via data-* attributes
  * antes de abrir o modal. No submit, o panel recarrega o cliente do banco
@@ -54,6 +54,14 @@ public class EditarClienteModalPanel extends Panel {
         hiddenId.setOutputMarkupId(true);
         form.add(hiddenId);
 
+        // Nome agora é editável (anteriormente era apenas exibição read-only).
+        // O JS preenche este campo com data-nome ao abrir o modal.
+        TextField<String> tfNome = new TextField<>("formNome",
+                new PropertyModel<>(state, "nome"));
+        tfNome.setMarkupId("editNome");
+        tfNome.setOutputMarkupId(true);
+        form.add(tfNome);
+
         TextField<String> tfEmail = new TextField<>("formEmail",
                 new PropertyModel<>(state, "email"));
         tfEmail.setMarkupId("editEmail");
@@ -81,7 +89,9 @@ public class EditarClienteModalPanel extends Panel {
 
                     ClienteDTO dto = new ClienteDTO();
                     dto.setTipoPessoa(current.getTipoPessoa());
-                    dto.setNome(current.getNome());
+                    // Nome agora vem do state (editável). Se vier vazio, o validator do
+                    // service vai recusar com mensagem clara — não bloqueamos aqui.
+                    dto.setNome(state.getNome());
                     dto.setCpfCnpj(current.getCpfCnpj());
                     dto.setDataNascimento(current.getDataNascimento());
                     dto.setEmail(state.getEmail());

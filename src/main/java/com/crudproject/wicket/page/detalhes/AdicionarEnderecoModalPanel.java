@@ -26,6 +26,7 @@ import org.apache.wicket.markup.html.form.CheckBox;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
+import org.apache.wicket.markup.html.form.HiddenField;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.markup.html.panel.Panel;
@@ -38,11 +39,8 @@ import java.util.List;
 
 public class AdicionarEnderecoModalPanel extends Panel {
 
-    private static final List<String> UFS = Arrays.asList(
-            "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO",
-            "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI",
-            "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"
-    );
+    // Lista estática de UFs removida — agora dropdowns estado/cidade são
+    // populados via API do IBGE (ver clientes.js → ibgePopularSelectEstado).
 
     @SpringBean
     private ClienteService clienteService;
@@ -89,8 +87,9 @@ public class AdicionarEnderecoModalPanel extends Panel {
         form.add(new TextField<>("addEndNumero",      new PropertyModel<>(state, "numero")));
         form.add(new TextField<>("addEndComplemento", new PropertyModel<>(state, "complemento")));
         form.add(new TextField<>("addEndBairro",      new PropertyModel<>(state, "bairro")));
-        form.add(new TextField<>("addEndCidade",      new PropertyModel<>(state, "cidade")));
-        form.add(new DropDownChoice<>("addEndEstado", new PropertyModel<>(state, "estado"), UFS));
+        // Estado e Cidade são dropdowns IBGE → HiddenField recebe o valor do JS
+        form.add(new HiddenField<>("addEndCidade",    new PropertyModel<>(state, "cidade")));
+        form.add(new HiddenField<>("addEndEstado",    new PropertyModel<>(state, "estado")));
         form.add(new TextField<>("addEndCep",         new PropertyModel<>(state, "cep")));
         form.add(new TextField<>("addEndPais",        new PropertyModel<>(state, "pais")));
         form.add(new TextField<>("addEndTelefone",    new PropertyModel<>(state, "telefone")));

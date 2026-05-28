@@ -113,3 +113,19 @@ export interface Contadores {
   total: number;
   ativos: number;
 }
+
+// ── Estado brasileiro retornado pelo IBGE ──
+// API: GET https://servicodados.ibge.gov.br/api/v1/localidades/estados
+// Usamos só os 3 campos abaixo; o IBGE retorna outros (id, região, etc.)
+export interface Estado {
+  id: number;
+  sigla: string; // UF de 2 letras, ex: "SP"
+  nome: string;  // "São Paulo"
+}
+
+// ── Município brasileiro retornado pelo IBGE ──
+// API: GET https://servicodados.ibge.gov.br/api/v1/localidades/estados/{UF}/municipios
+export interface Cidade {
+  id: number;
+  nome: string;
+}

@@ -123,15 +123,23 @@
                     <input type="text" class="form-control form-control-sm viacep-bairro" wicket:id="endBairro">
                   </div>
 
-                  <div class="col-md-5">
-                    <label class="form-label small mb-1">Cidade</label>
-                    <input type="text" class="form-control form-control-sm viacep-cidade" wicket:id="endCidade">
-                  </div>
+                  <!-- UF: dropdown dinâmico via IBGE.
+                       O <select> é puro HTML (sem wicket:id), populado por JS.
+                       O <input type=hidden wicket:id="endEstado"> é quem o Wicket lê. -->
                   <div class="col-md-2">
                     <label class="form-label small mb-1">UF</label>
-                    <select class="form-select form-select-sm viacep-estado" wicket:id="endEstado">
-                      <option value="">Selecione...</option>
+                    <select class="form-select form-select-sm ibge-estado-select">
+                      <option value="">Carregando…</option>
                     </select>
+                    <input type="hidden" class="ibge-estado-hidden" wicket:id="endEstado">
+                  </div>
+                  <!-- Cidade: dropdown dinâmico via IBGE (depende do UF) -->
+                  <div class="col-md-5">
+                    <label class="form-label small mb-1">Cidade</label>
+                    <select class="form-select form-select-sm ibge-cidade-select">
+                      <option value="">Selecione um estado primeiro</option>
+                    </select>
+                    <input type="hidden" class="ibge-cidade-hidden" wicket:id="endCidade">
                   </div>
                   <div class="col-md-3">
                     <label class="form-label small mb-1">País</label>

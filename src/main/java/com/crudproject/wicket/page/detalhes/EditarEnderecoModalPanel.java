@@ -1,12 +1,16 @@
 /*
  * EditarEnderecoModalPanel — modal de edição de endereço.
  *
- * Campos editáveis: número, complemento, telefone e status "principal".
- * Os demais (logradouro, bairro, cidade, estado, CEP, país, tipo) são
- * exibidos só como referência (logradouro tem display read-only no HTML).
+ * A partir desta versão, TODOS os campos do endereço são editáveis:
+ * logradouro, número, complemento, bairro, cidade, estado, CEP, país,
+ * telefone e status "principal". O tipo (RESIDENCIAL/COMERCIAL) continua
+ * fixo — para trocar, basta excluir e criar de novo.
  *
- * O JS abrirModalEditarEndereco(btn) pré-preenche os campos editáveis via
- * data-* attributes. No submit, busca o cliente, atualiza o endereço alvo,
+ * O JS abrirModalEditarEndereco(btn) pré-preenche todos os campos via
+ * data-* attributes. Ao alterar o CEP, o ViaCEP é consultado automaticamente
+ * (mesma UX do modal de criar) para reabastecer logradouro/bairro/cidade/UF.
+ *
+ * No submit, busca o cliente, substitui o endereço alvo com os novos valores,
  * aplica a regra de "principal único" e chama clienteService.atualizar().
  */
 package com.crudproject.wicket.page.detalhes;
@@ -24,6 +28,7 @@ import org.apache.wicket.markup.html.form.CheckBox;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.HiddenField;
 import org.apache.wicket.markup.html.form.TextField;
+import org.apache.wicket.model.IModel;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
@@ -58,23 +63,38 @@ public class EditarEnderecoModalPanel extends Panel {
         hiddenId.setOutputMarkupId(true);
         form.add(hiddenId);
 
-        TextField<String> tfNumero = new TextField<>("editEndNumero",
-                new PropertyModel<>(state, "numero"));
-        tfNumero.setMarkupId("editEndNumero");
-        tfNumero.setOutputMarkupId(true);
-        form.add(tfNumero);
+        // ────────────────────────────────────────────────────────
+        // Campos que agora são editáveis (antes ficavam read-only)
+        // ────────────────────────────────────────────────────────
+        TextField<String> tfLogradouro = bindTexto(form, "editEndLogradouro", "logradouro");
+        TextField<String> tfBairro     = bindTexto(form, "editEndBairro",     "bairro");
+        TextField<String> tfCep        = bindTexto(form, "editEndCep",        "cep");
+        TextField<String> tfPais       = bindTexto(form, "editEndPais",       "pais");
 
-        TextField<String> tfComplemento = new TextField<>("editEndComplemento",
-                new PropertyModel<>(state, "complemento"));
-        tfComplemento.setMarkupId("editEndComplemento");
-        tfComplemento.setOutputMarkupId(true);
-        form.add(tfComplemento);
+        // Estado e Cidade são DROPDOWNS DINÂMICOS via IBGE.
+        // O usuário escolhe num <select> puro HTML — controlado por JS — e o
+        // JS mantém estes HiddenFields em sincronia. O Wicket então lê o valor
+        // submetido normalmente, como se fosse um TextField.
+        // (HiddenField é a melhor solução para listas dinâmicas em Wicket,
+        // já que DropDownChoice valida contra uma lista estática.)
+        HiddenField<String> hfEstado = new HiddenField<>("editEndEstado",
+                new PropertyModel<>(state, "estado"));
+        hfEstado.setMarkupId("editEndEstado");
+        hfEstado.setOutputMarkupId(true);
+        form.add(hfEstado);
 
-        TextField<String> tfTelefone = new TextField<>("editEndTelefone",
-                new PropertyModel<>(state, "telefone"));
-        tfTelefone.setMarkupId("editEndTelefone");
-        tfTelefone.setOutputMarkupId(true);
-        form.add(tfTelefone);
+        HiddenField<String> hfCidade = new HiddenField<>("editEndCidade",
+                new PropertyModel<>(state, "cidade"));
+        hfCidade.setMarkupId("editEndCidade");
+        hfCidade.setOutputMarkupId(true);
+        form.add(hfCidade);
+
+        // ────────────────────────────────────────────────────────
+        // Campos que já eram editáveis
+        // ────────────────────────────────────────────────────────
+        TextField<String> tfNumero      = bindTexto(form, "editEndNumero",      "numero");
+        TextField<String> tfComplemento = bindTexto(form, "editEndComplemento", "complemento");
+        TextField<String> tfTelefone    = bindTexto(form, "editEndTelefone",    "telefone");
 
         CheckBox cbPrincipal = new CheckBox("editEndPrincipal",
                 new PropertyModel<>(state, "principal"));
@@ -95,6 +115,15 @@ public class EditarEnderecoModalPanel extends Panel {
                             .findFirst()
                             .orElseThrow(() -> new RuntimeException("Endereço não encontrado."));
 
+                    // Aplica TODOS os campos editáveis (incluindo os que antes eram fixos).
+                    // O validator do service vai recusar valores inválidos (bairro vazio, CEP
+                    // mal formado, etc) com mensagem clara.
+                    alvo.setLogradouro(state.getLogradouro());
+                    alvo.setBairro(state.getBairro());
+                    alvo.setCidade(state.getCidade());
+                    alvo.setEstado(state.getEstado());
+                    alvo.setCep(state.getCep());
+                    alvo.setPais(state.getPais());
                     alvo.setNumero(state.getNumero());
                     alvo.setComplemento(state.getComplemento());
                     alvo.setTelefone(state.getTelefone());
@@ -139,5 +168,18 @@ public class EditarEnderecoModalPanel extends Panel {
         });
 
         add(form);
+    }
+
+    /**
+     * Helper privado para reduzir repetição: cria um TextField com markupId
+     * (necessário para o JS pré-preencher) e o adiciona ao form. Como todos
+     * os campos editáveis seguem o mesmo padrão, isso evita 5 blocos idênticos.
+     */
+    private TextField<String> bindTexto(Form<Void> form, String markupId, String propriedade) {
+        TextField<String> tf = new TextField<>(markupId, new PropertyModel<>(state, propriedade));
+        tf.setMarkupId(markupId);
+        tf.setOutputMarkupId(true);
+        form.add(tf);
+        return tf;
     }
 }

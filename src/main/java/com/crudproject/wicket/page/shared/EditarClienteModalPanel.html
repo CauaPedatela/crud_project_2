@@ -17,9 +17,10 @@
               <div class="col-md-6">
                 <label class="form-label">
                   <span id="editLabelNome">Nome completo</span>
-                  <span class="text-muted small">(não editável)</span>
                 </label>
-                <input type="text" class="form-control" id="editNome" disabled>
+                <!-- Nome agora é editável: wicket:id liga ao TextField "formNome".
+                     O JS continua preenchendo via id="editNome" ao abrir o modal. -->
+                <input type="text" class="form-control" wicket:id="formNome">
               </div>
 
               <div class="col-md-6">
