@@ -30,18 +30,7 @@ git clone <url-do-repo>
 cd crud_project_2
 ```
 
-### 2. Configurar o `application.properties`
-
-O `application.properties` está no `.gitignore` porque tem senha do banco. Crie a partir do exemplo:
-
-```bash
-# Copie o modelo
-cp src/main/resources/application.properties.example src/main/resources/application.properties
-```
-
-E ajuste a senha para `UnikaDevDB` (que é a definida no `docker-compose.yml`).
-
-### 3. Subir o banco (Docker)
+### 2. Subir o banco (Docker)
 
 ```bash
 docker compose up -d
@@ -53,7 +42,7 @@ Aguarde alguns segundos até o MySQL ficar "healthy". Para conferir:
 docker compose ps
 ```
 
-### 4. Rodar o backend Spring Boot
+### 3. Rodar o backend Spring Boot
 
 **Opção A — pelo IntelliJ (recomendado):** abra o projeto, escolha o run config **`RODAR WICKET`** (ou **`RODAR TUDO`** para subir Wicket + Angular juntos) e clique em Run.
 
@@ -65,7 +54,7 @@ A aplicação sobe em `http://localhost:8080`.
 > **VM Option necessária:** `--add-opens java.base/java.lang=ALL-UNNAMED`
 > Já está configurada no run config `RODAR WICKET`. Necessária para Wicket/POI funcionarem em Java 17 (sistema de módulos do JPMS).
 
-### 5. Rodar o frontend Angular
+### 4. Rodar o frontend Angular
 
 Em outro terminal:
 
@@ -79,7 +68,7 @@ Acesse em `http://localhost:4200`.
 
 > Pelo IntelliJ existe o run config `RODAR ANGULAR` que faz isso automaticamente.
 
-### 6. Pronto — pontos de acesso
+### 5. Pronto — pontos de acesso
 
 | URL | O que é |
 |---|---|
@@ -278,7 +267,7 @@ crud_project_2/
 │   │   │   └── state/          ← POJOs Serializable de form state
 │   │   └── CrudProjectApplication.java
 │   └── resources/
-│       ├── application.properties.example
+│       ├── application.properties        ← config de conexão (versionado)
 │       └── reports/            ← Templates .jrxml do Jasper
 └── frontend-angular/
     ├── src/app/

@@ -3,16 +3,20 @@
 > Leia também o `CLAUDE.md` da raiz antes de qualquer alteração aqui.
 
 ## Responsabilidade
-- **`application.properties`** — configuração local do Spring Boot (DB, porta, JPA).
-- **`application.properties.example`** — versão de exemplo, **rastreada no git** (sem credenciais reais).
+- **`application.properties`** — configuração do Spring Boot (DB, porta, JPA).
 - **`reports/cliente-detalhes.jrxml`** — template Jasper para relatório de detalhes de cliente.
 - **`reports/clientes-lista.jrxml`** — template Jasper para lista de clientes.
 
-## ⚠️ Regra forte: secrets fora do git
+## ℹ️ Sobre o `application.properties`
 
-- **`application.properties`** está (ou deveria estar) no `.gitignore` — ele tem senha do MySQL.
-- Mudanças de configuração de produção/usuário vão em `application.properties.example` (no git) **e** o usuário replica localmente no `application.properties`.
-- **Nunca commitar credenciais.** Se notar credencial real no diff antes de commit, **avisar o usuário e parar**.
+O arquivo está **versionado no repositório** porque a senha do banco já está
+pública no `docker-compose.yml` (que também é versionado). Esconder a credencial
+em um lugar e expor no outro seria teatro — então mantemos coerência.
+
+**Se um dia o projeto for para produção real:**
+- Use Spring Profiles (`application-prod.properties`) ou variáveis de ambiente.
+- Volte a gitignorar o `.properties` e use `${SPRING_DATASOURCE_PASSWORD}` para ler do ambiente.
+- Documente o setup novo no README.
 
 ## ⚠️ Templates Jasper (.jrxml)
 
@@ -26,15 +30,14 @@
 
 ## Pode alterar sem perguntar
 - Adicionar `.properties` novos auxiliares (mensagens, i18n).
-- Ajustar `application.properties.example` para refletir nova config (sem credenciais).
 - Editar `.jrxml` para correções pequenas listadas acima.
 
 ## ⛔ EXIGE confirmação antes de alterar
-- **`application.properties` (real)** — pode quebrar o ambiente local do usuário.
-- Mudar string de conexão JDBC, porta do servidor, `spring.jpa.hibernate.ddl-auto`.
+- **Mudar string de conexão JDBC, porta do servidor, `spring.jpa.hibernate.ddl-auto`** no `application.properties` — pode quebrar o ambiente do supervisor.
 - Mudar layout estrutural de relatórios Jasper sem usar o Studio.
 - Adicionar/remover templates `.jrxml`.
 - Mover arquivos para fora desta pasta.
+- Voltar a gitignorar o `application.properties` sem antes configurar um esquema de Profiles/env vars.
 
 ## Convenções
 - Comentários no `.properties` em pt-BR, com `#`.
