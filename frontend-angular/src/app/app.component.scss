@@ -1,12 +1,32 @@
-/* Título da toolbar clicável */
-.toolbar-titulo {
-  color: white !important;
-  font-size: 1.1rem;
-  font-weight: 500;
-  text-decoration: none;
+/* Toolbar branca com borda inferior — espelha .app-header do Wicket */
+.app-header {
+  background: #fff !important;
+  border-bottom: 1px solid #e6e8ec !important;
+  color: #111827 !important;
 }
 
-/* Link da navbar que está ativo (página atual) */
-.link-ativo {
-  background: rgba(255, 255, 255, 0.15) !important;
+/* Container interno: centraliza e limita igual ao .page-content (container-xl) */
+.header-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* Ícone vermelho ao lado do título — maior para dar mais destaque */
+.header-icon {
+  color: #c62828;
+  margin-right: 10px;
+  font-size: 1.9rem;
+}
+
+/* Título: texto maior e mais leve (peso 400 no lugar de 600) */
+.toolbar-titulo {
+  color: #111827 !important;
+  font-size: 1.2rem;
+  font-weight: 400;
+  text-decoration: none;
+  letter-spacing: 0.01em;
 }

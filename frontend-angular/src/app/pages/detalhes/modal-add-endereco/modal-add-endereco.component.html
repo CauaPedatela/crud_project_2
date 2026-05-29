@@ -5,7 +5,7 @@
 
 <!-- Título do diálogo -->
 <h2 mat-dialog-title>
-  <mat-icon color="primary" style="vertical-align: middle; margin-right: 8px;">add_location</mat-icon>
+  <mat-icon class="modal-titulo-icon">add_location</mat-icon>
   Adicionar Endereço
 </h2>
 
@@ -141,7 +141,7 @@
           (click)="salvar()"
           [disabled]="salvando">
     <!-- Spinner aparece enquanto aguarda a resposta da API -->
-    <mat-icon *ngIf="!salvando">add_location_alt</mat-icon>
+    <mat-icon *ngIf="!salvando" class="icon-sm">add_location_alt</mat-icon>
     <mat-spinner *ngIf="salvando" diameter="18" style="display: inline-block;"></mat-spinner>
     {{ salvando ? 'Salvando…' : 'Adicionar Endereço' }}
   </button>

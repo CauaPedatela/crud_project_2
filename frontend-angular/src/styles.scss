@@ -1,30 +1,116 @@
 /* ================================================================
    styles.scss — estilos globais do frontend Angular
-   O tema Angular Material (indigo-pink) é carregado via angular.json.
-   Aqui ficam apenas os overrides e utilitários globais do projeto.
+   O tema Angular Material (vermelho) é carregado via theme.scss,
+   referenciado em angular.json.
+   Aqui ficam os design tokens do Wicket, overrides do Material
+   e utilitários de layout.
    ================================================================ */
 
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; background: #f5f5f5; }
 
-/* ── Spacer: empurra o conteúdo à direita da toolbar ── */
-.spacer { flex: 1 1 auto; }
+/* Fundo idêntico ao Wicket (clientes.css: body { background-color: #f6f7f9 }) */
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background: #f6f7f9;
+}
 
-/* ── Cores customizadas para o MatSnackBar de feedback ──
-   Os painéis do snackbar recebem essas classes via panelClass no TypeScript */
-.snack-sucesso .mat-simple-snackbar-action { color: #a5d6a7; }
-.snack-sucesso { background: #2e7d32 !important; color: white !important; }
+/* ── mat-card: borda flat igual ao .page-card do Wicket (sem shadow) ──
+   Wicket: background:#fff; border:1px solid #e6e8ec; border-radius:.5rem */
+.mat-card {
+  border: 1px solid #e6e8ec !important;
+  box-shadow: none !important;
+  border-radius: 0.5rem !important;
+}
 
-.snack-erro .mat-simple-snackbar-action { color: #ef9a9a; }
-.snack-erro { background: #c62828 !important; color: white !important; }
+/* ── Identidade VERMELHA: override da cor primária do tema indigo-pink ──
+   Todos os elementos que usam color="primary" do Material passam a vermelho.
+   Abordagem por CSS override — mais confiável que recompilar o tema SCSS. */
 
-/* ── Avatar de iniciais: círculo colorido com as letras do nome ── */
+// Botões filled (raised, flat, fab)
+.mat-raised-button.mat-primary,
+.mat-flat-button.mat-primary,
+.mat-fab.mat-primary,
+.mat-mini-fab.mat-primary {
+  background-color: #c62828 !important;
+  color: #fff !important;
+}
+
+// Botão contornado e texto simples (stroked, button sem fill)
+.mat-stroked-button.mat-primary { color: #c62828 !important; border-color: #c62828 !important; }
+.mat-button.mat-primary         { color: #c62828 !important; }
+
+// Ícones e ripple em contexto primário
+.mat-icon-button.mat-primary             { color: #c62828 !important; }
+.mat-raised-button.mat-primary .mat-ripple-element,
+.mat-flat-button.mat-primary .mat-ripple-element  { background: rgba(255,255,255,0.15) !important; }
+
+// Checkbox, radio e slide-toggle primários
+.mat-checkbox.mat-primary .mat-checkbox-background,
+.mat-checkbox.mat-primary.mat-checkbox-checked .mat-checkbox-background { background: #c62828 !important; }
+.mat-radio-button.mat-primary.mat-radio-checked .mat-radio-outer-circle  { border-color: #c62828 !important; }
+.mat-radio-button.mat-primary .mat-radio-inner-circle                    { background: #c62828 !important; }
+.mat-slide-toggle.mat-primary.mat-checked .mat-slide-toggle-thumb        { background: #c62828 !important; }
+.mat-slide-toggle.mat-primary.mat-checked .mat-slide-toggle-bar          { background: rgba(198,40,40,0.54) !important; }
+
+// Paginador: página atual
+.mat-paginator .mat-paginator-range-label { color: #c62828 !important; }
+
+// Progress bar e spinner primários
+.mat-progress-bar.mat-primary .mat-progress-bar-fill::after { background-color: #c62828 !important; }
+.mat-spinner.mat-primary circle,
+.mat-progress-spinner.mat-primary circle { stroke: #c62828 !important; }
+
+// Tabs: indicador da aba ativa
+.mat-tab-group.mat-primary .mat-ink-bar,
+.mat-tab-nav-bar.mat-primary .mat-ink-bar { background: #c62828 !important; }
+
+// Form field outline e label em foco (cor do campo)
+.mat-form-field.mat-focused .mat-form-field-label        { color: #c62828 !important; }
+.mat-form-field.mat-focused.mat-form-field-appearance-outline .mat-form-field-outline-thick { color: #c62828 !important; }
+
+/* ── Cabeçalho da tabela: uppercase, muted, fundo cinza claro ──
+   Wicket: thead th { font-size:.78rem; text-transform:uppercase; letter-spacing:.04em;
+                      color:#5b6573; background:#f9fafb; border-bottom:1px solid #e6e8ec } */
+.mat-header-cell {
+  font-size: 12.5px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: #5b6573 !important;
+  background: #f9fafb !important;
+  border-bottom: 1px solid #e6e8ec !important;
+  font-weight: 600 !important;
+}
+.mat-cell, .mat-footer-cell { vertical-align: middle; }
+
+/* ── Campo label (título do campo, uppercase, muted) ──
+   Wicket: .field-label { font-size:.75rem; text-transform:uppercase; color:#6b7280 } */
+.campo-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  margin: 0 0 0.15rem;
+  font-weight: 400;
+}
+
+/* ── Campo valor (dado do campo, negrito, escuro) ──
+   Wicket: .field-value { font-size:1rem; color:#111827; font-weight:500 } */
+.campo-valor {
+  font-size: 16px;
+  color: #111827;
+  font-weight: 500;
+  margin: 0 0 1rem;
+}
+
+/* ── Avatar: identidade VERMELHA ──
+   Wicket usa azul (#eef2ff / #3949ab) — aqui convertemos para vermelho */
 .avatar-iniciais {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: #e8eaf6;
-  color: #3949ab;
+  background: #ffebee;
+  color: #c62828;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -33,11 +119,112 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; background:
   flex-shrink: 0;
 }
 
-/* ── Utilitários de layout (substituem d-flex/gap-x do Bootstrap) ── */
-.flex-row    { display: flex; flex-direction: row; }
-.flex-col    { display: flex; flex-direction: column; }
-.flex-wrap   { flex-wrap: wrap; }
-.align-center { align-items: center; }
+/* ── Chip "Principal" do endereço: vermelho (Wicket usava azul) ── */
+.chip-principal {
+  background: #c62828;
+  color: white;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── Chips de status: fundo sólido + texto branco, igual ao badge do Wicket ── */
+.chip-ativo   { background: #2e7d32 !important; color: #fff !important; }
+.chip-inativo { background: #c62828 !important; color: #fff !important; }
+
+/* ── Chips de tipo PF/PJ: fundo sólido + texto branco — PF verde, PJ vermelho ── */
+.chip-pf { background: #2e7d32 !important; color: #fff !important; }
+.chip-pj { background: #c62828 !important; color: #fff !important; }
+
+/* ── Link de nome na tabela: hover vermelho (era indigo) ── */
+.link-nome {
+  text-decoration: none;
+  color: inherit;
+  font-weight: 500;
+}
+.link-nome:hover { text-decoration: underline; color: #c62828; }
+
+/* ── Animação de botão: igual ao .btn:hover do Wicket ──
+   Wicket: transform:scale(1.04); box-shadow:0 4px 14px rgba(0,0,0,.13) */
+.mat-raised-button:not(:disabled):hover,
+.mat-stroked-button:not(:disabled):hover,
+.mat-flat-button:not(:disabled):hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.13) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.mat-raised-button:not(:disabled):active,
+.mat-stroked-button:not(:disabled):active,
+.mat-flat-button:not(:disabled):active {
+  transform: scale(0.97);
+  transition-duration: 0.07s;
+}
+
+/* ── MatSnackBar: cores de feedback ── */
+.snack-sucesso .mat-simple-snackbar-action { color: #a5d6a7; }
+.snack-sucesso { background: #2e7d32 !important; color: white !important; }
+.snack-erro .mat-simple-snackbar-action { color: #ef9a9a; }
+.snack-erro { background: #c62828 !important; color: white !important; }
+
+/* ── Ícone pequeno dentro de botões (busca, filtros, rodapé, modais) ── */
+.icon-sm {
+  font-size: 15px !important;
+  width: 15px !important;
+  height: 15px !important;
+  line-height: 15px !important;
+  vertical-align: middle;
+}
+
+/* ── Ícone do título (h2) de modais: vermelho, alinhado, tamanho moderado ── */
+.modal-titulo-icon {
+  color: #c62828 !important;
+  vertical-align: middle !important;
+  margin-right: 8px;
+  font-size: 20px !important;
+  width: 20px !important;
+  height: 20px !important;
+  line-height: 20px !important;
+}
+
+/* ── Título de seção dentro de modal (h3): alinha ícone ao texto e diminui ambos ── */
+.secao-titulo {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px;
+  font-size: 13px !important;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px !important;
+}
+.secao-titulo mat-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  line-height: 16px !important;
+  color: #6b7280;
+}
+
+/* ── Botão "Tornar Principal": compacto e afastado do formulário ── */
+.btn-principal.mat-stroked-button {
+  font-size: 12px !important;
+  height: 28px !important;
+  line-height: 26px !important;
+  padding: 0 10px !important;
+}
+.btn-principal .mat-icon {
+  font-size: 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+  line-height: 14px !important;
+}
+
+/* ── Utilitários de layout ── */
+.spacer          { flex: 1 1 auto; }
+.flex-row        { display: flex; flex-direction: row; }
+.flex-col        { display: flex; flex-direction: column; }
+.flex-wrap       { flex-wrap: wrap; }
+.align-center    { align-items: center; }
 .justify-between { justify-content: space-between; }
 .justify-end     { justify-content: flex-end; }
 .gap-1 { gap: 8px; }
@@ -45,24 +232,16 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; background:
 .gap-3 { gap: 24px; }
 .flex-1 { flex: 1; }
 
-/* ── Padding padrão das páginas ── */
-.page-content { padding: 16px 24px; }
-
-/* ── Links sem sublinhado nas células da tabela ── */
-.link-nome {
-  text-decoration: none;
-  color: inherit;
-  font-weight: 500;
+/* ── Padding padrão das páginas: centralizado com max-width ──
+   Wicket usa container-xl (Bootstrap) = max-width 1320px, centrado.
+   padding lateral preservado para telas menores que 1320px. */
+.page-content {
+  padding: 24px 24px;
+  max-width: 1320px;
+  margin: 0 auto;
 }
-.link-nome:hover { text-decoration: underline; color: #3f51b5; }
 
-/* ── Chip de status na tabela (Ativo / Inativo) ── */
-.chip-ativo   { background: #e8f5e9 !important; color: #2e7d32 !important; }
-.chip-inativo { background: #fce4ec !important; color: #880e4f !important; }
-.chip-pf      { background: #e3f2fd !important; color: #0d47a1 !important; }
-.chip-pj      { background: #fff3e0 !important; color: #e65100 !important; }
-
-/* ── Grid de formulário: 2 colunas no desktop, 1 coluna no mobile ── */
+/* ── Grid de formulário responsivo ── */
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -77,5 +256,5 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; background:
   .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
 }
 
-/* ── full-width: faz mat-form-field ocupar 100% da célula do grid ── */
+/* ── full-width: mat-form-field ocupa 100% da célula do grid ── */
 .full-width { width: 100%; }

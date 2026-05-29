@@ -5,7 +5,7 @@
      ================================================================ -->
 
 <h2 mat-dialog-title>
-  <mat-icon color="primary" style="vertical-align: middle; margin-right: 8px;">edit_location</mat-icon>
+  <mat-icon class="modal-titulo-icon">edit_location</mat-icon>
   Editar Endereço
 </h2>
 
@@ -127,7 +127,7 @@
   <button mat-raised-button color="primary"
           (click)="salvar()"
           [disabled]="salvando">
-    <mat-icon *ngIf="!salvando">save</mat-icon>
+    <mat-icon *ngIf="!salvando" class="icon-sm">save</mat-icon>
     <mat-spinner *ngIf="salvando" diameter="18" style="display: inline-block;"></mat-spinner>
     {{ salvando ? 'Salvando…' : 'Salvar Alterações' }}
   </button>

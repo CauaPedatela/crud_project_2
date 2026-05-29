@@ -169,6 +169,18 @@ public class ClienteService {
         return clienteMapper.toResponse(salvo);
     }
 
+    // Roda todo o pipeline de normalização + validação sem persistir nada.
+    // Usado pelo ClienteImportacaoService no passo 1 (checar todas as linhas antes de salvar qualquer uma).
+    @Transactional
+    public void validarParaImportacao(ClienteDTO dto) {
+        normalizarDados(dto);
+        validator.validarCamposObrigatorios(dto);
+        validator.validarDocumento(dto.getCpfCnpj(), dto.getTipoPessoa());
+        validator.validarUnicidadeDocumento(dto.getCpfCnpj(), null);
+        validator.validarEnderecos(dto.getEnderecos());
+        // sem save — apenas valida
+    }
+
     @Transactional
     public void excluir(Long id) {
         if (!clienteRepository.existsById(id)) {

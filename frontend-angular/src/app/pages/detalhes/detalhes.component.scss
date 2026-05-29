@@ -1,20 +1,94 @@
-/* Labels dos campos de detalhe */
+/* ── Chips de tipo (PF/PJ) e status (Ativo/Inativo) no card de detalhes ──
+   A estrutura base (padding, border-radius) é local; as cores vêm do styles.scss global. */
+.chip-tipo,
+.chip-status {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+/* ── Botão Relatório: vermelho preenchido + texto branco ── */
+.btn-relatorio {
+  background-color: #c62828 !important;
+  color: #fff !important;
+}
+
+/* ── Ícone menor dentro dos botões de ação do cabeçalho ── */
+.btn-icon-sm {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  line-height: 16px !important;
+  vertical-align: middle;
+}
+
+/* ── Campo label e valor: os globais (styles.scss) já definem os valores corretos.
+   Redefinimos aqui apenas para garantir especificidade no contexto do componente,
+   alinhando com os tokens do Wicket (.field-label / .field-value de clientes.css). */
 .campo-label {
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #6b7280;
-  margin: 0 0 2px;
-  font-size: 0.72rem;
+  margin: 0 0 0.15rem;
+  font-weight: 400;
 }
 
-/* Valores dos campos de detalhe */
 .campo-valor {
+  font-size: 16px;
   color: #111827;
   font-weight: 500;
-  margin: 0;
+  margin: 0 0 1rem;
 }
 
-/* Bloco de cada endereço na lista */
-.endereco-item {
-  padding: 16px 16px 0;
+/* ── Botões de ação por endereço (editar / excluir) ──
+   Caixinhas quadradas 30×30 px, fundo colorido e ícone branco — mesmo padrão
+   das colunas de ação da tabela de listagem. */
+.btn-acao-end {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  line-height: 30px !important;
+  border-radius: 4px !important;
+  padding: 0 !important;
+}
+
+/* Editar: cinza neutro (destaque menor que o excluir) */
+.btn-acao-end-editar {
+  background-color: #6b7280 !important;
+  color: #fff !important;
+
+  /* Ícone filho também fica branco */
+  .mat-icon { color: #fff !important; }
+}
+
+/* Excluir: vermelho — ação destrutiva */
+.btn-acao-end-excluir {
+  background-color: #c62828 !important;
+  color: #fff !important;
+
+  .mat-icon { color: #fff !important; }
+}
+
+/* ── Botão "Adicionar Endereço": vermelho preenchido + texto branco ── */
+.btn-add-endereco {
+  background-color: #c62828 !important;
+  color: #fff !important;
+}
+
+/* ── Card de endereço individual: borda + padding ──
+   Wicket: .rounded.border.p-3 → border-radius .5rem, border #e6e8ec, padding 16px.
+   margin-bottom entre cards; o último não tem margem. */
+.endereco-item-card {
+  border: 1px solid #e6e8ec;
+  border-radius: 0.5rem;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.endereco-item-card:last-child {
+  margin-bottom: 0;
 }

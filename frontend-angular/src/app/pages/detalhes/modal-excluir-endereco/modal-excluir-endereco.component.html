@@ -46,7 +46,7 @@
   <button mat-raised-button color="warn"
           (click)="confirmar()"
           [disabled]="excluindo">
-    <mat-icon *ngIf="!excluindo">delete</mat-icon>
+    <mat-icon *ngIf="!excluindo" class="icon-sm">delete</mat-icon>
     <mat-spinner *ngIf="excluindo" diameter="18" style="display: inline-block;"></mat-spinner>
     {{ excluindo ? 'Excluindo…' : 'Excluir Endereço' }}
   </button>

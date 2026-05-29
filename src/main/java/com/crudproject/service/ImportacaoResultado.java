@@ -13,15 +13,20 @@ public class ImportacaoResultado implements Serializable {
     private final int sucessos;
     private final int erros;
     private final List<String> mensagensErro;
+    // Total de linhas de dados encontradas na planilha (exclui cabeçalho e linhas vazias).
+    // Permite à UI exibir "0 de N clientes importados" quando a operação é cancelada.
+    private final int totalLinhasEncontradas;
 
-    public ImportacaoResultado(int sucessos, int erros, List<String> mensagensErro) {
+    public ImportacaoResultado(int sucessos, int erros, List<String> mensagensErro, int totalLinhasEncontradas) {
         this.sucessos = sucessos;
         this.erros = erros;
         this.mensagensErro = mensagensErro;
+        this.totalLinhasEncontradas = totalLinhasEncontradas;
     }
 
-    public int getSucessos()              { return sucessos; }
-    public int getErros()                 { return erros; }
+    public int getSucessos()               { return sucessos; }
+    public int getErros()                  { return erros; }
     public List<String> getMensagensErro() { return mensagensErro; }
-    public boolean temErros()             { return erros > 0; }
+    public int getTotalLinhasEncontradas() { return totalLinhasEncontradas; }
+    public boolean temErros()              { return erros > 0; }
 }

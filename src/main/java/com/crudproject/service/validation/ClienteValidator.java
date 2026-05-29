@@ -11,6 +11,7 @@ import com.crudproject.repository.ClienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.sql.SQLClientInfoException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -43,8 +44,7 @@ public class ClienteValidator {
 
         // Validação de E-mail
         if (dto.getEmail() == null || dto.getEmail().isBlank()) {
-            throw new RuntimeException("E-mail é obrigatório.");
-        }
+         }
         // Regex simples e eficiente para validar formato de e-mail
         if (!dto.getEmail().matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
             throw new RuntimeException("O formato do e-mail é inválido.");

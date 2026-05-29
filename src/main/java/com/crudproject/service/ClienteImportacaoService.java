@@ -5,6 +5,7 @@ import com.crudproject.dto.endereco.EnderecoDTO;
 import com.crudproject.model.TipoEndereco;
 import com.crudproject.model.TipoPessoa;
 import com.crudproject.service.reports.ExcelEstilos;
+import com.crudproject.service.validation.DocumentoUtil;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -18,7 +19,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 // Responsável por duas operações relacionadas à importação em lote:
 //   gerarPlanilhaModelo() → retorna os bytes de um .xlsx de exemplo para o usuário baixar e preencher
@@ -144,31 +147,67 @@ public class ClienteImportacaoService {
     // Importação
     // ────────────────────────────────────────────────────────────────────────
 
-    // Lê o .xlsx, tenta salvar cada linha de dados como um novo Cliente.
-    // Linhas com erro são registradas (com número de linha) e não interrompem o lote.
+    // Importa o .xlsx em modo "tudo ou nada":
+    //   Passo 1 — lê e valida TODAS as linhas sem persistir nada; acumula erros.
+    //   Passo 2 — só executa se o passo 1 não encontrou nenhum erro; salva todos os DTOs.
+    // Se qualquer linha falhar na validação, nenhum registro é salvo e os erros são retornados.
     public ImportacaoResultado importar(InputStream inputStream) throws Exception {
-        int sucessos = 0;
+        List<ClienteDTO> dtosValidos = new ArrayList<>();
         List<String> erros = new ArrayList<>();
 
         try (Workbook wb = new XSSFWorkbook(inputStream)) {
             Sheet sheet = wb.getSheetAt(0);
             int primeiraLinhaDados = detectarPrimeiraLinhaDados(sheet);
 
+            // Rastreia CPF/CNPJ já vistos na planilha (normalizado, sem máscara) → número da linha.
+            // A checagem acontece ANTES de qualquer validação de negócio para garantir que
+            // uma duplicata interna seja sinalizada com mensagem clara ("já aparece na linha X"),
+            // e não mascarada por uma mensagem genérica de unicidade do banco.
+            Map<String, Integer> cpfsVistos = new HashMap<>();
+
+            // Passo 1: parseia e valida TODAS as linhas sem salvar nada
             for (int i = primeiraLinhaDados; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
                 if (row == null || linhaVazia(row)) continue;
 
                 try {
                     ClienteDTO dto = parsearLinha(row);
-                    clienteService.salvar(dto);
-                    sucessos++;
+
+                    // 1a) Duplicata interna — verifica ANTES das regras de negócio
+                    // DocumentoUtil.limparFormatacao remove pontos/traços/barras para comparar
+                    // o documento bruto, independente de como o usuário digitou na planilha
+                    String cpfNormalizado = DocumentoUtil.limparFormatacao(dto.getCpfCnpj());
+                    if (cpfsVistos.containsKey(cpfNormalizado)) {
+                        throw new RuntimeException(
+                            "CPF/CNPJ já aparece na linha " + cpfsVistos.get(cpfNormalizado) + " desta planilha.");
+                    }
+                    cpfsVistos.put(cpfNormalizado, i + 1);
+
+                    // 1b) Validação de negócio: normalização completa + regras (Caelum Stella, unicidade no banco, etc.)
+                    clienteService.validarParaImportacao(dto);
+
+                    dtosValidos.add(dto);
                 } catch (Exception ex) {
                     erros.add("Linha " + (i + 1) + ": " + ex.getMessage());
                 }
             }
-        }
 
-        return new ImportacaoResultado(sucessos, erros.size(), erros);
+            int totalLinhas = dtosValidos.size() + erros.size();
+
+            // Se houver qualquer erro, aborta sem salvar nada
+            if (!erros.isEmpty()) {
+                return new ImportacaoResultado(0, erros.size(), erros, totalLinhas);
+            }
+
+            // Passo 2: todas as linhas são válidas — persiste
+            int sucessos = 0;
+            for (ClienteDTO dto : dtosValidos) {
+                clienteService.salvar(dto);
+                sucessos++;
+            }
+
+            return new ImportacaoResultado(sucessos, 0, Collections.emptyList(), totalLinhas);
+        }
     }
 
     // ────────────────────────────────────────────────────────────────────────

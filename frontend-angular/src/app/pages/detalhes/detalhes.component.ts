@@ -87,6 +87,15 @@ export class DetalhesComponent implements OnInit {
     return `${dia}/${mes}/${ano}`;
   }
 
+  // ── Formata "yyyy-MM-ddTHH:mm:ss" para "dd/MM/yyyy às HH:mm" (subtítulo do card) ──
+  formatarDataHora(iso: string): string {
+    if (!iso) return '';
+    const [dataParte, horaParte] = iso.split('T');
+    const [ano, mes, dia] = dataParte.split('-');
+    const hora = horaParte ? horaParte.substring(0, 5) : '';
+    return `${dia}/${mes}/${ano}${hora ? ' às ' + hora : ''}`;
+  }
+
   // ── Formata CPF ou CNPJ para exibição ──
   formatarDocumento(cpfCnpj: string): string {
     const n = cpfCnpj.replace(/\D/g, '');

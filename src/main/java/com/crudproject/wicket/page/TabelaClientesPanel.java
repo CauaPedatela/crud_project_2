@@ -73,7 +73,7 @@ public class TabelaClientesPanel extends Panel {
                 item.add(new Label("email",     cliente.getEmail()));
 
                 boolean isAtivo = Boolean.TRUE.equals(cliente.getAtivo());
-                Label ativoLabel = new Label("ativo", isAtivo ? "Sim" : "Não");
+                Label ativoLabel = new Label("ativo", isAtivo ? "Ativo" : "Inativo");
                 ativoLabel.add(new AttributeAppender("class",
                         Model.of(isAtivo ? " text-bg-success" : " text-bg-danger"), " "));
                 item.add(ativoLabel);

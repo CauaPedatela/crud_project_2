@@ -46,7 +46,7 @@ export class ListagemComponent implements OnInit, AfterViewInit {
   // Paginação é server-side agora — apenas o sort fica client-side dentro da página atual.
   dataSource = new MatTableDataSource<Cliente>();
   // Colunas que aparecem na tabela, na ordem da esquerda para a direita
-  colunas: string[] = ['nome', 'tipo', 'documento', 'email', 'status', 'acoes'];
+  colunas: string[] = ['numero', 'nome', 'tipo', 'documento', 'email', 'status', 'acoes'];
 
   // Referências aos controles de paginação e ordenação declarados no HTML
   @ViewChild(MatPaginator) paginator!: MatPaginator;

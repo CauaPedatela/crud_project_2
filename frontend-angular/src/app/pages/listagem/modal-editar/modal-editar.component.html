@@ -1,6 +1,6 @@
 <!-- Modal de edição de cliente -->
 <h2 mat-dialog-title>
-  <mat-icon style="vertical-align: middle; margin-right: 8px;">edit</mat-icon>
+  <mat-icon class="modal-titulo-icon">edit</mat-icon>
   Editar Cliente
 </h2>
 
@@ -56,7 +56,7 @@
 <mat-dialog-actions align="end">
   <button mat-button (click)="cancelar()" [disabled]="salvando">Cancelar</button>
   <button mat-raised-button color="primary" (click)="salvar()" [disabled]="salvando">
-    <mat-icon *ngIf="!salvando">check</mat-icon>
+    <mat-icon *ngIf="!salvando" class="icon-sm">check</mat-icon>
     <mat-spinner *ngIf="salvando" diameter="18" style="display:inline-block;"></mat-spinner>
     {{ salvando ? 'Salvando…' : 'Salvar Alterações' }}
   </button>

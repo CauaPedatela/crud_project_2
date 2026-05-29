@@ -1,6 +1,6 @@
 <!-- Modal de importação via Excel -->
 <h2 mat-dialog-title>
-  <mat-icon color="primary" style="vertical-align: middle; margin-right: 8px;">upload_file</mat-icon>
+  <mat-icon class="modal-titulo-icon">upload_file</mat-icon>
   Importar Clientes via Excel
 </h2>
 
@@ -82,7 +82,7 @@
   <button mat-raised-button color="primary"
           (click)="importar()"
           [disabled]="!arquivoSelecionado || importando">
-    <mat-icon *ngIf="!importando">upload</mat-icon>
+    <mat-icon *ngIf="!importando" class="icon-sm">upload</mat-icon>
     <mat-spinner *ngIf="importando" diameter="18" style="display:inline-block;"></mat-spinner>
     {{ importando ? 'Importando…' : 'Importar Clientes' }}
   </button>

@@ -1,6 +1,6 @@
 <!-- Modal de filtros avançados -->
 <h2 mat-dialog-title>
-  <mat-icon style="vertical-align: middle; margin-right: 8px;">filter_list</mat-icon>
+  <mat-icon class="modal-titulo-icon">filter_list</mat-icon>
   Filtros
 </h2>
 
@@ -53,9 +53,9 @@
 <mat-dialog-actions align="end">
   <button mat-button (click)="cancelar()">Cancelar</button>
   <button mat-stroked-button (click)="limpar()">
-    <mat-icon>clear</mat-icon> Limpar
+    <mat-icon class="icon-sm">clear</mat-icon> Limpar
   </button>
   <button mat-raised-button color="primary" (click)="aplicar()">
-    <mat-icon>check</mat-icon> Aplicar Filtros
+    <mat-icon class="icon-sm">check</mat-icon> Aplicar Filtros
   </button>
 </mat-dialog-actions>

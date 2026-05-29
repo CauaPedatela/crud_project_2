@@ -16,7 +16,7 @@
       <div>
         <!-- Breadcrumb -->
         <p class="mat-caption" style="margin: 0; color: #888;">
-          <a routerLink="/clientes" style="color: #3f51b5; text-decoration: none;">Clientes</a>
+          <a routerLink="/clientes" style="color: #c62828; text-decoration: none;">Clientes</a>
           / <strong>Detalhes</strong>
         </p>
         <h2 class="mat-h2" style="margin: 4px 0 0;">Detalhes do Cliente</h2>
@@ -25,74 +25,79 @@
       <!-- Botões de ação -->
       <div class="flex-row gap-1" style="flex-wrap: wrap;">
         <button mat-stroked-button (click)="voltar()">
-          <mat-icon>arrow_back</mat-icon> Voltar
+          <mat-icon class="btn-icon-sm">arrow_back</mat-icon> Voltar
         </button>
-        <button mat-stroked-button (click)="abrirModalRelatorio()">
-          <mat-icon>description</mat-icon> Relatório
+        <!-- Relatório: vermelho preenchido + ícone menor -->
+        <button mat-raised-button class="btn-relatorio" (click)="abrirModalRelatorio()">
+          <mat-icon class="btn-icon-sm">description</mat-icon> Relatório
         </button>
+        <!-- Editar: vermelho (primary) + ícone menor -->
         <button mat-raised-button color="primary" (click)="abrirModalEditar()">
-          <mat-icon>edit</mat-icon> Editar
+          <mat-icon class="btn-icon-sm">edit</mat-icon> Editar
         </button>
       </div>
     </div>
 
     <!-- ── Card de dados do cliente ── -->
     <mat-card style="margin-bottom: 16px;">
-      <mat-card-header style="padding-bottom: 16px;">
-        <!-- Avatar com iniciais -->
-        <div mat-card-avatar class="avatar-iniciais">
-          {{ getIniciais(cliente.nome) }}
+      <mat-card-content style="padding: 16px;">
+
+        <!-- Avatar + nome + chips (PF/PJ e Ativo) + subtítulo com ID e data de cadastro -->
+        <div class="flex-row align-center gap-2" style="padding-bottom: 16px;">
+          <div class="avatar-iniciais">{{ getIniciais(cliente.nome) }}</div>
+          <div>
+            <div class="flex-row align-center gap-1" style="flex-wrap: wrap; margin-bottom: 4px;">
+              <strong style="font-size: 1.15rem; color: #111827;">{{ cliente.nome }}</strong>
+              <!-- Chip PF/PJ: pequeno, igual à tabela da listagem -->
+              <span class="chip-tipo" [class.chip-pf]="!isPJ" [class.chip-pj]="isPJ">
+                {{ isPJ ? 'PJ' : 'PF' }}
+              </span>
+              <!-- Chip Ativo/Inativo -->
+              <span class="chip-status" [class.chip-ativo]="cliente.ativo" [class.chip-inativo]="!cliente.ativo">
+                {{ cliente.ativo ? 'Ativo' : 'Inativo' }}
+              </span>
+            </div>
+            <!-- Subtítulo: ID e data de cadastro — igual ao Wicket -->
+            <p style="margin: 0; font-size: 13px; color: #6b7280;">
+              Cliente #{{ cliente.id }} · cadastrado em {{ formatarDataHora(cliente.dataCadastro) }}
+            </p>
+          </div>
         </div>
 
-        <mat-card-title>{{ cliente.nome }}</mat-card-title>
+        <mat-divider style="margin-bottom: 16px;"></mat-divider>
 
-        <mat-card-subtitle>
-          <!-- Chips de tipo e status -->
-          <span class="chip-tipo"
-                [class.chip-pf]="!isPJ" [class.chip-pj]="isPJ"
-                style="margin-right: 8px; padding: 2px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 600;">
-            {{ isPJ ? 'Pessoa Jurídica' : 'Pessoa Física' }}
-          </span>
-          <span class="chip-status"
-                [class.chip-ativo]="cliente.ativo" [class.chip-inativo]="!cliente.ativo"
-                style="padding: 2px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 600;">
-            {{ cliente.ativo ? 'Ativo' : 'Inativo' }}
-          </span>
-        </mat-card-subtitle>
-      </mat-card-header>
-
-      <mat-divider></mat-divider>
-
-      <mat-card-content style="padding-top: 16px;">
-        <!-- Grid de campos -->
-        <div class="form-grid">
-
+        <!-- Linha 1 de campos: Razão Social | E-mail | Ativo -->
+        <div class="form-grid-3">
           <div>
-            <p class="mat-caption campo-label">{{ isPJ ? 'CNPJ' : 'CPF' }}</p>
-            <p class="mat-body-1 campo-valor">{{ formatarDocumento(cliente.cpfCnpj) }}</p>
+            <p class="campo-label">{{ isPJ ? 'Razão Social' : 'Nome' }}</p>
+            <p class="campo-valor">{{ cliente.nome }}</p>
           </div>
-
           <div>
-            <p class="mat-caption campo-label">{{ isPJ ? 'Inscrição Estadual' : 'RG' }}</p>
-            <p class="mat-body-1 campo-valor">{{ cliente.rgInscricaoEstadual || '—' }}</p>
+            <p class="campo-label">E-mail</p>
+            <p class="campo-valor">{{ cliente.email }}</p>
           </div>
-
           <div>
-            <p class="mat-caption campo-label">{{ isPJ ? 'Data de Fundação' : 'Data de Nascimento' }}</p>
-            <p class="mat-body-1 campo-valor">{{ formatarData(cliente.dataNascimento) }}</p>
+            <p class="campo-label">Ativo</p>
+            <p class="campo-valor">{{ cliente.ativo ? 'Ativo' : 'Inativo' }}</p>
           </div>
-
-          <div>
-            <p class="mat-caption campo-label">E-mail</p>
-            <p class="mat-body-1 campo-valor">{{ cliente.email }}</p>
-          </div>
-
-          <div>
-            <p class="mat-caption campo-label">Data de Cadastro</p>
-            <p class="mat-body-1 campo-valor">{{ formatarData(cliente.dataCadastro) }}</p>
-          </div>
-
         </div>
+
+        <!-- Linha 2 de campos: CPF/CNPJ | RG/IE | Data de Criação -->
+        <div class="form-grid-3">
+          <div>
+            <p class="campo-label">{{ isPJ ? 'CNPJ' : 'CPF' }}</p>
+            <p class="campo-valor">{{ formatarDocumento(cliente.cpfCnpj) }}</p>
+          </div>
+          <div>
+            <p class="campo-label">{{ isPJ ? 'Inscrição Estadual' : 'RG' }}</p>
+            <p class="campo-valor">{{ cliente.rgInscricaoEstadual || '—' }}</p>
+          </div>
+          <div>
+            <p class="campo-label">{{ isPJ ? 'Data de Criação' : 'Data de Nascimento' }}</p>
+            <p class="campo-valor">{{ formatarData(cliente.dataNascimento) }}</p>
+          </div>
+        </div>
+
       </mat-card-content>
     </mat-card>
 
@@ -100,7 +105,7 @@
     <mat-card>
       <mat-card-header style="padding-bottom: 8px;">
         <mat-card-title>
-          <mat-icon style="vertical-align: middle; margin-right: 8px; color: #3f51b5;">
+          <mat-icon style="vertical-align: middle; margin-right: 8px; color: #c62828;">
             location_on
           </mat-icon>
           Endereços
@@ -110,10 +115,10 @@
 
       <mat-divider></mat-divider>
 
-      <mat-card-content style="padding: 0;">
-        <!-- Lista de endereços -->
+      <mat-card-content style="padding: 16px;">
+        <!-- Lista de endereços: cada um em seu próprio card com borda (igual ao .rounded.border.p-3 do Wicket) -->
         <div *ngFor="let end of cliente.enderecos; let ultimo = last"
-             class="endereco-item">
+             class="endereco-item-card">
 
           <!-- Cabeçalho do endereço: tipo + badges + ações -->
           <div class="flex-row align-center justify-between" style="margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
@@ -122,22 +127,25 @@
               <span style="background: #e3f2fd; color: #0d47a1; padding: 2px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 600;">
                 {{ end.tipo }}
               </span>
-              <!-- Badge "Principal" -->
-              <span *ngIf="end.principal"
-                    style="background: #3f51b5; color: white; padding: 2px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 600;">
+              <!-- Badge "Principal": vermelho (identidade do sistema) -->
+              <span *ngIf="end.principal" class="chip-principal">
                 Principal
               </span>
             </div>
 
-            <!-- Botões de ação por endereço -->
-            <div>
-              <button mat-icon-button (click)="abrirModalEditarEndereco(end)" matTooltip="Editar endereço">
-                <mat-icon>edit</mat-icon>
+            <!-- Botões de ação por endereço: caixinha colorida + ícone menor branco -->
+            <div class="flex-row gap-1">
+              <button mat-icon-button
+                      class="btn-acao-end btn-acao-end-editar"
+                      (click)="abrirModalEditarEndereco(end)"
+                      matTooltip="Editar endereço">
+                <mat-icon class="icon-sm">edit</mat-icon>
               </button>
-              <button mat-icon-button color="warn"
+              <button mat-icon-button
+                      class="btn-acao-end btn-acao-end-excluir"
                       (click)="abrirModalExcluirEndereco(end)"
                       matTooltip="Excluir endereço">
-                <mat-icon>delete</mat-icon>
+                <mat-icon class="icon-sm">delete</mat-icon>
               </button>
             </div>
           </div>
@@ -178,14 +186,13 @@
             </div>
           </div>
 
-          <mat-divider *ngIf="!ultimo" style="margin-top: 16px;"></mat-divider>
         </div>
       </mat-card-content>
 
-      <!-- Rodapé do card de endereços: botão adicionar -->
+      <!-- Rodapé do card de endereços: botão adicionar — vermelho preenchido, texto branco -->
       <mat-card-actions>
-        <button mat-stroked-button color="primary" (click)="abrirModalAddEndereco()">
-          <mat-icon>add</mat-icon> Adicionar Endereço
+        <button mat-raised-button class="btn-add-endereco" (click)="abrirModalAddEndereco()">
+          <mat-icon class="icon-sm">add</mat-icon> Adicionar Endereço
         </button>
       </mat-card-actions>
     </mat-card>

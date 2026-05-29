@@ -1,0 +1,27 @@
+// ================================================================
+// theme.scss — Tema Angular Material com identidade VERMELHA
+// Usa a API @import (legacy) garantida no Angular Material 14.
+// Red-800 (#c62828) como cor primária, pink A200 como accent.
+// ================================================================
+
+// Importa as funções e mixins do theming do Material
+@import '@angular/material/theming';
+
+// Inclui estilos comuns (typography, elevation, focus-ring)
+// Deve ser chamado exatamente uma vez no projeto
+@include mat-core();
+
+// Paleta primária: vermelho escuro (Red 800 = #c62828)
+$app-primary: mat-palette($mat-red, 800, 300, 900);
+
+// Paleta accent: pink — complementa o vermelho sem conflito
+$app-accent: mat-palette($mat-pink, A200, A100, A400);
+
+// Paleta warn: deep-orange — diferenciado do primário vermelho
+$app-warn: mat-palette($mat-deep-orange);
+
+// Cria o tema claro com as três paletas
+$app-theme: mat-light-theme($app-primary, $app-accent, $app-warn);
+
+// Aplica o tema em todos os componentes Angular Material
+@include angular-material-theme($app-theme);

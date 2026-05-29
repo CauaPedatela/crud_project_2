@@ -7,24 +7,17 @@
          (ListagemComponent ou DetalhesComponent, conforme a URL)
      ================================================================ -->
 
-<!-- Barra de navegação principal -->
-<mat-toolbar color="primary">
-  <!-- Ícone do sistema -->
-  <mat-icon>people</mat-icon>
-
-  <!-- Título clicável que leva à listagem -->
-  <a mat-button routerLink="/clientes" class="toolbar-titulo">
-    {{ titulo }}
-  </a>
-
-  <!-- Spacer empurra os links de navegação para a direita -->
-  <span class="spacer"></span>
-
-  <!-- Link de navegação -->
-  <a mat-button routerLink="/clientes" routerLinkActive="link-ativo">
-    <mat-icon>list</mat-icon>
-    Clientes
-  </a>
+<!-- Barra de navegação principal
+     Fundo branco com borda inferior — espelha o .app-header do Wicket.
+     O .header-container centraliza e limita a largura igual ao container-xl. -->
+<mat-toolbar class="app-header">
+  <div class="header-container">
+    <!-- Ícone vermelho + título (Wicket: bi-people-fill text-primary) -->
+    <mat-icon class="header-icon">people</mat-icon>
+    <a mat-button routerLink="/clientes" class="toolbar-titulo">
+      {{ titulo }}
+    </a>
+  </div>
 </mat-toolbar>
 
 <!-- Área de conteúdo: o Angular Router renderiza aqui
